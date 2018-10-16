@@ -108,6 +108,7 @@ MODULE negf_control_types
       REAL(kind=dp)                                      :: v_shift
       !> initial offset to determine the correct shift in Hartree potential [in a.u.]
       REAL(kind=dp)                                      :: v_shift_offset
+      REAL(kind=dp)                                      :: v_shift_alpha
       !> maximal number of iteration to determine the shift in Hartree potential
       INTEGER                                            :: v_shift_maxiters
    END TYPE negf_control_type
@@ -286,6 +287,7 @@ CONTAINS
 
       CALL section_vals_val_get(negf_section, "V_SHIFT", r_val=negf_control%v_shift)
       CALL section_vals_val_get(negf_section, "V_SHIFT_OFFSET", r_val=negf_control%v_shift_offset)
+      CALL section_vals_val_get(negf_section, "V_SHIFT_ALPHA", r_val=negf_control%v_shift_alpha)
       CALL section_vals_val_get(negf_section, "V_SHIFT_MAX_ITERS", i_val=negf_control%v_shift_maxiters)
 
       ! check consistency

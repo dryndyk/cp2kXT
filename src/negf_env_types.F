@@ -24,7 +24,7 @@ MODULE negf_env_types
                                               dbcsr_init_p,&
                                               dbcsr_p_type,&
                                               dbcsr_set,&
-                                              dbcsr_type
+                                              dbcsr_type, dbcsr_print !DAR
    USE force_env_types,                 ONLY: force_env_get,&
                                               force_env_p_type,&
                                               force_env_type,&
@@ -47,6 +47,8 @@ MODULE negf_env_types
                                               negf_copy_sym_dbcsr_to_fm_submat,&
                                               negf_reference_contact_matrix,&
                                               number_of_atomic_orbitals
+   USE negf_qs_env_types,               ONLY: negf_qs_env_neighbour_mepos,&
+                                              negf_qs_env_type                                           
    USE negf_subgroup_types,             ONLY: negf_subgroup_env_type
    USE negf_vectors,                    ONLY: contact_direction_vector,&
                                               projection_on_direction_vector
@@ -180,12 +182,24 @@ CONTAINS
       TYPE(force_env_p_type), DIMENSION(:), POINTER      :: sub_force_env
       TYPE(negf_atom_map_contact_type), ALLOCATABLE, &
          DIMENSION(:)                                    :: map_contact
+      TYPE(negf_qs_env_type), POINTER                    :: negf_qs_env
+      TYPE(pw_env_type), POINTER                         :: pw_env
+      TYPE(pw_pool_type), POINTER                        :: pw_pool
       TYPE(pw_type), POINTER                             :: v_hartree_rspace
       TYPE(qs_environment_type), POINTER                 :: qs_env, qs_env_contact
       TYPE(qs_subsys_type), POINTER                      :: subsys, subsys_contact
 
       CALL timeset(routineN, handle)
 
+      !DAR begin - negf_env_create is started
+      IF (log_unit > 0) THEN
+      WRITE (*,*)                                                                                      
+      WRITE (*,"('--------------------------------------------------------------------------------')")
+      WRITE (*,"('-- negf_env_create is started                                                 --')") 
+      WRITE (*,"('--------------------------------------------------------------------------------')")
+      END iF
+      !DAR end
+      
       ! ensure we have Quickstep enabled for all force_env
       NULLIFY (sub_force_env)
       CALL force_env_get(force_env, in_use=in_use, qs_env=qs_env, sub_force_env=sub_force_env)
@@ -230,7 +244,9 @@ CONTAINS
       CALL qs_energies_init(qs_env, calc_forces=.FALSE.)
       CALL get_qs_env(qs_env, blacs_env=blacs_env, do_kpoints=do_kpoints, &
                       matrix_s_kp=matrix_s_kp, matrix_ks_kp=matrix_ks_kp, &
-                      subsys=subsys, v_hartree_rspace=v_hartree_rspace)
+                      negf_env=negf_qs_env, pw_env=pw_env, subsys=subsys, &
+                      v_hartree_rspace=v_hartree_rspace)
+      CALL pw_env_get(pw_env, auxbas_pw_pool=pw_pool)                
 
       IF (do_kpoints) THEN
          CPABORT("k-points are currently not supported for device FORCE_EVAL")
@@ -241,6 +257,8 @@ CONTAINS
       ALLOCATE (map_contact(ncontacts))
 
       DO icontact = 1, ncontacts
+         !WRITE (*,*) !DAR!
+         !WRITE (*,"('atom map for contact',I2)") icontact !DAR!
          CALL force_env_get(sub_force_env(negf_control%contacts(icontact)%force_env_index)%force_env, qs_env=qs_env_contact)
          CALL get_qs_env(qs_env_contact, subsys=subsys_contact)
 
@@ -251,6 +269,11 @@ CONTAINS
                                          subsys_device=subsys, &
                                          subsys_contact=subsys_contact)
 
+         !WRITE (*,"('atomlist_cell0:',100000I4)") negf_env%contacts(icontact)%atomlist_cell0 !DAR!
+         !WRITE (*,"('atom_map_cell0:',100000I4)") negf_env%contacts(icontact)%atom_map_cell0 !DAR!
+         !WRITE (*,"('atomlist_cell1:',100000I4)") negf_env%contacts(icontact)%atomlist_cell1 !DAR!
+         !WRITE (*,"('atom_map_cell1:',100000I4)") negf_env%contacts(icontact)%atom_map_cell1 !DAR!
+         
          IF (negf_env%contacts(icontact)%direction_axis == 0) THEN
             WRITE (contact_str, '(I11)') icontact
             WRITE (force_env_str, '(I11)') negf_control%contacts(icontact)%force_env_index
@@ -261,6 +284,9 @@ CONTAINS
          END IF
       END DO
 
+      ! obtain a Konh-Sham and overlap matrices for each contact
+      ALLOCATE (negf_qs_env%contacts(ncontacts))
+      
       ! stage 2: obtain relevant Kohn-Sham matrix blocks for each contact
       DO icontact = 1, ncontacts
          IF (log_unit > 0) &
@@ -270,10 +296,30 @@ CONTAINS
 
          CALL qs_energies(qs_env_contact, consistent_energies=.FALSE., calc_forces=.FALSE.)
 
+         IF (log_unit > 0) &
+            WRITE (log_unit, '(/,T2,A,T70,I11)') "NEGF| Extract relevant matrix blocks for the contact ", icontact !DAR
+         
          CALL negf_env_contact_init_matrices(contact_env=negf_env%contacts(icontact), sub_env=sub_env, &
                                              qs_env_contact=qs_env_contact, matrix_s_device=matrix_s_kp(1, 1)%matrix)
-      END DO
+      !
+         !  CALL negf_get_bulk_contact_matrix(negf_control_aux%contacts(icontact)%ks_block_map, &
+         !                                    negf_control_aux%contacts(icontact)%ks_block_storage,&
+         !                                    matrix_ks_kp, negf_control%contacts(icontact)%atomlist_bulk, &
+         !                                    map_contact(icontact)%atom_map, &
+         !                                    matrix_ks_kp_contact, cell_to_index, blacs_env%para_env)
 
+         negf_qs_env%contacts(icontact)%direction_vector = negf_env%contacts(icontact)%direction_vector
+         negf_qs_env%contacts(icontact)%origin_scattering = negf_env%contacts(icontact)%origin
+         negf_qs_env%contacts(icontact)%v_external = negf_control%contacts(icontact)%v_external
+      END DO
+      !negf_control_aux%update_ks_matrix = .TRUE.
+
+      IF (log_unit > 0) WRITE (log_unit,*) !DAR
+      IF (log_unit > 0) WRITE (log_unit,"(' NEGF| CONTACTS CALCULATED')") !DAR
+      
+      IF (log_unit > 0) &
+            WRITE (log_unit, '(/,T2,A,T70)') "NEGF| Construct the Kohn-Sham matrix for the scattering region " !DAR
+            
       ! obtain an initial KS-matrix for the scattering region
       CALL qs_energies(qs_env, consistent_energies=.FALSE., calc_forces=.FALSE.)
       CALL negf_env_device_init_matrices(negf_env, negf_control, sub_env, qs_env)
@@ -286,7 +332,19 @@ CONTAINS
       CALL get_qs_env(qs_env, dft_control=dft_control)
       CALL mixing_storage_create(negf_env%mixing_storage, negf_mixing_section, &
                                  negf_env%mixing_method, dft_control%qs_control%cutoff)
+                                 
+      CALL negf_qs_env_neighbour_mepos(negf_qs_env, pw_pool)
+      negf_qs_env%conv_jacobi = negf_control%conv_density
 
+      !DAR begin - negf_env_create is started
+      IF (log_unit > 0) THEN
+      WRITE (*,*)                                                                                      
+      WRITE (*,"('--------------------------------------------------------------------------------')")
+      WRITE (*,"('-- negf_env_create is finished                                                --')") 
+      WRITE (*,"('--------------------------------------------------------------------------------')")
+      END iF
+      !DAR end
+      
       CALL timestop(handle)
    END SUBROUTINE negf_env_create
 

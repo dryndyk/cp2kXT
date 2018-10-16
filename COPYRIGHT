@@ -1,3 +1,43 @@
+
+================================================================================
+==                                                                            ==
+==          TraNaS open software suite for quantum nanoscale modeling         ==
+==                                                                            ==
+================================================================================
+==                                                                            ==
+==                                CP2K+XT 0.01                                ==
+==                                                                            ==
+== CP2K eXTended version for atomistic quantum transport at nanoscale,        ==
+== many-body nonequilibrium phenomena, material & device modeling             ==
+== Uses the libraries of the DFTB+XT package                                  ==
+== Copyright (C) 2000-2018 CP2K developers group                              ==
+== Copyright (C) 2017-2018 DFTB+ developers group                             ==
+== Copyright (C) 2018 Dmitry A. Ryndyk                                        ==
+==                                                                            ==
+================================================================================
+==                                                                            ==
+== Please cite as: TraNaS OpenSuite [1], based on the DFTB+ [2,3] source code ==
+== and the CP2K software package with a Quickstep module [4].                 ==
+==                                                                            ==
+== [1] Dmitry A. Ryndyk, TraNaS OpenSuite, http://quantranspro.org/opensuite/ ==
+== [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ==
+==     J. Phys. Chem. A 111, 5678 (2007); http://dftbplus.org/                ==
+== [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ==
+==     New Journal of Physics 10, 065022 (2008) [for transport calculations]  ==
+== [4] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ==
+==     and J. Hutter, Comput. Phys. Commun. 167, 103 (2005)                   ==
+==                                                                            ==
+================================================================================
+== Note the change of License!                                                ==
+== CP2K+XT package depends on DFTB+XT which is distributed under the terms of ==
+== the GNU Lesser General Public License version 3 or later.                  ==
+== As the original CP2K is distributed under the GNU General Public License   ==
+== either version 2 or any later version, the CP2K+XT package is ditributed   ==
+== under the GNU General Public License version 3 or any later version.       ==
+== Any changes from this package can be backported to the original CP2K only  ==
+== by the authors under the GPL v.2.                                          ==
+================================================================================
+
 !-----------------------------------------------------------------------------!
 !                                                                             !
 !   CP2K: A general program to perform molecular dynamics simulations         !

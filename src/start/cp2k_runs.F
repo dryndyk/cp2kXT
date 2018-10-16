@@ -1087,6 +1087,12 @@ CONTAINS
       INTEGER                                            :: unit_nr
       LOGICAL                                            :: success
       TYPE(cp_para_env_type), POINTER                    :: para_env
+      
+      !DAR begin
+      character, parameter :: vbar = '|'
+      character, parameter :: hbar = '='
+      integer, parameter :: headerWidth = 80
+      !DAR end
 
       IF (PRESENT(mpi_comm)) THEN
          NULLIFY (para_env)
@@ -1106,6 +1112,43 @@ CONTAINS
       ELSE
          unit_nr = -1
       END IF
+      
+      !DAR begin
+      if(unit_nr>0) then
+        write(unit_nr,*)
+        write(unit_nr, '(A)') repeat(hbar, headerWidth)
+        write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
+        write(unit_nr, '(5A)') hbar,hbar,'          TraNaS open software suite for quantum nanoscale modeling         ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
+        write(unit_nr, '(A)') repeat(hbar, headerWidth)
+        write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
+        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 0.01                                ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
+        write(unit_nr, '(5A)') hbar,hbar,' CP2K eXTended version for atomistic quantum transport at nanoscale,        ',hbar,hbar 
+        write(unit_nr, '(5A)') hBar,hBar,' many-body nonequilibrium phenomena, material & device modeling             ',hbar,hbar
+        write(unit_nr, '(5A)') hbar,hbar,' Uses the libraries of the DFTB+XT package                                  ',hbar,hbar
+        write(unit_nr, '(5A)') hbar,hbar,' Copyright (C) 2000-2018 CP2K developers group                              ',hbar,hbar
+        write(unit_nr, '(5A)') hbar,hbar,' Copyright (C) 2017-2018 DFTB+ developers group                             ',hbar,hbar
+        write(unit_nr, '(5A)') hbar,hbar,' Copyright (C) 2018 Dmitry A. Ryndyk                                        ',hbar,hbar
+        write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
+        write(unit_nr, '(A)') repeat(hbar, headerWidth)  
+        write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' Please cite as: TraNaS OpenSuite [1], based on the DFTB+ [2,3] source code ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' and the CP2K software package with a Quickstep module [4].                 ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' [1] Dmitry A. Ryndyk, TraNaS OpenSuite, http://quantranspro.org/opensuite/ ',hBar,hBar 
+        write(unit_nr, '(5A)') hBar,hBar,' [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,'     J. Phys. Chem. A 111, 5678 (2007); http://dftbplus.org/                ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,'     New Journal of Physics 10, 065022 (2008) [for transport calculations]  ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' [4] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,'     and J. Hutter, Comput. Phys. Commun. 167, 103 (2005)                   ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
+        write(unit_nr, '(A)') repeat(hBar, headerWidth)
+        write(unit_nr,*)
+      end if
+      !DAR end
+      
       success = cp2k_run(input_declaration, input_file_path, unit_nr, para_env%group)
       IF (.NOT. success) THEN
          ierr = cp_failure_level

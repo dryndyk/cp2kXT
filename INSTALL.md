@@ -1,15 +1,54 @@
-# How to compile the CP2K code
+# How to compile the CP2K+XT code
+
+##  0. CP2K+XT| Before compiling
+
+The directories cp2kXT/ and dftbXT/ must be in the same (any) directory <MAIN>/
+The usual name for this directory is OpenSuite or TraNaS.
+
+DFTB+XT must be installed before CP2K+XT (note however, that if you want to use the versions of
+MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: cp2k/tools/toolchain, you can install it first.)
+
+Do not change default directories during DFTB+XT compilation or be sure what you do! 
+
+The object, mod and lib files must be copied from <MAIN>/dftbXT to <MAIN>/dftbXT_libs
+
+$ cd <MAIN>
+$ mkdir dftbXT_libs
+$ cp  dftbXT/_build/prog/dftb+/*.mod dftbXT_libs/
+$ mv  dftbXT_libs/environment.mod dftbXT_libs/environment_1.mod
+$ cp  dftbXT/_build/prog/dftb+/*.o dftbXT_libs/
+$ rm  dftbXT_libs/dftbplus.o
+$ cp  dftbXT/_build/external/fsockets/libfsockets.a dftbXT_libs/
+$ cp  dftbXT/_build/external/mpifx/libmpifx.a dftbXT_libs/
+$ cp  dftbXT/_build/external/mpifx/libmpifx_module.mod dftbXT_libs/
+$ cp  dftbXT/_build/external/mudpack/libmudpack.a dftbXT_libs/
+$ cp  dftbXT/_build/external/scalapackfx/libscalapackfx.a dftbXT_libs/
+$ cp  dftbXT/_build/external/sparskit/libzsparskit.a dftbXT_libs/
+$ cp  dftbXT/_build/external/tranas/libtranas.a dftbXT_libs/
+$ cp  dftbXT/_build/external/xmlf90/libxmlf90.a dftbXT_libs/
+
+You can use the script <MAIN>/cp2kXT/copy_files.sh:
+
+$ cd <MAIN>
+$ mkdir dftbXT_libs
+$ sh cp2kXT/copy_files.sh
+
+Before CP2K compilation change arch files, see 3c below!
 
 ##  1. Acquire the code:
 
-See  https://www.cp2k.org/download
-
-For users, the preferred method is to download a release.
-For developers, the preferred method is to download it from Git.
+CP2K+XT| https://github.com/dryndyk/cp2kXT.git
+DFTB+XT| https://github.com/dryndyk/dftbXT.git
 
 ## 2. Install Prerequisites
 
-Sub-points here discuss prerequisites needed to build CP2K. Most of these can be conveniently installed via the [toolchain script](./tools/toolchain). Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
+Sub-points here discuss prerequisites needed to build CP2K. 
+Most of these can be conveniently installed via the [toolchain script](./tools/toolchain). 
+Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
+
+CP2K+XT| IMPORTANT!
+CP2K+XT| The arch files obtained by a script in cp2k/tools/toolchain must be modified
+CP2K+XT| as it is explained in 3c.
 
 ### 2a. GNU make (required, build system)
 
@@ -231,6 +270,23 @@ Features useful to deal with legacy systems
   * `-D__NO_STATM_ACCESS` - Do not try to read from /proc/self/statm to get memory usage information. This is otherwise attempted on several. Linux-based architectures or using with the NAG, gfortran, compilers.
   * `-D__F2008` Allow for conformity check with the Fortran 2008 standard when using the GFortran compiler flag `-std=f2008`
 
+### 3b. CP2K+XT| Modifications to compile and link with DFTB+XT
+
+1. Include the path to mod files for compilation
+  
+   FCFLAGS => FCFLAGS -I'<MAIN>/dftbXT_libs' 
+   
+2. Add "-fopenmp" to LDFLAGS
+
+   LDFLAGS => -fopenmp LDFLAGS
+   
+3. Add object files and libraries
+   
+   LIBS => LIBS <MAIN>/cp2kXT/dftbXT_libs/*.o -L<MAIN>/cp2kXT/dftbXT_libs -lxmlf90  -lfsockets -ltranas -lmudpack -lzsparskit -lmudpack -ltranas -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
+   
+   LIB_[SCA]LAPACK/BLAS should be taken from the DFTB+XT arch file (something like '-L/usr/lib -lscalapack -lopenblas')
+   IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.  
+  
 ## 4. If it doesn't work?
 If things fail, take a break... go back to 2a (or skip to step 6).
 
