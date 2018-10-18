@@ -451,7 +451,6 @@ CONTAINS
         write(log_unit, '(5A)') hbar,hbar,'                         CP2K is switched to DFTB+XT                        ',hbar,hbar
         write(log_unit, '(A)') repeat(hbar, headerWidth)
       end if
-      call mpifx_barrier(env%mpi%globalComm)
       call initGlobalEnv_CP2K()
       allocate(input)
       call parseHsdInput(input)
