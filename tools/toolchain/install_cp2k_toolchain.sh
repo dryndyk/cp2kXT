@@ -27,6 +27,11 @@ export SHA256_CHECKSUM="${SCRIPTDIR}/checksums.sha256"
 export ARCH_FILE_TEMPLATE="${SCRIPTDIR}/arch_base.tmpl"
 
 # ------------------------------------------------------------------------
+# Make a copy of all options for $SETUPFILE
+# ------------------------------------------------------------------------
+TOOLCHAIN_OPTIONS="$@"
+
+# ------------------------------------------------------------------------
 # Load common variables and tools
 # ------------------------------------------------------------------------
 source "${SCRIPTDIR}"/common_vars.sh
@@ -204,6 +209,20 @@ The --with-PKG options follow the rules:
                           Default = no
   --with-quip             Enable interface to QUIP library
                           Default = no
+  --with-sirius           Enable interface to the plane wave SIRIUS library.
+                          This package requires: gsl, libspg, elpa, scalapack, json-fortran, hdf5 and libxc.
+                          Default = no
+  --with-gsl              Enable the gnu scientific library library
+                          Default = no
+  --with-spglib           Enable the spg library (search of symmetry groups)
+                          This package depends on cmake.
+                          Default = no
+  --with-hdf5             Enable the hdf5 library (use by sirius library)
+                          Default = no
+  --with-json-fortran     Enable the json fortran library (used by cp2k when sirius is activated)
+                          This package depends on cmake.
+                          Default = no
+
 
 FURTHER INSTRUCTIONS
 
@@ -240,7 +259,7 @@ tool_list="binutils lcov valgrind make cmake gcc"
 mpi_list="mpich openmpi"
 math_list="mkl acml openblas reflapack"
 lib_list="fftw libint libxc libsmm libxsmm scalapack elpa \
-          ptscotch parmetis metis superlu pexsi quip"
+          ptscotch parmetis metis superlu pexsi quip gsl spglib hdf5 sirius json_fortran"
 package_list="$tool_list $mpi_list $math_list $lib_list"
 # ------------------------------------------------------------------------
 
@@ -279,6 +298,13 @@ with_mkl=__SYSTEM__
 with_openblas=__INSTALL__
 with_reflapack=__INSTALL__
 
+# sirius is not activated by default.
+with_sirius="__INSTALL__"
+with_gsl="__INSTALL__"
+with_spglib="__INSTALL__"
+with_hdf5="__INSTALL__"
+with_json_fortran="__INSTALL__"
+
 # for MPI, we try to detect system MPI variant
 with_openmpi=__SYSTEM__
 with_mpich=__SYSTEM__
@@ -295,7 +321,7 @@ if (command -v mpirun >&- 2>&-) ; then
         export MPI_MODE=mpich
     fi
 else
-    report_warning $LINENO "No MPI installation detected on you system. Ignore this message if you are using Cray Linux Environment"
+    report_warning $LINENO "No MPI installation detected on your system. Ignore this message if you are using Cray Linux Environment"
     MPI_MODE=no
 fi
 
@@ -331,6 +357,7 @@ if [ "$CRAY_LD_LIBRARY_PATH" ] ; then
 else
     enable_cray=__FALSE__
 fi
+
 
 # ------------------------------------------------------------------------
 # parse user options
@@ -526,6 +553,21 @@ while [ $# -ge 1 ] ; do
         --with-quip*)
             with_quip=$(read_with $1)
             ;;
+        --with-sirius*)
+            with_sirius=$(read_with $1)
+            ;;
+        --with-gsl*)
+            with_gsl=$(read_with $1)
+            ;;
+        --with-spglib*)
+            with_spglib=$(read_with $1)
+            ;;
+        --with-hdf5*)
+            with_hdf5=$(read_with $1)
+            ;;
+        --with-json*)
+            with_json_fortran=$(read_with $1)
+            ;;
         --help*)
             show_help
             exit 0
@@ -589,6 +631,10 @@ if [ $MPI_MODE = no ] ; then
         echo "Not using MPI, so PEXSI is disabled."
         with_pexsi="__DONTUSE__"
     fi
+    if [ "$with_sirius" != "__DONTUSE__" ] ; then
+        echo "Not using MPI, so sirius is disabled"
+        with_sirius="__DONTUSE__"
+    fi
 else
     # if gcc is installed, then mpi needs to be installed too
     if [ "$with_gcc" = "__INSTALL__" ] ; then
@@ -645,6 +691,42 @@ if [ "$with_parmetis" = "__INSTALL__" ] ; then
     with_metis="__INSTALL__"
 fi
 
+# SIRIUS dependencies. Remove the gsl library from the dependencies if SIRIUS is not activated
+if [ "$with_sirius" = "__INSTALL__" ] ; then
+    if [ "$with_gsl" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working gsl library use --with-gsl option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_elpa" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working ELPA library use --with-elpa option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_libxc" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working libxc library use --with-libxc option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_scalpack" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working scalapack library use --with-scalapack option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_fftw" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working fftw library use --with-fftw option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_spglib" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working spglib library use --with-spglib option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_hdf5" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working hdf5 library use --with-hdf5 option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
+    if [ "$with_json_fortran" = "__DONTUSE__"  ] ; then
+        report_error "For SIRIUS to work you need a working json-fortran library use --with-json option to specify if you wish to install it or specify its location."
+    exit 1
+    fi
+fi
+
 # ------------------------------------------------------------------------
 # Preliminaries
 # ------------------------------------------------------------------------
@@ -663,6 +745,7 @@ export CP_LDFLAGS="-Wl,--enable-new-dtags"
 cat <<EOF > "$SETUPFILE"
 #!/bin/bash
 source "${SCRIPTDIR}/tool_kit.sh"
+export CP2K_TOOLCHAIN_OPTIONS="${TOOLCHAIN_OPTIONS}"
 EOF
 
 # ------------------------------------------------------------------------
@@ -800,7 +883,7 @@ time_stop=`date +%s`
 printf "Step took %0.2f seconds.\n" $((time_stop-time_start))
 
 # math core libraries, need to use reflapack for valgrind builds, as
-# many fast libraries are not necesarily valgrind clean
+# many fast libraries are not necessarily valgrind clean
 export REF_MATH_CFLAGS=''
 export REF_MATH_LDFLAGS=''
 export REF_MATH_LIBS=''
@@ -906,7 +989,7 @@ WFLAGS_WARNALL="-pedantic -Wall -Wextra -Wsurprising -Wunused-parameter -Warray-
 # IEEE_EXCEPTIONS dependency
 IEEE_EXCEPTIONS_DFLAGS="-D__HAS_IEEE_EXCEPTIONS"
 
-# check all of the above flags, filter out incompatable flags for the
+# check all of the above flags, filter out incompatible flags for the
 # current version of gcc in use
 BASEFLAGS=$(allowed_gfortran_flags         $BASEFLAGS)
 OPT_FLAGS=$(allowed_gfortran_flags         $OPT_FLAGS)
@@ -918,13 +1001,13 @@ WFLAGS_ERROR=$(allowed_gfortran_flags      $WFLAGS_ERROR)
 WFLAGS_WARN=$(allowed_gfortran_flags       $WFLAGS_WARN)
 WFLAGS_WARNALL=$(allowed_gfortran_flags    $WFLAGS_WARNALL)
 
-# check if ieee_exeptions module is avaliable for the current version
+# check if ieee_exeptions module is available for the current version
 # of gfortran being used
 if ! (check_gfortran_module ieee_exceptions) ; then
     IEEE_EXCEPTIONS_DFLAGS=""
 fi
 
-# contagnate the above flags into WFLAGS, FCDEBFLAGS, DFLAGS and
+# concatenate the above flags into WFLAGS, FCDEBFLAGS, DFLAGS and
 # finally into FCFLAGS and CFLAGS
 WFLAGS="$WFLAGS_ERROR $WFLAGS_WARN IF_WARNALL(${WFLAGS_WARNALL}|)"
 FCDEBFLAGS="$FCDEB_FLAGS IF_DEBUG($FCDEB_FLAGS_DEBUG|)"
@@ -937,7 +1020,7 @@ G_CFLAGS="$G_CFLAGS IF_DEBUG(|$PROFOPT_FLAGS)"
 G_CFLAGS="$G_CFLAGS $CP_CFLAGS"
 # FCFLAGS, for gfortran
 FCFLAGS="$G_CFLAGS \$(FCDEBFLAGS) \$(WFLAGS) \$(DFLAGS)"
-# CFLAGS, spcial flags for gcc (currently none)
+# CFLAGS, special flags for gcc (currently none)
 CFLAGS="$G_CFLAGS \$(DFLAGS)"
 
 # Linker flags
@@ -1005,7 +1088,7 @@ EOF
     local __TMPL=$(cat $__filename)
     eval "printf \"${__TMPL}\n\"" > $__filename
     # pass this to parsers to replace all of the IF_XYZ statements
-    python ${SCRIPTDIR}/parse_if.py $__filename $__flags
+    "${SCRIPTDIR}/parse_if.py" -i -f "${__filename}" $__flags
     echo "Wrote ${INSTALLDIR}/arch/$__filename"
 }
 
