@@ -6,7 +6,7 @@ The directories cp2kXT/ and dftbXT/ must be in the same (any) directory <MAIN>/
 The usual name for this directory is OpenSuite or TraNaS.
 
 DFTB+XT must be installed before CP2K+XT (note however, that if you want to use the versions of
-MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: cp2k/tools/toolchain, you can install it first.)
+MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: cp2kXT/tools/toolchain, you can install it first.)
 
 Do not change default directories during DFTB+XT compilation or be sure what you do! 
 
@@ -47,7 +47,7 @@ Most of these can be conveniently installed via the [toolchain script](./tools/t
 Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
 
 CP2K+XT| IMPORTANT!
-CP2K+XT| The arch files obtained by a script in cp2k/tools/toolchain must be modified
+CP2K+XT| The arch files obtained by a script in cp2kXT/tools/toolchain must be modified
 CP2K+XT| as it is explained in 3c.
 
 ### 2a. GNU make (required, build system)
@@ -215,7 +215,7 @@ You'll need to modify one of these files to match your system's settings.
 
 You can now build CP2K using these settings (where -j N allows for a parallel build using N processes):
 ```
-> cd cp2k/makefiles
+> cd cp2kXT
 > make -j N ARCH=architecture VERSION=version
 ```
 e.g.
@@ -270,22 +270,23 @@ Features useful to deal with legacy systems
   * `-D__NO_STATM_ACCESS` - Do not try to read from /proc/self/statm to get memory usage information. This is otherwise attempted on several. Linux-based architectures or using with the NAG, gfortran, compilers.
   * `-D__F2008` Allow for conformity check with the Fortran 2008 standard when using the GFortran compiler flag `-std=f2008`
 
-### 3b. CP2K+XT| Modifications to compile and link with DFTB+XT
+### 3c. CP2K+XT| Modifications to compile and link with DFTB+XT
 
 1. Include the path to mod files for compilation
-  
+
    FCFLAGS => FCFLAGS -I'<MAIN>/dftbXT_libs' 
-   
+ 
 2. Add "-fopenmp" to LDFLAGS
 
    LDFLAGS => -fopenmp LDFLAGS
-   
+
 3. Add object files and libraries
-   
+
    LIBS => LIBS <MAIN>/cp2kXT/dftbXT_libs/*.o -L<MAIN>/cp2kXT/dftbXT_libs -lxmlf90  -lfsockets -ltranas -lmudpack -lzsparskit -lmudpack -ltranas -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
-   
+ 
    LIB_[SCA]LAPACK/BLAS should be taken from the DFTB+XT arch file (something like '-L/usr/lib -lscalapack -lopenblas')
-   IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.  
+   IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.
+   If cp2kXT/tools/toolchain was used to compile DFTB+XT, LIB_[SCA]LAPACK/BLAS can be usually skiped.
   
 ## 4. If it doesn't work?
 If things fail, take a break... go back to 2a (or skip to step 6).
