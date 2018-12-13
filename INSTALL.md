@@ -76,6 +76,8 @@ If compiling with OpenMP support then it is recommended to use a non-threaded ve
 
 On the Mac, BLAS and LAPACK may be provided by Apple's Accelerate framework. If using this framework, `-D__ACCELERATE` must be defined to account for some interface incompatibilities between Accelerate and reference BLAS/LAPACK.
 
+When building on/for Windows using the Minimalist GNU for Windows (MinGW) environment, you must set `-D__MINGW`,  `-D__NO_STATM_ACCESS` and `-D__NO_IPI_DRIVER` to avoid undefined references during linking, respectively errors while printing the statistics.
+
 ## 2e. MPI and SCALAPACK (optional, required for MPI parallel builds)
 MPI (version 2) and SCALAPACK are needed for parallel code. (Use the latest versions available and download all patches!).
 
@@ -119,7 +121,9 @@ Hartree-Fock exchange (optional, use `-D__LIBINT`) requires the libint package t
 ### 2j. CUDA (optional, improved performance on GPU systems)
   * `-D__ACC` needed to enable accelerator support.
   * Use the `-D__DBCSR_ACC` to enable accelerator support for matrix multiplications.
-  * Add `-lcudart -lrt` to LIBS.
+  * Add `-lcudart -lrt -lnvrtc` to LIBS.
+  * Specify the GPU type (e.g. `GPUVER   = P100`)
+  * Specify the C++ compiler (e.g. `CXX = g++`). Rember to set the flags to support C++11 standard.
   * Use `-D__PW_CUDA` for CUDA support for PW (gather/scatter/fft) calculations.
   * CUFFT 7.0 has a known bug and is therefore disabled by default. NVidia's webpage list a patch (an upgraded version cufft i.e. >= 7.0.35) - use this together with `-D__HAS_PATCHED_CUFFT_70`.
   * Use `-D__CUDA_PROFILING` to turn on Nvidia Tools Extensions.
