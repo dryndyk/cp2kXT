@@ -1,31 +1,36 @@
 
 ================================================================================
 ==                                                                            ==
-==          TraNaS open software suite for quantum nanoscale modeling         ==
+==                              TraNaS OpenSuite                              ==
+==       (integrated open software suite for quantum nanoscale modeling)      ==
 ==                                                                            ==
 ================================================================================
 ==                                                                            ==
-==                                CP2K+XT 0.01                                ==
+==                                CP2K+XT 1.02                                ==
 ==                                                                            ==
 == CP2K eXTended version for atomistic quantum transport at nanoscale,        ==
 == many-body nonequilibrium phenomena, material & device modeling             ==
 == Uses the libraries of the DFTB+XT package                                  ==
-== Copyright (C) 2000-2018 CP2K developers group                              ==
-== Copyright (C) 2017-2018 DFTB+ developers group                             ==
-== Copyright (C) 2018 Dmitry A. Ryndyk                                        ==
+== Copyright (C) 2000-2019 CP2K developers group                              ==
+== Copyright (C) 2017-2019 DFTB+ developers group                             ==
+== Copyright (C) 2018-2019 Dmitry A. Ryndyk                                   ==
 ==                                                                            ==
 ================================================================================
 ==                                                                            ==
-== Please cite as: TraNaS OpenSuite [1], based on the DFTB+ [2,3] source code ==
-== and the CP2K software package with a Quickstep module [4].                 ==
+== Please cite as:                                                            ==
+== TraNaS OpenSuite [1], partially based on the DFTB+ [2,3] source code       ==
+== and the CP2K software package [4] with a Quickstep module [5].             ==
 ==                                                                            ==
-== [1] Dmitry A. Ryndyk, TraNaS OpenSuite, http://quantranspro.org/opensuite/ ==
+== [1] Dmitry A. Ryndyk, TraNaS OpenSuite, tranas.org/opensuite               ==
 == [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ==
-==     J. Phys. Chem. A 111, 5678 (2007); http://dftbplus.org/                ==
+==     J. Phys. Chem. A 111, 5678 (2007); dftbplus.org                        ==
 == [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ==
-==     New Journal of Physics 10, 065022 (2008) [for transport calculations]  ==
-== [4] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ==
+==     New Journal of Physics 10, 065022 (2008)                               ==
+== [4] CP2K (Development Version), cp2k.org                                   ==
+== [5] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ==
 ==     and J. Hutter, Comput. Phys. Commun. 167, 103 (2005)                   ==
+==                                                                            ==
+== Please find additional references in the end of this file.                 ==
 ==                                                                            ==
 ================================================================================
 == Note the change of License!                                                ==

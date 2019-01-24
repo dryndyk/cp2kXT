@@ -133,7 +133,8 @@ MODULE negf_methods
    use initprogram, only : initProgramVariables, negf_init_nogeom, negf_init_str, tranasNoGeom 
    use libmpifx_module 
    use tranas_vars 
-   use periodic                                                         
+   use periodic   
+   use densedescr
    !-----------------------------------------------------------------------------------------------!
    !DAR end
    !-----------------------------------------------------------------------------------------------!
@@ -200,9 +201,9 @@ CONTAINS
 
       type(TEnvironment) :: env
       type(inputData), allocatable :: input
-      integer :: iAtom 
+      integer :: iAtom, nAtom
       logical :: tInitNEGF   
-      Type(TGDFTBstructure) :: gdftbStr 
+      type(TDenseDescr) :: denseDescr
       integer, allocatable :: nNeigh(:)
       integer, allocatable :: img2CentCell(:)
       integer, allocatable :: iNeigh(:,:)
@@ -452,10 +453,11 @@ CONTAINS
         write(log_unit, '(A)') repeat(hbar, headerWidth)
       end if
       call initGlobalEnv_CP2K()
-      allocate(input)
-      call parseHsdInput(input)
       call TEnvironment_init(env)
       call env%initMpi(1)
+      allocate(input)
+      call mpifx_barrier(env%mpi%globalComm)
+      call parseHsdInput(input)      
       call mpifx_barrier(env%mpi%globalComm)
       write(stdOut, "(A)") repeat("-", 80)
       write(stdOut, "(A)") "-- TraNaS parameters are defined from CP2K                                   --"
@@ -478,12 +480,12 @@ CONTAINS
       write(stdOut, "(A)") repeat("-", 80)
       call negf_init_nogeom(input%transpar,input%ginfo%greendens,input%ginfo%tundos,env%mpi%globalComm,tInitNEGF)
       if (.not.tInitNEGF) write(stdout, "('libnegf initialization error (negf_init_nogeom)')")
-      gdftbStr%nAtom=input%transpar%NumStates
-      allocate(gdftbStr%iAtomStart(gdftbStr%nAtom+1))
-      do iAtom=1,gdftbStr%nAtom+1          
-        gdftbStr%iAtomStart(iAtom)=iAtom
+      nAtom=input%transpar%NumStates
+      allocate(denseDescr%iAtomStart(nAtom+1))
+      do iAtom=1,nAtom+1          
+        denseDescr%iAtomStart(iAtom)=iAtom
       end do
-      call negf_init_str(gdftbStr, input%transpar, input%ginfo%greendens, &
+      call negf_init_str(denseDescr, input%transpar, input%ginfo%greendens, &
         iNeigh, nNeigh, img2CentCell)     
       write(stdout, "(A)") repeat("-", 80)
       write(stdOut, "(A)") "-- Initialization is finished                                                 --"

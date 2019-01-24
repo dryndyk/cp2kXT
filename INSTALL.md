@@ -18,10 +18,11 @@ $ cp  dftbXT/_build/prog/dftb+/*.mod dftbXT_libs/
 $ mv  dftbXT_libs/environment.mod dftbXT_libs/environment_1.mod
 $ cp  dftbXT/_build/prog/dftb+/*.o dftbXT_libs/
 $ rm  dftbXT_libs/dftbplus.o
-$ cp  dftbXT/_build/external/fsockets/libfsockets.a dftbXT_libs/
+$ cp  dftbXT/_build/external/fsockets/libfsockets.a dftbXT_libs/    # if DFTB+XT is compiled with sockets
 $ cp  dftbXT/_build/external/mpifx/libmpifx.a dftbXT_libs/
 $ cp  dftbXT/_build/external/mpifx/libmpifx_module.mod dftbXT_libs/
-$ cp  dftbXT/_build/external/mudpack/libmudpack.a dftbXT_libs/
+$ cp  dftbXT/_build/external/poisson/libpoisson.a dftbXT_libs/
+$ cp  dftbXT/_build/external/poisson/libmudpack.a dftbXT_libs/
 $ cp  dftbXT/_build/external/scalapackfx/libscalapackfx.a dftbXT_libs/
 $ cp  dftbXT/_build/external/sparskit/libzsparskit.a dftbXT_libs/
 $ cp  dftbXT/_build/external/tranas/libtranas.a dftbXT_libs/
@@ -37,8 +38,8 @@ Before CP2K compilation change arch files, see 3c below!
 
 ##  1. Acquire the code:
 
-CP2K+XT| https://github.com/dryndyk/cp2kXT.git
-DFTB+XT| https://github.com/dryndyk/dftbXT.git
+CP2K+XT| https://github.com/tranas-open/cp2kXT.git
+DFTB+XT| https://github.com/tranas-open/dftbXT.git
 
 ## 2. Install Prerequisites
 
@@ -288,7 +289,7 @@ Features useful to deal with legacy systems
 
 3. Add object files and libraries
 
-   LIBS => LIBS <MAIN>/cp2kXT/dftbXT_libs/*.o -L<MAIN>/cp2kXT/dftbXT_libs -lxmlf90  -lfsockets -ltranas -lmudpack -lzsparskit -lmudpack -ltranas -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
+   LIBS => LIBS <MAIN>/cp2kXT/dftbXT_libs/*.o -L<MAIN>/cp2kXT/dftbXT_libs -lxmlf90  -ltranas -lpoisson -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
  
    LIB_[SCA]LAPACK/BLAS should be taken from the DFTB+XT arch file (something like '-L/usr/lib -lscalapack -lopenblas')
    IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.
