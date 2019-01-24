@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2018  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -751,7 +751,13 @@ CONTAINS
             WRITE (iunit, *) "  1"
             WRITE (iunit, "(40I3)") nval, lmin, lmax, nprim, (nbas(l), l=lmin, lmax)
             DO i = nprim, 1, -1
-               WRITE (iunit, "(G20.12,40F16.10)") al(i), ((gcc(i, j, l), j=1, nbas(l)), l=lmin, lmax)
+               WRITE (iunit, "(G20.12)", advance="no") al(i)
+               DO l = lmin, lmax
+                  DO j = 1, nbas(l)
+                     WRITE (iunit, "(F16.10)", advance="no") gcc(i, j, l)
+                  END DO
+               END DO
+               WRITE (iunit, *)
             END DO
             WRITE (iunit, *)
          END IF

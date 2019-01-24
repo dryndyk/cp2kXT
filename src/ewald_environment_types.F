@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2018  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -373,7 +373,8 @@ CONTAINS
       IF (ewald_env%do_multipoles) THEN
          SELECT CASE (ewald_env%ewald_type)
          CASE (do_ewald_ewald)
-            CALL section_vals_val_get(multipole_section, "MAX_MULTIPOLE_EXPANSION", i_val=ewald_env%max_multipole)
+            CALL section_vals_val_get(multipole_section, "MAX_MULTIPOLE_EXPANSION", &
+                                      i_val=ewald_env%max_multipole)
             CALL section_vals_val_get(multipole_section, "MAX_IPOL_ITER", i_val=ewald_env%max_ipol_iter)
          CASE DEFAULT
             CPABORT("Multipole code works at the moment only with standard EWALD sums.")

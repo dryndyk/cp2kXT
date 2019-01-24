@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2018  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -380,7 +380,6 @@ CONTAINS
 !> \param matrix_w ...
 !> \param matrix_w_mp2 ...
 !> \param matrix_p_mp2 ...
-!> \param gamma_matrix ...
 !> \param rho ...
 !> \param rho_aux_fit ...
 !> \param rho_aux_fit_buffer ...
@@ -495,7 +494,7 @@ CONTAINS
                          matrix_h_kp, matrix_ks_kp, matrix_vxc_kp, kinetic_kp, matrix_s_kp, matrix_w_kp, matrix_s_RI_aux_kp, &
                          matrix_ks_aux_fit, matrix_ks_aux_fit_im, matrix_ks_aux_fit_dft, matrix_ks_aux_fit_hfx, &
                          matrix_s, matrix_s_aux_fit, matrix_s_aux_fit_vs_orb, matrix_s_RI_aux, matrix_w, &
-                         matrix_w_mp2, matrix_p_mp2, gamma_matrix, rho, rho_aux_fit, rho_aux_fit_buffer, &
+                         matrix_w_mp2, matrix_p_mp2, rho, rho_aux_fit, rho_aux_fit_buffer, &
                          rho_buffer, rho_xc, pw_env, ewald_env, ewald_pw, active_space, &
                          mpools, mpools_aux_fit, input, para_env, blacs_env, scf_control, rel_control, kinetic, qs_charges, &
                          vppl, rho_core, rho_nlcc, rho_nlcc_g, ks_env, ks_qmmm_env, wf_history, scf_env, id_nr, local_particles, &
@@ -552,7 +551,7 @@ CONTAINS
       TYPE(dbcsr_p_type), DIMENSION(:), OPTIONAL, POINTER :: matrix_ks_aux_fit, &
          matrix_ks_aux_fit_im, matrix_ks_aux_fit_dft, matrix_ks_aux_fit_hfx, matrix_s, &
          matrix_s_aux_fit, matrix_s_aux_fit_vs_orb, matrix_s_RI_aux, matrix_w, matrix_w_mp2, &
-         matrix_p_mp2, gamma_matrix
+         matrix_p_mp2
       TYPE(qs_rho_type), OPTIONAL, POINTER               :: rho, rho_aux_fit, rho_aux_fit_buffer, &
                                                             rho_buffer, rho_xc
       TYPE(pw_env_type), OPTIONAL, POINTER               :: pw_env
@@ -772,7 +771,6 @@ CONTAINS
                       matrix_w=matrix_w, &
                       matrix_w_mp2=matrix_w_mp2, &
                       matrix_p_mp2=matrix_p_mp2, &
-                      gamma_matrix=gamma_matrix, &
                       matrix_h_kp=matrix_h_kp, &
                       matrix_ks_kp=matrix_ks_kp, &
                       matrix_vxc_kp=matrix_vxc_kp, &

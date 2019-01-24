@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2018  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -1140,7 +1140,9 @@ CONTAINS
          DEALLOCATE (xtob)
       END IF
 
-      CALL close_file(unit_number=iw)
+      IF (debug) THEN
+         CALL close_file(unit_number=iw)
+      END IF
 
    END SUBROUTINE atom_fit_pseudo
 ! **************************************************************************************************

@@ -41,11 +41,27 @@ Before CP2K compilation change arch files, see 3c below!
 CP2K+XT| https://github.com/tranas-open/cp2kXT.git
 DFTB+XT| https://github.com/tranas-open/dftbXT.git
 
-## 2. Install Prerequisites
+## 2. Install prerequisites
 
-Sub-points here discuss prerequisites needed to build CP2K. 
-Most of these can be conveniently installed via the [toolchain script](./tools/toolchain). 
-Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
+The most convenient way to install pre-requisites is by using the [toolchain script](./tools/toolchain/install_cp2k_toolchain.sh).
+
+For a complete introduction to the toolchain script, see the [README for users](./tools/toolchain/README_FOR_USERS.md) or the [README for developers](./tools/toolchain/README_FOR_DEVELOPERS.md).
+
+The basic steps are:
+
+- Read toolchain installation options:
+
+> cd tools/toolchain/
+> ./install_cp2k_toolchain.sh --help
+
+- Launch toolchain script (example option choice)
+
+> ./install_cp2k_toolchain.sh --with-libxsmm=install --with-openblas=system \
+     --with-fftw=system --with-reflapack=no  --enable-cuda --enable-omp
+
+- Once the script has completed successfully, follow the instructions given at the end of its output.
+
+Sub-points here discuss prerequisites needed to build CP2K. Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
 
 CP2K+XT| IMPORTANT!
 CP2K+XT| The arch files obtained by a script in cp2kXT/tools/toolchain must be modified
@@ -214,7 +230,7 @@ Conventionally, there are six versions:
 | sdbg    | serial                  | single core testing and debugging  |
 | sopt    | serial                  | general single core usage          |
 | ssmp    | parallel (only OpenMP)  | optimized, single node, multi core |
-| pdbg    | parallel (only MPI)     | multinode testing and debugging    |
+| pdbg    | parallel (only MPI)     | multi-node testing and debugging   |
 | popt    | parallel (only MPI)     | general usage, no threads          |
 | psmp    | parallel (MPI + OpenMP) | general usage, threading might improve scalability and memory usage |
 
@@ -223,6 +239,7 @@ You'll need to modify one of these files to match your system's settings.
 You can now build CP2K using these settings (where -j N allows for a parallel build using N processes):
 ```
 > cd cp2kXT
+
 > make -j N ARCH=architecture VERSION=version
 ```
 e.g.
