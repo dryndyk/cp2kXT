@@ -61,6 +61,8 @@ The basic steps are:
 
 - Once the script has completed successfully, follow the instructions given at the end of its output.
 
+CP2K+XT| Note, that "cp2k" directory should be understood as "cp2kXT".
+
 Sub-points here discuss prerequisites needed to build CP2K. Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
 
 CP2K+XT| IMPORTANT!
@@ -306,7 +308,7 @@ Features useful to deal with legacy systems
 
 3. Add object files and libraries
 
-   LIBS => LIBS <MAIN>/cp2kXT/dftbXT_libs/*.o -L<MAIN>/cp2kXT/dftbXT_libs -lxmlf90  -ltranas -lpoisson -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
+   LIBS => LIBS <MAIN>/dftbXT_libs/*.o -L<MAIN>/dftbXT_libs -lxmlf90  -ltranas -lpoisson -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
  
    LIB_[SCA]LAPACK/BLAS should be taken from the DFTB+XT arch file (something like '-L/usr/lib -lscalapack -lopenblas')
    IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.
