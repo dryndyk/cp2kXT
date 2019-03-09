@@ -196,7 +196,7 @@ The --with-PKG options follow the rules:
                           Default = install
   --with-elpa             Eigenvalue SoLvers for Petaflop-Applications library.
                           Fast library for large parallel jobs.
-                          Default = no
+                          Default = install
   --with-ptscotch         PT-SCOTCH, only used if PEXSI is used
                           Default = no
   --with-parmetis         ParMETIS, and if --with-parmetis=install will also install
@@ -302,12 +302,13 @@ with_mkl=__SYSTEM__
 with_openblas=__INSTALL__
 with_reflapack=__INSTALL__
 
-# sirius is not activated by default.
+# sirius is activated by default
 with_sirius="__INSTALL__"
 with_gsl="__INSTALL__"
 with_spglib="__INSTALL__"
 with_hdf5="__INSTALL__"
 with_json_fortran="__INSTALL__"
+with_elpa="__INSTALL__"
 
 # for MPI, we try to detect system MPI variant
 with_openmpi=__SYSTEM__
@@ -735,6 +736,11 @@ if [ "$with_spglib" = "__INSTALL__" ] ; then
     [ "$with_cmake" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
 fi
 
+# json-fortran requires cmake.
+if [ "$with_json_fortran" = "__INSTALL__" ] ; then
+    [ "$with_cmake" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
+fi
+
 # SIRIUS dependencies. Remove the gsl library from the dependencies if SIRIUS is not activated
 if [ "$with_sirius" = "__INSTALL__" ] ; then
     if [ "$with_gsl" = "__DONTUSE__" ] ; then
@@ -916,12 +922,12 @@ done
 
 # setup compiler flags, leading to nice stack traces on crashes but
 # still optimised
-CFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native -ffast-math $TSANFLAGS"
-FFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native -ffast-math $TSANFLAGS"
-F77FLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native -ffast-math $TSANFLAGS"
-F90FLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native -ffast-math $TSANFLAGS"
-FCFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native -ffast-math $TSANFLAGS"
-CXXFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native -ffast-math $TSANFLAGS"
+CFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native $TSANFLAGS"
+FFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native $TSANFLAGS"
+F77FLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native $TSANFLAGS"
+F90FLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native $TSANFLAGS"
+FCFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native $TSANFLAGS"
+CXXFLAGS="-O2 -ftree-vectorize -g -fno-omit-frame-pointer -march=native $TSANFLAGS"
 
 export CFLAGS=$(allowed_gcc_flags $CFLAGS)
 export FFLAGS=$(allowed_gfortran_flags $FFLAGS)
@@ -1029,12 +1035,12 @@ LD_arch="IF_MPI(${MPIFC}|${FC})"
 
 # we always want good line information and backtraces
 BASEFLAGS="-march=native -fno-omit-frame-pointer -g ${TSANFLAGS}"
-OPT_FLAGS="-O3 -funroll-loops -ffast-math"
+OPT_FLAGS="-O3 -funroll-loops"
 NOOPT_FLAGS="-O1"
 
 # those flags that do not influence code generation are used always, the others if debug
-FCDEB_FLAGS="-ffree-form -std=f2003 -fimplicit-none"
-FCDEB_FLAGS_DEBUG="-fsanitize=leak -fcheck=all -ffpe-trap=invalid,zero,overflow -finit-derived -finit-real=snan -finit-integer=-42 -fno-fast-math -Werror=realloc-lhs-all -finline-matmul-limit=0"
+FCDEB_FLAGS="-ffree-form -std=f2008 -fimplicit-none"
+FCDEB_FLAGS_DEBUG="-fsanitize=leak -fcheck=all -ffpe-trap=invalid,zero,overflow -finit-derived -finit-real=snan -finit-integer=-42 -Werror=realloc-lhs-all -finline-matmul-limit=0"
 
 # code coverage generation flags
 COVERAGE_FLAGS="-O1 -coverage -fkeep-static-functions"
@@ -1077,7 +1083,7 @@ fi
 # finally into FCFLAGS and CFLAGS
 WFLAGS="$WFLAGS_ERROR $WFLAGS_WARN IF_WARNALL(${WFLAGS_WARNALL}|)"
 FCDEBFLAGS="$FCDEB_FLAGS IF_DEBUG($FCDEB_FLAGS_DEBUG|)"
-DFLAGS="${CP_DFLAGS} IF_DEBUG($IEEE_EXCEPTIONS_DFLAGS|) IF_COVERAGE($COVERAGE_DFLAGS|)"
+DFLAGS="${CP_DFLAGS} IF_DEBUG($IEEE_EXCEPTIONS_DFLAGS -D__CHECK_DIAG|) IF_COVERAGE($COVERAGE_DFLAGS|)"
 # language independent flags
 # valgrind with avx can lead to spurious out-of-bound results
 G_CFLAGS="$BASEFLAGS IF_VALGRIND(-mno-avx -mno-avx2|)"

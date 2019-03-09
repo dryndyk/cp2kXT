@@ -2,7 +2,7 @@
 #              Intel(R) Fortran Intel(R) 64 Compiler for applications running on Intel(R) 64, Version 18.0.3.222 Build 20180410
 #              Intel(R) Fortran Intel(R) 64 Compiler for applications running on Intel(R) 64, Version 18.0.5.274 Build 20180823
 #              Intel MPI, MKL, Libint 1.1.6, Libxc 4.2.3, libxsmm 1.9, ELPA 2017.05.003, PLUMED 2.4.1
-# Author: Matthias Krack (matthias.krack@psi.ch, PSI, October 2018)
+# Author: Matthias Krack (matthias.krack@psi.ch, PSI, February 2019)
 
 include      $(MPI_PATH)/plumed/2.4.1/lib/plumed/src/lib/Plumed.inc.static
 
@@ -23,10 +23,10 @@ FC          = mpiifort
 LD          = mpiifort
 AR          = ar -r
 CPPFLAGS    =
-DFLAGS      = -D__ELPA=201705 -D__F2008 -D__FFTW3 -D__LIBINT -D__LIBXC -D__LIBXSMM \
+DFLAGS      = -D__ELPA=201705 -D__FFTW3 -D__LIBINT -D__LIBXC -D__LIBXSMM \
               -D__MKL -D__MPI_VERSION=3 -D__PLUMED2 \
               -D__LIBINT_MAX_AM=7 -D__LIBDERIV_MAX_AM1=6 -D__MAX_CONTR=4 \
-              -D__parallel -D__SCALAPACK
+              -D__parallel -D__SCALAPACK -D__CHECK_DIAG
 CFLAGS      = $(DFLAGS) -O2 -fopenmp
 FCFLAGS     = $(DFLAGS) -O2 -fopenmp
 FCFLAGS    += -fpp -free -funroll-loops

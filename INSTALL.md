@@ -3,10 +3,11 @@
 ##  0. CP2K+XT| Before compiling
 
 The directories cp2kXT/ and dftbXT/ must be in the same (any) directory <MAIN>/
-The usual name for this directory is OpenSuite or TraNaS.
+Possible name for this directory is OpenSuite or TraNaS, or what you want.
 
 DFTB+XT must be installed before CP2K+XT (note however, that if you want to use the versions of
-MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: cp2kXT/tools/toolchain, you can install it first.)
+MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: cp2kXT/tools/toolchain, you can install it first.
+See 2. Install prerequisites).
 
 Do not change default directories during DFTB+XT compilation or be sure what you do! 
 
@@ -34,7 +35,7 @@ $ cd <MAIN>
 $ mkdir dftbXT_libs
 $ sh cp2kXT/copy_files.sh
 
-Before CP2K compilation change arch files, see 3c below!
+Before CP2K compilation change arch files, see 3d below!
 
 ##  1. Acquire the code:
 
@@ -67,7 +68,7 @@ Sub-points here discuss prerequisites needed to build CP2K. Copies of the recomm
 
 CP2K+XT| IMPORTANT!
 CP2K+XT| The arch files obtained by a script in cp2kXT/tools/toolchain must be modified
-CP2K+XT| as it is explained in 3c.
+CP2K+XT| as it is explained in 3d.
 
 ### 2a. GNU make (required, build system)
 
@@ -77,7 +78,7 @@ GNU make should be on your system (gmake or make on linux) and used for the buil
 Python 2.x is needed to run the dependency generator. On most system Python is already installed. For more information visit: https://www.python.org/
 
 ### 2c. Fortran and C Compiler (required, build system)
-A Fortran 2003 compiler and matching C compiler should be installed on your system. We have good experience with gcc/gfortran (gcc >=4.6 works, later version recommended). Be aware that some compilers have bugs that might cause them to fail (internal compiler errors, segfaults) or, worse, yield a mis-compiled CP2K. Report bugs to compiler vendors; they (and we) have an interest in fixing them. Always run a `make -j test` (See point 5.) after compilation to identify these problems.
+A Fortran 2008 compiler and matching C compiler should be installed on your system. We have good experience with gcc/gfortran (gcc >=4.6 works, later version recommended). Be aware that some compilers have bugs that might cause them to fail (internal compiler errors, segfaults) or, worse, yield a mis-compiled CP2K. Report bugs to compiler vendors; they (and we) have an interest in fixing them. Always run a `make -j test` (See point 5.) after compilation to identify these problems.
 
 ### 2d. BLAS and LAPACK (required, base functionality)
 BLAS and LAPACK should be installed.  Using vendor-provided libraries can make a very significant difference (up to 100%, e.g., ACML, MKL, ESSL), not all optimized libraries are bug free. Use the latest versions available, use the interfaces matching your compiler, and download all patches!
@@ -91,13 +92,13 @@ BLAS and LAPACK should be installed.  Using vendor-provided libraries can make a
     * http://math-atlas.sourceforge.net/
     * https://www.tacc.utexas.edu/research-development/tacc-software/gotoblas2
 
-If compiling with OpenMP support then it is recommended to use a non-threaded version of BLAS. In particular if compiling with MKL and using OpenMP you must define `-D__MKL` to ensure the code is thread-safe. MKL with multiple OpenMP threads in CP2K requires that CP2K was compiled with the Intel compiler (and `-D__INTEL_COMPILER` is defined if explicit pre-processing is performed using cpp instead of the compiler).
+If compiling with OpenMP support then it is recommended to use a non-threaded version of BLAS. In particular if compiling with MKL and using OpenMP you must define `-D__MKL` to ensure the code is thread-safe. MKL with multiple OpenMP threads in CP2K requires that CP2K was compiled with the Intel compiler. If the `cpp` precompiler is used in a separate precompilation step in combination with the Intel Fortran compiler, `-D__INTEL_COMPILER` must be added explicitly (the Intel compiler sets `__INTEL_COMPILER` otherwise automatically).
 
 On the Mac, BLAS and LAPACK may be provided by Apple's Accelerate framework. If using this framework, `-D__ACCELERATE` must be defined to account for some interface incompatibilities between Accelerate and reference BLAS/LAPACK.
 
 When building on/for Windows using the Minimalist GNU for Windows (MinGW) environment, you must set `-D__MINGW`,  `-D__NO_STATM_ACCESS` and `-D__NO_IPI_DRIVER` to avoid undefined references during linking, respectively errors while printing the statistics.
 
-## 2e. MPI and SCALAPACK (optional, required for MPI parallel builds)
+### 2e. MPI and SCALAPACK (optional, required for MPI parallel builds)
 MPI (version 2) and SCALAPACK are needed for parallel code. (Use the latest versions available and download all patches!).
 
 :warning: Note that your MPI installation must match the used Fortran compiler. If your computing platform does not provide MPI, there are several freely available alternatives:
@@ -112,14 +113,14 @@ MPI (version 2) and SCALAPACK are needed for parallel code. (Use the latest vers
 
 CP2K assumes that the MPI library implements MPI version 3. If you have an older version of MPI (e.g. MPI 2.0) available you must define `-D__MPI_VERSION=2` in the arch file.
 
-## 2f. FFTW (optional, improved performance of FFTs)
+### 2f. FFTW (optional, improved performance of FFTs)
 FFTW can be used to improve FFT speed on a wide range of architectures. It is strongly recommended to install and use FFTW3. The current version of CP2K works with FFTW 3.X (use `-D__FFTW3`). It can be downloaded from http://www.fftw.org/
 
 :warning: Note that FFTW must know the Fortran compiler you will use in order to install properly (e.g., `export F77=gfortran` before configure if you intend to use gfortran).
 
 :warning: Note that on machines and compilers which support SSE you can configure FFTW3 with `--enable-sse2`. Compilers/systems that do not align memory (NAG f95, Intel IA32/gfortran) should either not use `--enable-sse2` or otherwise set the define `-D__FFTW3_UNALIGNED` in the arch file. When building an OpenMP parallel version of CP2K (ssmp or psmp), the FFTW3 threading library libfftw3_threads (or libfftw3_omp) is required.
 
-## 2g. LIBINT (optional, enables methods including HF exchange)
+### 2g. LIBINT (optional, enables methods including HF exchange)
 Hartree-Fock exchange (optional, use `-D__LIBINT`) requires the libint package to be installed.
   * Download from http://sourceforge.net/projects/libint/files/v1-releases/libint-1.1.4.tar.gz/download.
   * Additional information can be found in [README_LIBINT](./tools/hfx_tools/libint_tools/README_LIBINT).
@@ -294,9 +295,25 @@ Features useful to deal with legacy systems
   * `-D__HAS_NO_OMP_3` CP2K assumes that compilers support OpenMP 3.0. If this is not the case specify this flag to compile. Runtime performance will be poorer on low numbers of processors
   * `-D__HAS_NO_CUDA_STREAM_PRIORITIES` - Needed for CUDA sdk version < 5.5
   * `-D__NO_STATM_ACCESS` - Do not try to read from /proc/self/statm to get memory usage information. This is otherwise attempted on several. Linux-based architectures or using with the NAG, gfortran, compilers.
-  * `-D__F2008` Allow for conformity check with the Fortran 2008 standard when using the GFortran compiler flag `-std=f2008`
+  * `-D__CHECK_DIAG` Debug option which activates an orthonormality check of the eigenvectors calculated by the selected eigensolver
 
-### 3c. CP2K+XT| Modifications to compile and link with DFTB+XT
+### 3c. Building CP2K as a library
+
+You can build CP2K for use as a library by adding `libcp2k` as an option to your `make` command, e.g.
+```
+> make -j N ARCH=Linux-x86-64-gfortran VERSION=sopt libcp2k
+```
+This will create `libcp2k.a` in the relevant subdirectory of `./lib/`. You will need to add this subdirectory to the library search path of your compiler (typically via the `LD_LIBRARY_PATH` environment variable or the `-L` option to your compiler) and link to the library itself with `-lcp2k`.
+
+In order to use the functions in the library you will also require the `libcp2k.h` header file. This can be found in `./src/start/` directory. You should add this directory to the header search path of your compiler (typically via the `CPATH` environment variable or the `-I` option to your compiler).
+
+For Fortran users, you will require the module interface file (`.mod` file) for every MODULE encountered in the source. These are compiler specific and are to be found in the subdirectory of `./obj/` that corresponds to your build, e.g.,
+```
+./obj/Linux-x86-64-gfortran/sopt/
+```
+In order for your compiler to find these, you will need to indicate their location to the compiler as is done for header files  (typically via the `CPATH` environment variable or the `-I` option to your compiler).
+
+### 3d. CP2K+XT| Modifications to compile and link with DFTB+XT
 
 1. Include the path to mod files for compilation
 
@@ -312,7 +329,6 @@ Features useful to deal with legacy systems
  
    LIB_[SCA]LAPACK/BLAS should be taken from the DFTB+XT arch file (something like '-L/usr/lib -lscalapack -lopenblas')
    IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.
-   If cp2kXT/tools/toolchain was used to compile DFTB+XT, LIB_[SCA]LAPACK/BLAS can be usually skiped.
   
 ## 4. If it doesn't work?
 If things fail, take a break... go back to 2a (or skip to step 6).

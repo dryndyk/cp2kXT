@@ -1,7 +1,10 @@
 #!/bin/bash -e
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
-spglib_ver=${spglib_ver:-1.10.4}
+spglib_ver=${spglib_ver:-1.12.1}
+patches=(
+    "https://github.com/dev-zero/spglib/commit/2263d68f611a0df565968c5019d0605bc199669f.patch" # memory leak fix
+    )
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -18,26 +21,43 @@ case "$with_spglib" in
         echo "==================== Installing spglib ===================="
         pkg_install_dir="${INSTALLDIR}/spglib-${spglib_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
-        if [ -f "${install_lock_file}" ] ; then
+        if verify_checksums "${install_lock_file}" ; then
             echo "spglib-${spglib_ver} is already installed, skipping it."
         else
             if [ -f spglib-${spglib_ver}.tar.gz ] ; then
                 echo "spglib-${spglib_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} \
-                             https://www.cp2k.org/static/downloads/spglib-${spglib_ver}.tar.gz
+                             https://github.com/atztogo/spglib/archive/v${spglib_ver}.tar.gz \
+                             -o spglib-${spglib_ver}.tar.gz
             fi
+
+            for patch in "${patches[@]}" ; do
+                fname="${patch##*/}"
+                if [ -f "${fname}" ] ; then
+                    echo "${fname} is found"
+                else
+                    # parallel build patch
+                    download_pkg ${DOWNLOADER_FLAGS} "${patch}"
+                fi
+            done
+
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d spglib-${spglib_ver} ] && rm -rf spglib-${spglib_ver}
             tar -xzf spglib-${spglib_ver}.tar.gz
             cd spglib-${spglib_ver}
+
+            for patch in "${patches[@]}" ; do
+                patch -p1 < ../"${patch##*/}"
+            done
+
             mkdir build
             cd build
             cmake -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" -DCMAKE_BUILD_TYPE=Release .. > configure.log 2>&1
             make > make.log 2>&1
             make install >> make.log 2>&1
             cd ..
-            touch "${install_lock_file}"
+            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/$(basename ${SCRIPT_NAME})"
         fi
 
         SPGLIB_CFLAGS="-I${pkg_install_dir}/include"

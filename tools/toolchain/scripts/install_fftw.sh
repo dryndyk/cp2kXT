@@ -2,7 +2,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-fftw_ver=${fftw_ver:-3.3.7}
+fftw_ver=${fftw_ver:-3.3.8}
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -22,14 +22,14 @@ case "$with_fftw" in
         echo "==================== Installing FFTW ===================="
         pkg_install_dir="${INSTALLDIR}/fftw-${fftw_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
-        if [[ $install_lock_file -nt $SCRIPT_NAME ]]; then
+        if verify_checksums "${install_lock_file}" ; then
             echo "fftw-${fftw_ver} is already installed, skipping it."
         else
             if [ -f fftw-${fftw_ver}.tar.gz ] ; then
                 echo "fftw-${fftw_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} \
-                             https://www.cp2k.org/static/downloads/fftw-${fftw_ver}.tar.gz
+                             http://www.fftw.org/fftw-${fftw_ver}.tar.gz
             fi
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d fftw-${fftw_ver} ] && rm -rf fftw-${fftw_ver}
@@ -39,7 +39,7 @@ case "$with_fftw" in
             make -j $NPROCS > make.log 2>&1
             make install > install.log 2>&1
             cd ..
-            touch "${install_lock_file}"
+            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/$(basename ${SCRIPT_NAME})"
         fi
         FFTW_CFLAGS="-I'${pkg_install_dir}/include'"
         FFTW_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"

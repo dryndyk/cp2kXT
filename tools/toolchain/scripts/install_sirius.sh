@@ -2,7 +2,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-sirius_ver=${sirius_ver:-5.8.3}
+sirius_ver=${sirius_ver:-6.0.0}
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -53,14 +53,15 @@ case "$with_sirius" in
 
         pkg_install_dir="${INSTALLDIR}/sirius-${sirius_ver}"
         install_lock_file="${pkg_install_dir}/install_successful"
-        if [ -f "${install_lock_file}" ] ; then
+        if verify_checksums "${install_lock_file}" ; then
             echo "sirius_dist-${sirius_ver} is already installed, skipping it."
         else
             if [ -f SIRIUS-${sirius_ver}.tar.gz ] ; then
                 echo "sirius_v${sirius_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} \
-                             https://www.cp2k.org/static/downloads/SIRIUS-${sirius_ver}.tar.gz
+                             https://github.com/electronic-structure/SIRIUS/archive/v${sirius_ver}.tar.gz \
+                             -o SIRIUS-${sirius_ver}.tar.gz
             fi
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d sirius-${sirius_ver} ] && rm -rf sirius-${sirius_ver}
@@ -157,7 +158,7 @@ EOF
             fi
             SIRIUS_CFLAGS="-I'${pkg_install_dir}/include'"
             SIRIUS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
-            touch "${install_lock_file}"
+            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/$(basename ${SCRIPT_NAME})"
         fi
         ;;
     __SYSTEM__)

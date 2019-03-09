@@ -2,7 +2,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-libxc_ver=${libxc_ver:-4.2.3}
+libxc_ver=${libxc_ver:-4.3.0}
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -21,14 +21,14 @@ case "$with_libxc" in
         echo "==================== Installing LIBXC ===================="
         pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
-        if [[ $install_lock_file -nt $SCRIPT_NAME ]]; then
+        if verify_checksums "${install_lock_file}" ; then
             echo "libxc-${libxc_ver} is already installed, skipping it."
         else
             if [ -f libxc-${libxc_ver}.tar.gz ] ; then
                 echo "libxc-${libxc_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} \
-                             https://www.cp2k.org/static/downloads/libxc-${libxc_ver}.tar.gz
+                             https://tddft.org/programs/octopus/download/libxc/${libxc_ver}/libxc-${libxc_ver}.tar.gz
             fi
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d libxc-${libxc_ver} ] && rm -rf libxc-${libxc_ver}
@@ -39,11 +39,15 @@ case "$with_libxc" in
                 configure
             # patch for libxc 3.0.0 + gcc 6.4.0 (undefined behavior in lda_x.c)
             CFLAGS=`echo ${CFLAGS} |sed 's|-fno-omit-frame-pointer ||g'`
+
+            # patch for libxc 4.3.0 (undefined symbols due to function removal)
+            patch -p1 < "${SCRIPT_DIR}/files/libxc-4.3.0-fix-fortran-iface.patch"
+
             ./configure  --prefix="${pkg_install_dir}" --libdir="${pkg_install_dir}/lib" > configure.log 2>&1
             make -j $NPROCS > make.log 2>&1
             make install > install.log 2>&1
             cd ..
-            touch "${install_lock_file}"
+            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/$(basename ${SCRIPT_NAME})"
         fi
         LIBXC_CFLAGS="-I'${pkg_install_dir}/include'"
         LIBXC_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"

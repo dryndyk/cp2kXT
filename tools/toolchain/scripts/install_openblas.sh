@@ -2,7 +2,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-openblas_ver=${openblas_ver:-0.3.3}  # Keep in sync with get_openblas_arch.sh.
+openblas_ver=${openblas_ver:-0.3.5}  # Keep in sync with get_openblas_arch.sh.
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -14,10 +14,7 @@ with_openblas=${1:-__INSTALL__}
 OPENBLAS_CFLAGS=''
 OPENBLAS_LDFLAGS=''
 OPENBLAS_LIBS=''
-PATCHES=(
-    https://github.com/xianyi/OpenBLAS/commit/79ea839b635d1fd84b6ce8a47e086f01d64198e6.patch
-    https://github.com/xianyi/OpenBLAS/commit/288aeea8a285da8551c465681c7b9330a5486e7e.patch
-    )
+PATCHES=()
 
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
@@ -26,14 +23,15 @@ case "$with_openblas" in
         echo "==================== Installing OpenBLAS ===================="
         pkg_install_dir="${INSTALLDIR}/openblas-${openblas_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
-        if [[ $install_lock_file -nt $SCRIPT_NAME ]]; then
+        if verify_checksums "${install_lock_file}" ; then
             echo "openblas-${openblas_ver} is already installed, skipping it."
         else
             if [ -f OpenBLAS-${openblas_ver}.tar.gz ] ; then
                 echo "OpenBLAS-${openblas_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} \
-                             https://www.cp2k.org/static/downloads/OpenBLAS-${openblas_ver}.tar.gz
+                             https://github.com/xianyi/OpenBLAS/archive/v${openblas_ver}.tar.gz \
+                             -o OpenBLAS-${openblas_ver}.tar.gz
             fi
 
             for patch in "${PATCHES[@]}" ; do
@@ -124,7 +122,7 @@ case "$with_openblas" in
                     install > install.omp.log 2>&1
             fi 
             cd ..
-            touch "${install_lock_file}"
+            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/$(basename ${SCRIPT_NAME})"
         fi
         OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"
         OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
@@ -163,14 +161,10 @@ EOF
     cat <<EOF >> "${BUILDDIR}/setup_openblas"
 export OPENBLAS_CFLAGS="${OPENBLAS_CFLAGS}"
 export OPENBLAS_LDFLAGS="${OPENBLAS_LDFLAGS}"
-if [ $ENABLE_OMP = "__TRUE__" ] ; then
-    export OPENBLAS_LIBS="${OPENBLAS_LIBS_OMP}"
-else
-    export OPENBLAS_LIBS="${OPENBLAS_LIBS}"
-fi
+export OPENBLAS_LIBS="IF_OMP(${OPENBLAS_LIBS_OMP}|${OPENBLAS_LIBS})"
 export FAST_MATH_CFLAGS="\${FAST_MATH_CFLAGS} ${OPENBLAS_CFLAGS}"
 export FAST_MATH_LDFLAGS="\${FAST_MATH_LDFLAGS} ${OPENBLAS_LDFLAGS}"
-export FAST_MATH_LIBS="\${FAST_MATH_LIBS} ${OPENBLAS_LIBS}"
+export FAST_MATH_LIBS="\${FAST_MATH_LIBS} IF_OMP(${OPENBLAS_LIBS_OMP}|${OPENBLAS_LIBS})"
 EOF
 fi
 cd "${ROOTDIR}"
