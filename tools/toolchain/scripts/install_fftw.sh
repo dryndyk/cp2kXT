@@ -19,9 +19,11 @@ FFTW_LIBS_OMP=''
 cd "${BUILDDIR}"
 case "$with_fftw" in
     __INSTALL__)
+        require_env MPI_LIBS
         echo "==================== Installing FFTW ===================="
         pkg_install_dir="${INSTALLDIR}/fftw-${fftw_ver}"
         install_lock_file="$pkg_install_dir/install_successful"
+
         if verify_checksums "${install_lock_file}" ; then
             echo "fftw-${fftw_ver} is already installed, skipping it."
         else
@@ -35,7 +37,13 @@ case "$with_fftw" in
             [ -d fftw-${fftw_ver} ] && rm -rf fftw-${fftw_ver}
             tar -xzf fftw-${fftw_ver}.tar.gz
             cd fftw-${fftw_ver}
-            ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp > configure.log 2>&1
+            if [ "$MPI_MODE" != "no" ] ; then
+                # fftw has mpi support but not compiled by default. so compile it if we build with mpi.
+                # it will create a second library to link with if needed
+                ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp --enable-mpi > configure.log 2>&1
+            else
+                ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp > configure.log 2>&1
+            fi
             make -j $NPROCS > make.log 2>&1
             make install > install.log 2>&1
             cd ..
@@ -48,6 +56,7 @@ case "$with_fftw" in
         echo "==================== Finding FFTW from system paths ===================="
         check_lib -lfftw3 "FFTW"
         [ $ENABLE_OMP = "__TRUE__" ] && check_lib -lfftw3_omp "FFTW"
+        [ "$MPI_MODE" != "no" ] && check_lib -lfftw3_mpi "FFTW"
         add_include_from_paths FFTW_CFLAGS "fftw3.h" $INCLUDE_PATHS
         add_lib_from_paths FFTW_LDFLAGS "libfftw3.*" $LIB_PATHS
         ;;
@@ -83,7 +92,9 @@ export FFTW_LIBS_OMP="${FFTW_LIBS_OMP}"
 export CP_DFLAGS="\${CP_DFLAGS} -D__FFTW3 IF_COVERAGE(IF_MPI(|-U__FFTW3)|)"
 export CP_CFLAGS="\${CP_CFLAGS} ${FFTW_CFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${FFTW_LDFLAGS}"
-export CP_LIBS="${FFTW_LIBS} IF_OMP(${FFTW_LIBS_OMP}|) \${CP_LIBS}"
+export CP_LIBS="IF_MPI(-lfftw3_mpi|) ${FFTW_LIBS} IF_OMP(${FFTW_LIBS_OMP}|) \${CP_LIBS}"
+prepend_path PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$pkg_install_dir/lib/pkgconfig"
+export FFTWROOT="$pkg_install_dir"
 EOF
 fi
 cd "${ROOTDIR}"

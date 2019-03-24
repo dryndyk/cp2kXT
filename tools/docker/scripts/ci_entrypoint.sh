@@ -7,6 +7,7 @@ set -eo pipefail
 REPORT=/workspace/report.txt
 echo -n "StartDate: " | tee -a $REPORT
 date --utc --rfc-3339=seconds | tee -a $REPORT
+ulimit -c 0  # Disable core dumps as they can take a very long time to write.
 
 # Rsync with common args.
 function rsync_changes {
@@ -27,6 +28,16 @@ function upload_file {
     CONTENT_TYPE=$3
     wget --quiet --output-document=- --method=PUT --header="content-type: ${CONTENT_TYPE}" --header="cache-control: no-cache" --body-file="${FILE}" "${URL}" > /dev/null
 }
+
+# Handle preemption gracefully.
+function sigterm_handler {
+    echo -e "\nThis job just got preempted. No worries, it should restart soon.\n" | tee -a $REPORT
+    echo -n "EndDate: " | tee -a $REPORT
+    date --utc --rfc-3339=seconds | tee -a $REPORT
+    upload_file "${REPORT_UPLOAD_URL}" "${REPORT}" "text/plain;charset=utf-8"
+    exit 1
+}
+trap sigterm_handler SIGTERM
 
 # Upload preliminary report every 30s in the background.
 (
@@ -125,7 +136,8 @@ fi
 if [ -n "${ARTIFACTS_UPLOAD_URL}" ] &&  [ -d /workspace/artifacts ]; then
     echo "Uploading artifacts..."
     ARTIFACTS_TGZ="/tmp/test_${TESTNAME}_artifacts.tgz"
-    tar -czf "${ARTIFACTS_TGZ}" -C /workspace/artifacts .
+    cd /workspace/artifacts
+    tar -czf "${ARTIFACTS_TGZ}" *
     upload_file "${ARTIFACTS_UPLOAD_URL}" "${ARTIFACTS_TGZ}" "application/gzip"
 fi
 

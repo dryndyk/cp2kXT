@@ -2,7 +2,7 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-mpich_ver=${mpich_ver:-3.2.1}
+mpich_ver=${mpich_ver:-3.3}
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -34,13 +34,11 @@ case "$with_mpich" in
             [ -d mpich-${mpich_ver} ] && rm -rf mpich-${mpich_ver}
             tar -xzf mpich-${mpich_ver}.tar.gz
             cd mpich-${mpich_ver}
-            (
-                unset F90
-                unset F90FLAGS
-                ./configure --prefix="${pkg_install_dir}" --libdir="${pkg_install_dir}/lib" > configure.log 2>&1
-                make -j $NPROCS > make.log 2>&1
-                make -j $NPROCS install > install.log 2>&1
-            )
+            unset F90
+            unset F90FLAGS
+            ./configure --prefix="${pkg_install_dir}" --libdir="${pkg_install_dir}/lib" MPICC="" > configure.log 2>&1
+            make -j $NPROCS > make.log 2>&1
+            make install > install.log 2>&1
             cd ..
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/$(basename ${SCRIPT_NAME})"
         fi

@@ -5,16 +5,22 @@
 # install Ubuntu packages
 apt-get update
 apt-get install -y --no-install-recommends \
+    autoconf                               \
+    autogen                                \
+    automake                               \
+    autotools-dev                          \
     ca-certificates                        \
-    python                                 \
-    git                                    \
-    nano                                   \
-    wget                                   \
-    unzip                                  \
-    less                                   \
-    make                                   \
     cmake                                  \
-    rsync
+    git                                    \
+    less                                   \
+    libtool                                \
+    make                                   \
+    nano                                   \
+    pkg-config                             \
+    python                                 \
+    rsync                                  \
+    unzip                                  \
+    wget
 rm -rf /var/lib/apt/lists/*
 
 # clone cp2k repository
