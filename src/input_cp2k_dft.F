@@ -3072,7 +3072,7 @@ CONTAINS
          "Use the previous wavefunction (not available for K-points)", &
          "Higher order extrapolation of the density matrix times the overlap matrix (not available for K-points)", &
          "Frozen ...", &
-         "Always stable predictor corrector, similar to PS, but going for MD stability instead of intial guess accuracy. "// &
+         "Always stable predictor corrector, similar to PS, but going for MD stability instead of initial guess accuracy. "// &
          "(not available for K-points)"), &
          enum_i_vals=(/ &
          wfi_use_guess_method_nr, &
@@ -5830,7 +5830,7 @@ CONTAINS
       CPASSERT(.NOT. ASSOCIATED(section))
       CALL section_create(section, name="OPT_EMBED", &
                           description="This section specifies optional parameters for DFT embedding potential optimization.", &
-                          n_keywords=16, n_subsections=4, repeats=.FALSE.)
+                          n_keywords=17, n_subsections=4, repeats=.FALSE.)
 
       NULLIFY (keyword)
 
@@ -5906,8 +5906,29 @@ CONTAINS
                           usage="LEEUWEN-BAERENDS .TRUE.", &
                           default_l_val=.FALSE.)
       CALL section_add_keyword(section, keyword)
-
       CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, name="FAB", &
+                          description="Finzel-Ayers-Bultinck iterative update. Generally, not reliable. ", &
+                          usage="FAB .TRUE.", &
+                          default_l_val=.FALSE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, name="VW_CUTOFF", &
+                          description="Cutoff for von Weizsacker potential in "// &
+                          "the FAB optimization procedure.", &
+                          usage="VW_CUTOFF 0.01", default_r_val=0.01_dp)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, name="VW_SMOOTH_CUT_RANGE", &
+                          description="Smooth cutoff range for von Weizsacker potential in "// &
+                          "the FAB optimization procedure.", &
+                          usage="VW_CUTOFF 1.0", default_r_val=1.0_dp)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
       CALL keyword_create(keyword, name="ADD_CONST_POT", &
                           description="Apply level shift in the  "// &
                           "optimization of the embedding potential.", &
@@ -5991,7 +6012,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create(keyword, name="TRUST_RAD", &
-                          description="Maximum number of iterations "// &
+                          description="Step length "// &
                           "in the optimization procedure.", &
                           usage="TRUST_RAD 0.5", default_r_val=0.5_dp)
       CALL section_add_keyword(section, keyword)
@@ -7092,7 +7113,7 @@ CONTAINS
 
       CALL keyword_create( &
          keyword, name="MAX_TAYLOR", &
-         description="Maximum order of the Taylor expansion before diagonalisation is prefered, for large parallel runs"// &
+         description="Maximum order of the Taylor expansion before diagonalisation is preferred, for large parallel runs"// &
          " a slightly higher order could sometimes result in a small speedup.", &
          usage="MAX_TAYLOR 5", &
          default_i_val=4)

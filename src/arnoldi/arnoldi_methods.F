@@ -760,7 +760,7 @@ CONTAINS
   END SUBROUTINE compute_norms_${nametype1}$
 
 ! **************************************************************************************************
-!> \brief Computes the intial guess for the solution of the generalized eigenvalue
+!> \brief Computes the initial guess for the solution of the generalized eigenvalue
 !>        using the arnoldi method
 !> \param matrix ...
 !> \param matrix_arnoldi ...
@@ -857,7 +857,7 @@ CONTAINS
 !> \brief builds the basis rothogonal wrt. teh metric.
 !>        The structure looks similar to normal arnoldi but norms, vectors and
 !>        matrix_vector products are very differently defined. Therefore it is
-!>        cleaner to put it in a seperate subroutine to avoid confusion
+!>        cleaner to put it in a separate subroutine to avoid confusion
 !> \param matrix ...
 !> \param vectors ...
 !> \param arnoldi_data ...

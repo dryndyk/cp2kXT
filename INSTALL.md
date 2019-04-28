@@ -42,6 +42,12 @@ Before CP2K compilation change arch files, see 3d below!
 CP2K+XT| https://github.com/tranas-open/cp2kXT.git
 DFTB+XT| https://github.com/tranas-open/dftbXT.git
 
+For more details on downloading CP2K, see https://www.cp2k.org/download.
+
+To udate with submodules use
+$ git pull
+$ git submodule update --recursive
+
 ## 2. Install prerequisites
 
 The most convenient way to install pre-requisites is by using the [toolchain script](./tools/toolchain/install_cp2k_toolchain.sh).
@@ -61,6 +67,7 @@ The basic steps are:
      --with-fftw=system --with-reflapack=no  --enable-cuda --enable-omp
 
 - Once the script has completed successfully, follow the instructions given at the end of its output.
+Note that the pre-built arch files provided by the toolchain are for the GNU compiler, users have to adapt them for other compilers. It is possible to use the provided [arch files](./arch) as guidance.
 
 CP2K+XT| Note, that "cp2k" directory should be understood as "cp2kXT".
 
@@ -78,7 +85,7 @@ GNU make should be on your system (gmake or make on linux) and used for the buil
 Python 2.x is needed to run the dependency generator. On most system Python is already installed. For more information visit: https://www.python.org/
 
 ### 2c. Fortran and C Compiler (required, build system)
-A Fortran 2008 compiler and matching C compiler should be installed on your system. We have good experience with gcc/gfortran (gcc >=4.6 works, later version recommended). Be aware that some compilers have bugs that might cause them to fail (internal compiler errors, segfaults) or, worse, yield a mis-compiled CP2K. Report bugs to compiler vendors; they (and we) have an interest in fixing them. Always run a `make -j test` (See point 5.) after compilation to identify these problems.
+A Fortran 2008 compiler and matching C compiler should be installed on your system. We have good experience with gcc/gfortran (gcc >=4.6 works, later version recommended). Be aware that some compilers have bugs that might cause them to fail (internal compiler errors, segfaults) or, worse, yield a mis-compiled CP2K. Report bugs to compiler vendors; they (and we) have an interest in fixing them. A list of tested compiler can be found [here](https://www.cp2k.org/dev:compiler_support). Always run a `make -j test` (See point 5.) after compilation to identify these problems.
 
 ### 2d. BLAS and LAPACK (required, base functionality)
 BLAS and LAPACK should be installed.  Using vendor-provided libraries can make a very significant difference (up to 100%, e.g., ACML, MKL, ESSL), not all optimized libraries are bug free. Use the latest versions available, use the interfaces matching your compiler, and download all patches!
