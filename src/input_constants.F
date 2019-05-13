@@ -818,8 +818,7 @@ MODULE input_constants
 
    ! DIAGONALIZATION library
    INTEGER, PARAMETER, PUBLIC               :: do_diag_sl = 1, &
-                                               do_diag_sl2 = 2, &
-                                               do_diag_elpa = 3
+                                               do_diag_elpa = 2
    ! FFT library
    ! these might need sync with fft_lib.F
    INTEGER, PARAMETER, PUBLIC               :: do_fft_sg = 1, &
@@ -865,8 +864,13 @@ MODULE input_constants
                                                ls_s_inversion_sign_sqrt = 5, &
                                                ls_s_inversion_none = 6
 
-   INTEGER, PARAMETER, PUBLIC               :: ls_scf_ns = 17, ls_scf_trs4 = 18, &
+   INTEGER, PARAMETER, PUBLIC               :: ls_s_sqrt_ns = 1, &
+                                               ls_s_sqrt_proot = 2
+
+   INTEGER, PARAMETER, PUBLIC               :: ls_scf_sign = 17, ls_scf_trs4 = 18, &
                                                ls_scf_tc2 = 19, ls_scf_pexsi = 20
+
+   INTEGER, PARAMETER, PUBLIC               :: ls_scf_sign_ns = 1, ls_scf_sign_proot = 2
 
    INTEGER, PARAMETER, PUBLIC               :: ls_scf_line_search_3point = 3, &
                                                ls_scf_line_search_3point_2d = 6
@@ -957,7 +961,11 @@ MODULE input_constants
    INTEGER, PARAMETER, PUBLIC               :: ri_rpa_g0w0_crossing_none = 0, &
                                                ri_rpa_g0w0_crossing_z_shot = 1, &
                                                ri_rpa_g0w0_crossing_newton = 2, &
-                                               ri_rpa_g0w0_crossing_bisection = 3
+                                               ri_rpa_g0w0_crossing_bisection = 3, &
+                                               gw_no_print_exx = 5, &
+                                               gw_print_exx = 6, &
+                                               gw_read_exx = 7, &
+                                               gw_skip_for_regtest = 8
 
    INTEGER, PARAMETER, PUBLIC               :: gw_pade_approx = 0, &
                                                gw_two_pole_model = 1
