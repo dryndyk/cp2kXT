@@ -66,6 +66,10 @@ MODULE mp2_gpw
                                               distribution_2d_type
    USE distribution_methods,            ONLY: distribute_molecules_1d,&
                                               distribute_molecules_2d
+   USE group_dist_types,                ONLY: create_group_dist,&
+                                              get_group_dist,&
+                                              group_dist_d1_type,&
+                                              release_group_dist
    USE input_constants,                 ONLY: do_eri_gpw,&
                                               ri_overlap
    USE input_section_types,             ONLY: section_vals_val_get
@@ -170,13 +174,12 @@ CONTAINS
                            do_ri_sos_laplace_mp2)
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(mp2_type), POINTER                            :: mp2_env
-      REAL(KIND=dp)                                      :: Emp2, Emp2_Cou, Emp2_EX, Emp2_S, Emp2_T
+      REAL(KIND=dp), INTENT(OUT)                         :: Emp2, Emp2_Cou, Emp2_EX, Emp2_S, Emp2_T
       TYPE(mo_set_p_type), DIMENSION(:), POINTER         :: mos_mp2
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER                                            :: unit_nr
-      LOGICAL, INTENT(IN)                                :: calc_forces
-      LOGICAL                                            :: calc_ex
-      LOGICAL, OPTIONAL                                  :: do_ri_mp2, do_ri_rpa, &
+      INTEGER, INTENT(IN)                                :: unit_nr
+      LOGICAL, INTENT(IN)                                :: calc_forces, calc_ex
+      LOGICAL, INTENT(IN), OPTIONAL                      :: do_ri_mp2, do_ri_rpa, &
                                                             do_ri_sos_laplace_mp2
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'mp2_gpw_main', routineP = moduleN//':'//routineN
@@ -186,11 +189,7 @@ CONTAINS
          gw_corr_lev_virt, gw_corr_lev_virt_beta, handle, homo, homo_beta, i, i_multigrid, &
          local_unit_nr, my_group_L_end, my_group_L_size, my_group_L_start, n_multigrid, nelectron, &
          nelectron_beta, nmo, nspins, ri_metric
-      INTEGER, ALLOCATABLE, DIMENSION(:) :: ends_array, ends_array_mc_t, ends_B_all, &
-         ends_B_occ_bse, ends_B_virt_bse, ends_B_virtual, ends_B_virtual_beta, sizes_array, &
-         sizes_B_all, sizes_B_occ_bse, sizes_B_virt_bse, sizes_B_virtual, sizes_B_virtual_beta, &
-         starts_array, starts_array_mc_t, starts_B_all, starts_B_occ_bse, starts_B_virt_bse, &
-         starts_B_virtual, starts_B_virtual_beta
+      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: ends_array_mc_t, starts_array_mc_t
       LOGICAL :: blacs_repeatable, do_bse, do_dbcsr_t, do_im_time, do_kpoints_cubic_RPA, do_mao, &
          my_do_gw, my_do_ri_mp2, my_do_ri_rpa, my_do_ri_sos_laplace_mp2, &
          skip_load_balance_distributed
@@ -227,6 +226,9 @@ CONTAINS
       TYPE(dbcsr_type), POINTER :: mo_coeff_all, mo_coeff_all_beta, mo_coeff_gw, mo_coeff_gw_beta, &
          mo_coeff_o, mo_coeff_o_beta, mo_coeff_v, mo_coeff_v_beta
       TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(group_dist_d1_type)                           :: gd_array, gd_B_all, gd_B_occ_bse, &
+                                                            gd_B_virt_bse, gd_B_virtual, &
+                                                            gd_B_virtual_beta
       TYPE(kpoint_type), POINTER                         :: kpoints, kpoints_from_DFT
       TYPE(local_atoms_type), ALLOCATABLE, DIMENSION(:)  :: atom2d
       TYPE(mo_set_p_type), DIMENSION(:), POINTER         :: mos
@@ -507,8 +509,7 @@ CONTAINS
          IF (nspins == 2) THEN
             ! open shell case (RI) here the (ia|K) integrals are computed for both the alpha and beta components
             CALL mp2_ri_gpw_compute_in( &
-               BIb_C, BIb_C_gw, BIb_C_bse_ij, BIb_C_bse_ab, ends_array, ends_B_virtual, sizes_array, &
-               sizes_B_virtual, starts_array, starts_B_virtual, dimen_RI, qs_env, &
+               BIb_C, BIb_C_gw, BIb_C_bse_ij, BIb_C_bse_ab, gd_array, gd_B_virtual, dimen_RI, qs_env, &
                para_env, para_env_sub, color_sub, dft_control, cell, particle_set, &
                atomic_kind_set, qs_kind_set, mo_coeff, fm_matrix_L_RI_metric, nmo, homo, rho_r, rho_g, pot_g, &
                mat_munu, mat_munu_mao_occ_virt, mat_munu_mao_virt_occ, sab_orb_sub, sab_orb_all, &
@@ -516,19 +517,17 @@ CONTAINS
                task_list_sub, mo_coeff_o, mo_coeff_v, mo_coeff_all, mo_coeff_gw, &
                mp2_env%mp2_gpw%eps_filter, unit_nr, &
                mp2_env%mp2_memory, mp2_env%calc_PQ_cond_num, calc_forces, blacs_env_sub, my_do_gw, &
-               do_bse, starts_B_all, sizes_B_all, ends_B_all, starts_array_mc_t, ends_array_mc_t, &
-               gw_corr_lev_occ, gw_corr_lev_virt, do_im_time, do_mao, do_kpoints_cubic_RPA, kpoints, &
+               do_bse, gd_B_all, starts_array_mc_t, ends_array_mc_t, gw_corr_lev_occ, gw_corr_lev_virt, &
+               do_im_time, do_mao, do_kpoints_cubic_RPA, kpoints, &
                mat_3c_overl_int, do_dbcsr_t, t_3c_M, t_3c_O, &
                mat_3c_overl_int_mao_for_occ, mat_3c_overl_int_mao_for_virt, &
                mao_coeff_occ, mao_coeff_virt, ri_metric, &
-               starts_B_occ_bse, sizes_B_occ_bse, ends_B_occ_bse, &
-               starts_B_virt_bse, sizes_B_virt_bse, ends_B_virt_bse, &
-               BIb_C_beta, BIb_C_gw_beta, ends_B_virtual_beta, sizes_B_virtual_beta, starts_B_virtual_beta, &
+               gd_B_occ_bse, gd_B_virt_bse, &
+               BIb_C_beta, BIb_C_gw_beta, gd_B_virtual_beta, &
                homo_beta, mo_coeff_o_beta, mo_coeff_v_beta, mo_coeff_all_beta, mo_coeff_gw_beta)
          ELSE
             ! closed shell case (RI)
-            CALL mp2_ri_gpw_compute_in(BIb_C, BIb_C_gw, BIb_C_bse_ij, BIb_C_bse_ab, ends_array, ends_B_virtual, &
-                                       sizes_array, sizes_B_virtual, starts_array, starts_B_virtual, &
+            CALL mp2_ri_gpw_compute_in(BIb_C, BIb_C_gw, BIb_C_bse_ij, BIb_C_bse_ab, gd_array, gd_B_virtual, &
                                        dimen_RI, qs_env, para_env, para_env_sub, &
                                        color_sub, dft_control, cell, particle_set, &
                                        atomic_kind_set, qs_kind_set, mo_coeff, fm_matrix_L_RI_metric, &
@@ -538,15 +537,13 @@ CONTAINS
                                        task_list_sub, mo_coeff_o, mo_coeff_v, mo_coeff_all, mo_coeff_gw, &
                                        mp2_env%mp2_gpw%eps_filter, unit_nr, &
                                        mp2_env%mp2_memory, mp2_env%calc_PQ_cond_num, calc_forces, &
-                                       blacs_env_sub, my_do_gw, do_bse, starts_B_all, sizes_B_all, &
-                                       ends_B_all, starts_array_mc_t, ends_array_mc_t, &
+                                       blacs_env_sub, my_do_gw, do_bse, gd_B_all, &
+                                       starts_array_mc_t, ends_array_mc_t, &
                                        gw_corr_lev_occ, gw_corr_lev_virt, &
                                        do_im_time, do_mao, do_kpoints_cubic_RPA, kpoints, &
                                        mat_3c_overl_int, do_dbcsr_t, t_3c_M, t_3c_O, mat_3c_overl_int_mao_for_occ, &
                                        mat_3c_overl_int_mao_for_virt, mao_coeff_occ, mao_coeff_virt, &
-                                       ri_metric, &
-                                       starts_B_occ_bse, sizes_B_occ_bse, ends_B_occ_bse, &
-                                       starts_B_virt_bse, sizes_B_virt_bse, ends_B_virt_bse)
+                                       ri_metric, gd_B_occ_bse, gd_B_virt_bse)
 
          END IF
       ELSE
@@ -624,9 +621,7 @@ CONTAINS
             CALL dbcsr_init_p(mp2_env%ri_grad%mo_coeff_v_beta)
             CALL dbcsr_copy(mp2_env%ri_grad%mo_coeff_v_beta, mo_coeff_v_beta, name="mo_coeff_v_b")
          ENDIF
-         my_group_L_size = sizes_array(color_sub)
-         my_group_L_start = starts_array(color_sub)
-         my_group_L_end = ends_array(color_sub)
+         CALL get_group_dist(gd_array, color_sub, my_group_L_start, my_group_L_end, my_group_L_size)
       END IF
       ! Copy mo coeffs for RPA AXK
       IF (mp2_env%ri_rpa%do_ri_axk) THEN
@@ -726,9 +721,7 @@ CONTAINS
          IF (nspins == 2) THEN
             CALL rpa_ri_compute_en(qs_env, Emp2, mp2_env, BIb_C, BIb_C_gw, BIb_C_bse_ij, BIb_C_bse_ab, &
                                    para_env, para_env_sub_RPA, color_sub, &
-                                   ends_array, ends_B_virtual, ends_B_all, sizes_array, sizes_B_virtual, sizes_B_all, &
-                                   starts_array, starts_B_virtual, starts_B_all, starts_B_occ_bse, sizes_B_occ_bse, &
-                                   ends_B_occ_bse, starts_B_virt_bse, sizes_B_virt_bse, ends_B_virt_bse, &
+                                   gd_array, gd_B_virtual, gd_B_all, gd_B_occ_bse, gd_B_virt_bse, &
                                    mo_coeff, fm_matrix_L_RI_metric, kpoints, &
                                    Eigenval, nmo, homo, dimen_RI, gw_corr_lev_occ, gw_corr_lev_virt, &
                                    unit_nr, my_do_ri_sos_laplace_mp2, my_do_gw, do_im_time, do_mao, do_bse, matrix_s, &
@@ -739,14 +732,12 @@ CONTAINS
                                    ends_array_mc_t, &
                                    mat_3c_overl_int_mao_for_occ, mat_3c_overl_int_mao_for_virt, &
                                    mp2_env%mp2_gpw%eps_filter, BIb_C_beta, homo_beta, Eigenval_beta, &
-                                   ends_B_virtual_beta, sizes_B_virtual_beta, starts_B_virtual_beta, &
+                                   gd_B_virtual_beta, &
                                    mo_coeff_beta, BIb_C_gw_beta, gw_corr_lev_occ_beta, gw_corr_lev_virt_beta)
          ELSE
             CALL rpa_ri_compute_en(qs_env, Emp2, mp2_env, BIb_C, BIb_C_gw, BIb_C_bse_ij, BIb_C_bse_ab, &
                                    para_env, para_env_sub_RPA, color_sub, &
-                                   ends_array, ends_B_virtual, ends_B_all, sizes_array, sizes_B_virtual, sizes_B_all, &
-                                   starts_array, starts_B_virtual, starts_B_all, starts_B_occ_bse, sizes_B_occ_bse, &
-                                   ends_B_occ_bse, starts_B_virt_bse, sizes_B_virt_bse, ends_B_virt_bse, &
+                                   gd_array, gd_B_virtual, gd_B_all, gd_B_occ_bse, gd_B_virt_bse, &
                                    mo_coeff, fm_matrix_L_RI_metric, kpoints, &
                                    Eigenval, nmo, homo, dimen_RI, gw_corr_lev_occ, gw_corr_lev_virt, &
                                    unit_nr, my_do_ri_sos_laplace_mp2, my_do_gw, do_im_time, do_mao, do_bse, matrix_s, &
@@ -792,35 +783,34 @@ CONTAINS
                ! alpha-alpha component
                CALL mp2_ri_gpw_compute_en( &
                   Emp2, Emp2_Cou, Emp2_EX, BIb_C, mp2_env, para_env, para_env_sub, color_sub, &
-                  ends_array, ends_B_virtual, sizes_array, sizes_B_virtual, starts_array, starts_B_virtual, &
+                  gd_array, gd_B_virtual, &
                   Eigenval, nmo, homo, dimen_RI, unit_nr, calc_forces, calc_ex, &
                   open_shell_SS=.TRUE.)
 
                ! beta-beta component
                CALL mp2_ri_gpw_compute_en( &
                   Emp2_BB, Emp2_Cou_BB, Emp2_EX_BB, BIb_C_beta, mp2_env, para_env, para_env_sub, color_sub, &
-                  ends_array, ends_B_virtual_beta, sizes_array, &
-                  sizes_B_virtual_beta, starts_array, starts_B_virtual_beta, &
+                  gd_array, gd_B_virtual_beta, &
                   Eigenval_beta, nmo, homo_beta, dimen_RI, unit_nr, calc_forces, calc_ex, &
                   open_shell_SS=.TRUE.)
 
                ! alpha-beta case
                CALL mp2_ri_gpw_compute_en( &
                   Emp2_d_AB, Emp2_AB, Emp2_d2_AB, BIb_C, mp2_env, para_env, para_env_sub, color_sub, &
-                  ends_array, ends_B_virtual, sizes_array, sizes_B_virtual, starts_array, starts_B_virtual, &
+                  gd_array, gd_B_virtual, &
                   Eigenval, nmo, homo, dimen_RI, unit_nr, calc_forces, .FALSE., &
                   .FALSE., BIb_C_beta, homo_beta, Eigenval_beta, &
-                  ends_B_virtual_beta, sizes_B_virtual_beta, starts_B_virtual_beta)
+                  gd_B_virtual_beta)
 
             ELSE
                ! closed shell case
                CALL mp2_ri_gpw_compute_en( &
                   Emp2, Emp2_Cou, Emp2_EX, BIb_C, mp2_env, para_env, para_env_sub, color_sub, &
-                  ends_array, ends_B_virtual, sizes_array, sizes_B_virtual, starts_array, starts_B_virtual, &
+                  gd_array, gd_B_virtual, &
                   Eigenval, nmo, homo, dimen_RI, unit_nr, calc_forces, calc_ex)
             END IF
             ! if we need forces time to calculate the MP2 non-separable contribution
-            ! and start coputing the Largrangian
+            ! and start coputing the Lagrangian
             IF (calc_forces) THEN
                ! since we have to compute again integrals reinitialize the stuff we need
                ! get some of the grids ready
@@ -836,25 +826,6 @@ CONTAINS
                                          use_data=COMPLEXDATA1D, &
                                          in_space=RECIPROCALSPACE)
                ENDIF
-
-               ! the mu_nu matrix (again)
-               ! XXXXXXXXXXXXXXXXXXXXXXXXX
-               ! ! build a dbcsr matrix the hard way
-               ! CALL get_particle_set(particle_set=particle_set,nsgf=rbs)
-               ! CALL array_nullify (row_blk_sizes)
-               ! CALL array_new (row_blk_sizes, rbs, gift=.TRUE.)
-               ! ALLOCATE(mat_munu%matrix, STAT=stat)
-               ! CPPostcondition(stat==0,cp_failure_level,routineP,failure)
-               ! CALL dbcsr_init(mat_munu%matrix)
-               ! CALL dbcsr_create(matrix=mat_munu%matrix,&
-               !            name="(ai|munu)",&
-               !            dist=dbcsr_dist_sub, &
-               !            matrix_type=dbcsr_type_symmetric,&
-               !            ! matrix_type=dbcsr_type_no_symmetry,&
-               !            row_blk_size=row_blk_sizes, col_blk_size=row_blk_sizes, &
-               !            nze=0)
-               ! CALL cp_dbcsr_alloc_block_from_nbl(mat_munu%matrix,sab_orb_sub)
-               ! CALL array_release (row_blk_sizes)
 
                IF (nspins == 2) THEN ! Open shell
                   CALL calc_ri_mp2_nonsep(qs_env, mp2_env, para_env, para_env_sub, dft_control, cell, &
@@ -941,22 +912,6 @@ CONTAINS
          CALL deallocate_task_list(task_list_sub)
          CALL pw_env_release(pw_env_sub)
       END IF
-
-      ! CALL dbcsr_distribution_release(dbcsr_dist_sub)
-      ! DEALLOCATE(dbcsr_dist_sub,STAT=stat)
-      ! CPPostcondition(stat==0,cp_failure_level,routineP,failure)
-
-      ! DO i=1,SIZE(sab_orb_sub)
-      !    CALL deallocate_neighbor_list_set(sab_orb_sub(i)%neighbor_list_set)
-      ! END DO
-      ! DEALLOCATE(sab_orb_sub,stat=stat)
-      ! CPPostconditionNoFail(stat==0,cp_warning_level,routineP)
-
-      ! CALL distribution_2d_release(distribution_2d_sub)
-
-      ! CALL distribution_1d_release(local_particles_sub)
-      ! CALL distribution_1d_release(local_molecules_sub)
-      !XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
 
       ! re-init the radii to be able to generate pair lists with MP2-appropriate screening
       dft_control%qs_control%eps_pgf_orb = eps_pgf_orb_old
@@ -1045,34 +1000,34 @@ CONTAINS
                               mp2_memory, calc_ex, blacs_env_sub, homo_beta, mo_coeff_o_beta, &
                               mo_coeff_v_beta, Eigenval_beta, Emp2_AB)
 
-      REAL(KIND=dp)                                      :: Emp2, Emp2_Cou, Emp2_EX
+      REAL(KIND=dp), INTENT(OUT)                         :: Emp2, Emp2_Cou, Emp2_EX
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
-      INTEGER                                            :: color_sub
+      INTEGER, INTENT(IN)                                :: color_sub
       TYPE(dft_control_type), POINTER                    :: dft_control
       TYPE(cell_type), POINTER                           :: cell
       TYPE(particle_type), DIMENSION(:), POINTER         :: particle_set
       TYPE(atomic_kind_type), DIMENSION(:), POINTER      :: atomic_kind_set
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
       TYPE(cp_fm_type), POINTER                          :: mo_coeff
-      REAL(KIND=dp), DIMENSION(:)                        :: Eigenval
-      INTEGER                                            :: nmo, homo
-      TYPE(pw_p_type)                                    :: rho_r, rho_g, pot_g
-      TYPE(dbcsr_p_type)                                 :: mat_munu
+      REAL(KIND=dp), DIMENSION(:), INTENT(IN)            :: Eigenval
+      INTEGER, INTENT(IN)                                :: nmo, homo
+      TYPE(pw_p_type), INTENT(INOUT)                     :: rho_r, rho_g, pot_g
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_munu
       TYPE(pw_env_type), POINTER                         :: pw_env_sub
       TYPE(pw_poisson_type), POINTER                     :: poisson_env
       TYPE(pw_pool_type), POINTER                        :: auxbas_pw_pool
       TYPE(task_list_type), POINTER                      :: task_list_sub
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_o, mo_coeff_v
-      REAL(KIND=dp)                                      :: eps_filter
-      INTEGER                                            :: unit_nr
-      REAL(KIND=dp)                                      :: mp2_memory
-      LOGICAL                                            :: calc_ex
+      REAL(KIND=dp), INTENT(IN)                          :: eps_filter
+      INTEGER, INTENT(IN)                                :: unit_nr
+      REAL(KIND=dp), INTENT(IN)                          :: mp2_memory
+      LOGICAL, INTENT(IN)                                :: calc_ex
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env_sub
-      INTEGER, OPTIONAL                                  :: homo_beta
+      INTEGER, INTENT(IN), OPTIONAL                      :: homo_beta
       TYPE(dbcsr_type), OPTIONAL, POINTER                :: mo_coeff_o_beta, mo_coeff_v_beta
-      REAL(KIND=dp), DIMENSION(:), OPTIONAL              :: Eigenval_beta
-      REAL(KIND=dp), OPTIONAL                            :: Emp2_AB
+      REAL(KIND=dp), DIMENSION(:), INTENT(IN), OPTIONAL  :: Eigenval_beta
+      REAL(KIND=dp), INTENT(OUT), OPTIONAL               :: Emp2_AB
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'mp2_gpw_compute', &
          routineP = moduleN//':'//routineN
@@ -1608,11 +1563,11 @@ CONTAINS
 !> \param calc_ex ...
 !> \param mem_try ...
 ! **************************************************************************************************
-   SUBROUTINE estimate_memory_usage(wfn_size, p, q, num_w, nmo, virtual, homo, calc_ex, mem_try)
-      REAL(KIND=dp)                                      :: wfn_size
-      INTEGER                                            :: p, q, num_w, nmo, virtual, homo
-      LOGICAL                                            :: calc_ex
-      REAL(KIND=dp)                                      :: mem_try
+   ELEMENTAL SUBROUTINE estimate_memory_usage(wfn_size, p, q, num_w, nmo, virtual, homo, calc_ex, mem_try)
+      REAL(KIND=dp), INTENT(IN)                          :: wfn_size
+      INTEGER, INTENT(IN)                                :: p, q, num_w, nmo, virtual, homo
+      LOGICAL, INTENT(IN)                                :: calc_ex
+      REAL(KIND=dp), INTENT(OUT)                         :: mem_try
 
       mem_try = 0.0_dp
       ! integrals
@@ -1651,11 +1606,11 @@ CONTAINS
                                 my_B_virtual_end, my_B_virtual_start)
       TYPE(cp_para_env_type), POINTER                    :: para_env_sub
       TYPE(cp_fm_type), POINTER                          :: fm_BIb_jb
-      REAL(KIND=dp), DIMENSION(:, :)                     :: BIb_jb
-      INTEGER                                            :: max_row_col_local
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: proc_map
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: local_col_row_info
-      INTEGER                                            :: my_B_virtual_end, my_B_virtual_start
+      REAL(KIND=dp), DIMENSION(:, :), INTENT(OUT)        :: BIb_jb
+      INTEGER, INTENT(IN)                                :: max_row_col_local
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: proc_map
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(IN)  :: local_col_row_info
+      INTEGER, INTENT(IN)                                :: my_B_virtual_end, my_B_virtual_start
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'grep_my_integrals', &
          routineP = moduleN//':'//routineN
@@ -1764,10 +1719,11 @@ CONTAINS
                                      mo_coeff_o, mo_coeff_v, my_Cocc, my_Cvirt)
 
       TYPE(cp_para_env_type), POINTER                    :: para_env_sub
-      INTEGER :: dimen, my_I_occupied_start, my_I_occupied_end, my_I_batch_size, &
+      INTEGER, INTENT(IN) :: dimen, my_I_occupied_start, my_I_occupied_end, my_I_batch_size, &
          my_A_virtual_start, my_A_virtual_end, my_A_batch_size
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_o, mo_coeff_v
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: my_Cocc, my_Cvirt
+      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :), &
+         INTENT(OUT)                                     :: my_Cocc, my_Cvirt
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'grep_occ_virt_wavefunc', &
          routineP = moduleN//':'//routineN
@@ -1854,53 +1810,38 @@ CONTAINS
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
       TYPE(cp_fm_type), POINTER                          :: mo_coeff
-      INTEGER                                            :: dimen, homo
-      TYPE(dbcsr_p_type)                                 :: mat_munu
+      INTEGER, INTENT(IN)                                :: dimen, homo
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_munu
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_o, mo_coeff_v, mo_coeff_all, &
                                                             mo_coeff_gw
-      LOGICAL                                            :: my_do_gw
-      INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_virt
-      LOGICAL, OPTIONAL                                  :: only_mo_coeff_all
+      LOGICAL, INTENT(IN)                                :: my_do_gw
+      INTEGER, INTENT(IN)                                :: gw_corr_lev_occ, gw_corr_lev_virt
+      LOGICAL, INTENT(IN), OPTIONAL                      :: only_mo_coeff_all
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'replicate_mat_to_subgroup', &
          routineP = moduleN//':'//routineN
 
-      INTEGER :: blk, col, col_offset, col_size, handle, i_global, iiB, iproc, itmp(2), j_global, &
-         jjB, max_row_col_local, my_mu_end, my_mu_size, my_mu_start, ncol_local, ncol_rec, &
-         nrow_local, nrow_rec, proc_receive, proc_receive_static, proc_send, proc_send_static, &
-         proc_shift, row, row_offset, row_size, virtual
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: ends_array, proc_map, sizes_array, &
-                                                            starts_array
+      INTEGER :: handle, i_global, iiB, j_global, jjB, max_row_col_local, my_mu_end, my_mu_size, &
+         my_mu_start, ncol_local, ncol_rec, nrow_local, nrow_rec, proc_receive, &
+         proc_receive_static, proc_send, proc_send_static, proc_shift, virtual
+      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: proc_map
       INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: local_col_row_info, rec_col_row_info
       INTEGER, DIMENSION(:), POINTER                     :: col_indices, col_indices_rec, &
                                                             row_indices, row_indices_rec
       LOGICAL                                            :: my_only_mo_coeff_all
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: C, Cgw, Cocc, Cvirt, rec_C
-      REAL(KIND=dp), DIMENSION(:, :), POINTER            :: data_block, local_C, local_C_internal
+      REAL(KIND=dp), DIMENSION(:, :), POINTER            :: local_C, local_C_internal
       TYPE(cp_fm_struct_type), POINTER                   :: fm_struct_coeff
-      TYPE(dbcsr_iterator_type)                          :: iter
+      TYPE(group_dist_d1_type)                           :: gd_array
 
       my_only_mo_coeff_all = .FALSE.
       IF (PRESENT(only_mo_coeff_all)) my_only_mo_coeff_all = only_mo_coeff_all
 
       CALL timeset(routineN, handle)
 
-      ALLOCATE (sizes_array(0:para_env_sub%num_pe-1))
-      ALLOCATE (starts_array(0:para_env_sub%num_pe-1))
-      starts_array = 0
-      ALLOCATE (ends_array(0:para_env_sub%num_pe-1))
-      ends_array = 0
+      CALL create_group_dist(gd_array, para_env_sub%num_pe, dimen)
 
-      DO iproc = 0, para_env_sub%num_pe-1
-         itmp = get_limit(dimen, para_env_sub%num_pe, iproc)
-         starts_array(iproc) = itmp(1)
-         ends_array(iproc) = itmp(2)
-         sizes_array(iproc) = itmp(2)-itmp(1)+1
-      ENDDO
-
-      my_mu_size = sizes_array(para_env_sub%mepos)
-      my_mu_start = starts_array(para_env_sub%mepos)
-      my_mu_end = ends_array(para_env_sub%mepos)
+      CALL get_group_dist(gd_array, para_env_sub%mepos, my_mu_start, my_mu_end, my_mu_size)
 
       ! local storage for the C matrix
       ALLOCATE (C(my_mu_size, dimen))
@@ -2023,18 +1964,12 @@ CONTAINS
       IF (.NOT. my_only_mo_coeff_all) THEN
          ! create and fill mo_coeff_o, mo_coeff_v and mo_coeff_all
          CALL build_mo_coeff_v_o_all(mp2_env, para_env_sub, mo_coeff_o, Cocc, &
-                                     homo, blk, row, col, row_size, col_size, row_offset, &
-                                     col_offset, i_global, j_global, my_mu_start, my_mu_end, &
-                                     mat_munu, iter, &
-                                     data_block, ends_array, proc_map, &
-                                     sizes_array, starts_array)
+                                     homo, my_mu_start, my_mu_end, &
+                                     mat_munu, gd_array, proc_map)
 
          CALL build_mo_coeff_v_o_all(mp2_env, para_env_sub, mo_coeff_v, Cvirt, &
-                                     virtual, blk, row, col, row_size, col_size, row_offset, &
-                                     col_offset, i_global, j_global, my_mu_start, my_mu_end, &
-                                     mat_munu, iter, &
-                                     data_block, ends_array, proc_map, &
-                                     sizes_array, starts_array)
+                                     virtual, my_mu_start, my_mu_end, &
+                                     mat_munu, gd_array, proc_map)
       ELSE
          DEALLOCATE (Cocc, Cvirt)
       END IF
@@ -2047,30 +1982,21 @@ CONTAINS
             Cgw(1:my_mu_size, 1:(gw_corr_lev_occ+gw_corr_lev_virt)) = &
                C(1:my_mu_size, homo-gw_corr_lev_occ+1:homo+gw_corr_lev_virt)
             CALL build_mo_coeff_v_o_all(mp2_env, para_env_sub, mo_coeff_gw, Cgw, &
-                                        gw_corr_lev_occ+gw_corr_lev_virt, &
-                                        blk, row, col, row_size, col_size, row_offset, &
-                                        col_offset, i_global, j_global, my_mu_start, my_mu_end, &
-                                        mat_munu, iter, &
-                                        data_block, ends_array, proc_map, &
-                                        sizes_array, starts_array)
+                                        gw_corr_lev_occ+gw_corr_lev_virt, my_mu_start, my_mu_end, &
+                                        mat_munu, gd_array, proc_map)
          END IF
 
          ! all levels
          CALL build_mo_coeff_v_o_all(mp2_env, para_env_sub, mo_coeff_all, C, &
-                                     dimen, blk, row, col, row_size, col_size, row_offset, &
-                                     col_offset, i_global, j_global, my_mu_start, my_mu_end, &
-                                     mat_munu, iter, &
-                                     data_block, ends_array, proc_map, &
-                                     sizes_array, starts_array)
+                                     dimen, my_mu_start, my_mu_end, &
+                                     mat_munu, gd_array, proc_map)
 
       ELSE
          DEALLOCATE (C)
       END IF
 
       DEALLOCATE (proc_map)
-      DEALLOCATE (sizes_array)
-      DEALLOCATE (starts_array)
-      DEALLOCATE (ends_array)
+      CALL release_group_dist(gd_array)
       DEALLOCATE (local_C)
 
       CALL timestop(handle)
@@ -2084,53 +2010,34 @@ CONTAINS
 !> \param mo_coeff_to_build ...
 !> \param Cread ...
 !> \param number_of_level ...
-!> \param blk ...
-!> \param row ...
-!> \param col ...
-!> \param row_size ...
-!> \param col_size ...
-!> \param row_offset ...
-!> \param col_offset ...
-!> \param i_global ...
-!> \param j_global ...
 !> \param my_mu_start ...
 !> \param my_mu_end ...
 !> \param mat_munu ...
-!> \param iter ...
-!> \param data_block ...
-!> \param ends_array ...
+!> \param gd_array ...
 !> \param proc_map ...
-!> \param sizes_array ...
-!> \param starts_array ...
 !> \author Jan Wilhelm, Code by Mauro Del Ben
 ! **************************************************************************************************
    SUBROUTINE build_mo_coeff_v_o_all(mp2_env, para_env_sub, mo_coeff_to_build, Cread, &
-                                     number_of_level, blk, row, col, row_size, col_size, row_offset, &
-                                     col_offset, i_global, j_global, my_mu_start, my_mu_end, &
-                                     mat_munu, iter, &
-                                     data_block, ends_array, proc_map, &
-                                     sizes_array, starts_array)
+                                     number_of_level, my_mu_start, my_mu_end, &
+                                     mat_munu, gd_array, proc_map)
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env_sub
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_to_build
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: Cread
-      INTEGER                                            :: number_of_level, blk, row, col, &
-                                                            row_size, col_size, row_offset, &
-                                                            col_offset, i_global, j_global, &
-                                                            my_mu_start, my_mu_end
-      TYPE(dbcsr_p_type)                                 :: mat_munu
-      TYPE(dbcsr_iterator_type)                          :: iter
-      REAL(KIND=dp), DIMENSION(:, :), POINTER            :: data_block
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: ends_array, proc_map, sizes_array, &
-                                                            starts_array
+      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :), &
+         INTENT(INOUT)                                   :: Cread
+      INTEGER, INTENT(IN)                                :: number_of_level, my_mu_start, my_mu_end
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_munu
+      TYPE(group_dist_d1_type), INTENT(IN)               :: gd_array
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: proc_map
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'build_mo_coeff_v_o_all', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: handle, i, j, proc_receive, proc_send, &
-                                                            proc_shift, rec_mu_end, rec_mu_size, &
-                                                            rec_mu_start
+      INTEGER :: blk, col, col_offset, col_size, handle, i, i_global, j, j_global, proc_receive, &
+         proc_send, proc_shift, rec_mu_end, rec_mu_size, rec_mu_start, row, row_offset, row_size
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: rec_C
+      REAL(KIND=dp), DIMENSION(:, :), POINTER            :: data_block
+      TYPE(dbcsr_iterator_type)                          :: iter
 
       CALL timeset(routineN, handle)
 
@@ -2164,9 +2071,7 @@ CONTAINS
          proc_send = proc_map(para_env_sub%mepos+proc_shift)
          proc_receive = proc_map(para_env_sub%mepos-proc_shift)
 
-         rec_mu_start = starts_array(proc_receive)
-         rec_mu_end = ends_array(proc_receive)
-         rec_mu_size = sizes_array(proc_receive)
+         CALL get_group_dist(gd_array, proc_receive, rec_mu_start, rec_mu_end, rec_mu_size)
 
          ALLOCATE (rec_C(rec_mu_size, number_of_level))
          rec_C = 0.0_dp
@@ -2231,7 +2136,7 @@ CONTAINS
                               molecule_set, sab_orb_sub, particle_set, cell, blacs_env_sub, &
                               do_ri_aux_basis, do_mixed_basis, group_size_prim, sab_orb_all, do_im_time)
 
-      TYPE(dbcsr_p_type)                                 :: mat_munu
+      TYPE(dbcsr_p_type), INTENT(OUT)                    :: mat_munu
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env
@@ -2246,11 +2151,11 @@ CONTAINS
       TYPE(particle_type), DIMENSION(:), POINTER         :: particle_set
       TYPE(cell_type), POINTER                           :: cell
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env_sub
-      LOGICAL, OPTIONAL                                  :: do_ri_aux_basis, do_mixed_basis
-      INTEGER, OPTIONAL                                  :: group_size_prim
+      LOGICAL, INTENT(IN), OPTIONAL                      :: do_ri_aux_basis, do_mixed_basis
+      INTEGER, INTENT(IN), OPTIONAL                      :: group_size_prim
       TYPE(neighbor_list_set_p_type), DIMENSION(:), &
          OPTIONAL, POINTER                               :: sab_orb_all
-      LOGICAL, OPTIONAL                                  :: do_im_time
+      LOGICAL, INTENT(IN), OPTIONAL                      :: do_im_time
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'create_mat_munu', &
          routineP = moduleN//':'//routineN
@@ -2544,7 +2449,7 @@ CONTAINS
    SUBROUTINE create_matrix_P(mat_P_global, qs_env, mp2_env, para_env, dft_control, atomic_kind_set, &
                               qs_kind_set, atom2d, molecule_kind_set, molecule_set, particle_set, cell)
 
-      TYPE(dbcsr_p_type)                                 :: mat_P_global
+      TYPE(dbcsr_p_type), INTENT(OUT)                    :: mat_P_global
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env
@@ -2623,9 +2528,12 @@ CONTAINS
                                             atom2d, molecule_kind_set, molecule_set, particle_set, cell, &
                                             para_env_sub_im_time_P, blacs_env_sub_im_time_3c)
 
-      TYPE(dbcsr_p_type) :: mat_munu, mat_P_local, mat_P_global, mat_M, mat_dm_occ_global_mao, &
-         mat_dm_virt_global_mao, mat_dm_occ_local, mat_dm_virt_local
-      LOGICAL                                            :: do_mao
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_munu, mat_P_local, mat_P_global, &
+                                                            mat_M
+      TYPE(dbcsr_p_type), INTENT(IN)                     :: mat_dm_occ_global_mao, &
+                                                            mat_dm_virt_global_mao
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_dm_occ_local, mat_dm_virt_local
+      LOGICAL, INTENT(IN)                                :: do_mao
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env
@@ -3169,18 +3077,19 @@ CONTAINS
                                             matrix_s, mo_coeff, mo_coeff_beta, homo, homo_beta, nmo, nspins, unit_nr, &
                                             mo_eigenvalues, mo_eigenvalues_beta)
 
-      TYPE(dbcsr_p_type)                                 :: mat_dm_occ_global_mao, &
+      TYPE(dbcsr_p_type), INTENT(OUT)                    :: mat_dm_occ_global_mao, &
                                                             mat_munu_mao_occ_virt, &
                                                             mat_munu_mao_virt_occ, &
-                                                            mat_dm_virt_global_mao, mat_munu
-      LOGICAL                                            :: do_mao
+                                                            mat_dm_virt_global_mao
+      TYPE(dbcsr_p_type), INTENT(IN)                     :: mat_munu
+      LOGICAL, INTENT(IN)                                :: do_mao
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mao_coeff_occ, mao_coeff_virt, &
                                                             mao_coeff_occ_A, mao_coeff_virt_A, &
                                                             matrix_s
       TYPE(cp_fm_type), POINTER                          :: mo_coeff, mo_coeff_beta
-      INTEGER                                            :: homo, homo_beta, nmo, nspins, unit_nr
+      INTEGER, INTENT(IN)                                :: homo, homo_beta, nmo, nspins, unit_nr
       REAL(KIND=dp), DIMENSION(:), POINTER               :: mo_eigenvalues, mo_eigenvalues_beta
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'create_mao_basis_and_matrices', &
@@ -3330,7 +3239,7 @@ CONTAINS
 
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: scaled_dm_for_maos_occ, rho_ao_kp
       TYPE(cp_fm_type), POINTER                          :: mo_coeff, mo_coeff_beta
-      INTEGER                                            :: nspins, homo, homo_beta, nmo
+      INTEGER, INTENT(IN)                                :: nspins, homo, homo_beta, nmo
       REAL(KIND=dp), DIMENSION(:), POINTER               :: mo_eigenvalues, mo_eigenvalues_beta
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'build_scaled_dm_occ', &
@@ -3458,7 +3367,7 @@ CONTAINS
    SUBROUTINE allocate_and_set_identity_dbscr(id_mat, rho_ao_kp, nspin)
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: id_mat
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: rho_ao_kp
-      INTEGER                                            :: nspin
+      INTEGER, INTENT(IN)                                :: nspin
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'allocate_and_set_identity_dbscr', &
          routineP = moduleN//':'//routineN
@@ -3492,7 +3401,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE mao_build_trafo_A(mao_coeff_A, mao_coeff, matrix_s, nspins)
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mao_coeff_A, mao_coeff, matrix_s
-      INTEGER                                            :: nspins
+      INTEGER, INTENT(IN)                                :: nspins
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'mao_build_trafo_A', &
          routineP = moduleN//':'//routineN
@@ -3550,7 +3459,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE clean_up_im_time_t(mat_P_global, mat_dm_occ_global_mao, mat_dm_virt_global_mao, &
                                  para_env_sub_im_time_3c)
-      TYPE(dbcsr_p_type)                                 :: mat_P_global, mat_dm_occ_global_mao, &
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_P_global, mat_dm_occ_global_mao, &
                                                             mat_dm_virt_global_mao
       TYPE(cp_para_env_type), POINTER                    :: para_env_sub_im_time_3c
 
@@ -3565,7 +3474,7 @@ CONTAINS
 
       CALL cp_para_env_release(para_env_sub_im_time_3c)
 
-   END SUBROUTINE
+   END SUBROUTINE clean_up_im_time_t
 
 ! **************************************************************************************************
 !> \brief ...
@@ -3594,14 +3503,14 @@ CONTAINS
                                para_env_sub_im_time_3c, para_env_sub_im_time_P, mao_coeff_occ, &
                                mao_coeff_virt, mao_coeff_occ_A, mao_coeff_virt_A, mp2_env)
 
-      TYPE(dbcsr_p_type) :: mat_munu, mat_P_local, mat_P_global, mat_M, mat_dm_occ_global_mao, &
-         mat_dm_virt_global_mao, mat_munu_mao_occ_virt, mat_munu_mao_virt_occ, mat_dm_occ_local, &
-         mat_dm_virt_local
+      TYPE(dbcsr_p_type), INTENT(INOUT) :: mat_munu, mat_P_local, mat_P_global, mat_M, &
+         mat_dm_occ_global_mao, mat_dm_virt_global_mao, mat_munu_mao_occ_virt, &
+         mat_munu_mao_virt_occ, mat_dm_occ_local, mat_dm_virt_local
       TYPE(cp_para_env_type), POINTER                    :: para_env_sub_im_time_3c, &
                                                             para_env_sub_im_time_P
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mao_coeff_occ, mao_coeff_virt, &
                                                             mao_coeff_occ_A, mao_coeff_virt_A
-      TYPE(mp2_type)                                     :: mp2_env
+      TYPE(mp2_type), POINTER                            :: mp2_env
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'clean_up_im_time', &
          routineP = moduleN//':'//routineN
@@ -3699,11 +3608,11 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE create_mat_M(mat_M, blacs_env_sub_P, nblkrows_total, row_blk_sizes, col_blk_sizes, mepos_P_from_RI_row)
 
-      TYPE(dbcsr_p_type)                                 :: mat_M
+      TYPE(dbcsr_p_type), INTENT(OUT)                    :: mat_M
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env_sub_P
-      INTEGER                                            :: nblkrows_total
+      INTEGER, INTENT(IN)                                :: nblkrows_total
       INTEGER, DIMENSION(:), POINTER                     :: row_blk_sizes, col_blk_sizes
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: mepos_P_from_RI_row
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(OUT)    :: mepos_P_from_RI_row
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'create_mat_M', routineP = moduleN//':'//routineN
 
@@ -3761,19 +3670,18 @@ CONTAINS
 !> \param n_group_col ...
 !> \author Jan Wilhelm
 ! **************************************************************************************************
-   SUBROUTINE generate_integer_product(num_pe, n_group_row, n_group_col)
+   PURE SUBROUTINE generate_integer_product(num_pe, n_group_row, n_group_col)
 
-      INTEGER                                            :: num_pe, n_group_row, n_group_col
+      INTEGER, INTENT(IN)                                :: num_pe
+      INTEGER, INTENT(OUT)                               :: n_group_row, n_group_col
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'generate_integer_product', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: a_int, b_int, handle, num_pe_temp_int, &
-                                                            sqrt_int, square_int, x_int
+      INTEGER                                            :: a_int, b_int, num_pe_temp_int, sqrt_int, &
+                                                            square_int, x_int
       LOGICAL                                            :: stay_while
       REAL(KIND=dp)                                      :: num_pe_real, offset_real, square_real
-
-      CALL timeset(routineN, handle)
 
       ! check whether num_pe is odd
       num_pe_temp_int = num_pe
@@ -3837,9 +3745,7 @@ CONTAINS
 
       END IF
 
-      CALL timestop(handle)
-
-   END SUBROUTINE
+   END SUBROUTINE generate_integer_product
 
 ! **************************************************************************************************
 !> \brief ...
@@ -3853,10 +3759,10 @@ CONTAINS
 !> \param row_blk_sizes ...
 !> \author Jan Wilhelm
 ! **************************************************************************************************
-   SUBROUTINE get_start_end_size_indx(start_indx, end_indx, size_indx, nblkrows_total, itmp_1, itmp_2, &
-                                      row_blk_offset, row_blk_sizes)
-      INTEGER                                            :: start_indx, end_indx, size_indx, &
-                                                            nblkrows_total, itmp_1, itmp_2
+   PURE SUBROUTINE get_start_end_size_indx(start_indx, end_indx, size_indx, nblkrows_total, itmp_1, itmp_2, &
+                                           row_blk_offset, row_blk_sizes)
+      INTEGER, INTENT(INOUT)                             :: start_indx, end_indx, size_indx
+      INTEGER, INTENT(IN)                                :: nblkrows_total, itmp_1, itmp_2
       INTEGER, DIMENSION(:), POINTER                     :: row_blk_offset, row_blk_sizes
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_start_end_size_indx', &
@@ -3886,7 +3792,7 @@ CONTAINS
          size_indx = 0
       END IF
 
-   END SUBROUTINE
+   END SUBROUTINE get_start_end_size_indx
 
 ! **************************************************************************************************
 !> \brief ...
@@ -3896,9 +3802,10 @@ CONTAINS
 !> \param blk_sizes ...
 !> \author Jan Wilhelm
 ! **************************************************************************************************
-   SUBROUTINE get_blk_from_indx(indx, blk, blk_offset, blk_sizes)
+   PURE SUBROUTINE get_blk_from_indx(indx, blk, blk_offset, blk_sizes)
 
-      INTEGER                                            :: indx, blk
+      INTEGER, INTENT(IN)                                :: indx
+      INTEGER, INTENT(OUT)                               :: blk
       INTEGER, DIMENSION(:), POINTER                     :: blk_offset, blk_sizes
 
       INTEGER                                            :: iblk, nblkrows_total
@@ -3915,7 +3822,7 @@ CONTAINS
 
       END DO
 
-   END SUBROUTINE
+   END SUBROUTINE get_blk_from_indx
 
 ! **************************************************************************************************
 !> \brief ...
@@ -3924,10 +3831,10 @@ CONTAINS
 !> \param eps_rho_rspace_old ...
 !> \param eps_gvg_rspace_old ...
 ! **************************************************************************************************
-   SUBROUTINE get_eps_old(dft_control, eps_pgf_orb_old, eps_rho_rspace_old, eps_gvg_rspace_old)
+   PURE SUBROUTINE get_eps_old(dft_control, eps_pgf_orb_old, eps_rho_rspace_old, eps_gvg_rspace_old)
 
       TYPE(dft_control_type), POINTER                    :: dft_control
-      REAL(kind=dp)                                      :: eps_pgf_orb_old, eps_rho_rspace_old, &
+      REAL(kind=dp), INTENT(OUT)                         :: eps_pgf_orb_old, eps_rho_rspace_old, &
                                                             eps_gvg_rspace_old
 
       ! re-init the radii to be able to generate pair lists with MP2-appropriate screening
@@ -3935,6 +3842,6 @@ CONTAINS
       eps_rho_rspace_old = dft_control%qs_control%eps_rho_rspace
       eps_gvg_rspace_old = dft_control%qs_control%eps_gvg_rspace
 
-   END SUBROUTINE
+   END SUBROUTINE get_eps_old
 
 END MODULE mp2_gpw

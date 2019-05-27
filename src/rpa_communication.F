@@ -31,13 +31,18 @@ MODULE rpa_communication
    USE dbcsr_api,                       ONLY: dbcsr_p_type,&
                                               dbcsr_type,&
                                               dbcsr_type_no_symmetry
+   USE group_dist_types,                ONLY: create_group_dist,&
+                                              get_group_dist,&
+                                              group_dist_d1_type,&
+                                              release_group_dist
    USE kinds,                           ONLY: dp
    USE message_passing,                 ONLY: mp_irecv,&
                                               mp_isend,&
                                               mp_sum,&
                                               mp_wait,&
                                               mp_waitall
-   USE mp2_ri_grad_util,                ONLY: fm2array
+   USE mp2_ri_grad_util,                ONLY: fm2array,&
+                                              prepare_redistribution
    USE mp2_types,                       ONLY: integ_mat_buffer_type
    USE util,                            ONLY: get_limit
 #include "./base/base_uses.f90"
@@ -77,12 +82,12 @@ CONTAINS
                                 number_of_rec, number_of_send, &
                                 map_send_size, map_rec_size, local_size_source, para_env_RPA)
       TYPE(cp_fm_type), POINTER                          :: fm_mat_source, fm_mat_dest
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: RPA_proc_map
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: RPA_proc_map
       TYPE(integ_mat_buffer_type), ALLOCATABLE, &
-         DIMENSION(:)                                    :: buffer_rec, buffer_send
-      INTEGER                                            :: number_of_rec, number_of_send
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: map_send_size, map_rec_size
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: local_size_source
+         DIMENSION(:), INTENT(OUT)                       :: buffer_rec, buffer_send
+      INTEGER, INTENT(OUT)                               :: number_of_rec, number_of_send
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(OUT)    :: map_send_size, map_rec_size
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(OUT) :: local_size_source
       TYPE(cp_para_env_type), POINTER                    :: para_env_RPA
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'initialize_buffer', &
@@ -335,12 +340,12 @@ CONTAINS
                               number_of_send, &
                               map_send_size, map_rec_size, local_size_source, para_env_RPA)
       TYPE(cp_fm_type), POINTER                          :: fm_mat_source, fm_mat_dest
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: RPA_proc_map
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: RPA_proc_map
       TYPE(integ_mat_buffer_type), ALLOCATABLE, &
-         DIMENSION(:)                                    :: buffer_rec, buffer_send
-      INTEGER                                            :: number_of_send
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: map_send_size, map_rec_size
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: local_size_source
+         DIMENSION(:), INTENT(INOUT)                     :: buffer_rec, buffer_send
+      INTEGER, INTENT(IN)                                :: number_of_send
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: map_send_size, map_rec_size
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(IN)  :: local_size_source
       TYPE(cp_para_env_type), POINTER                    :: para_env_RPA
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'fm_redistribute', &
@@ -528,12 +533,13 @@ CONTAINS
    SUBROUTINE release_buffer(RPA_proc_map, buffer_rec, buffer_send, &
                              number_of_rec, number_of_send, &
                              map_send_size, map_rec_size, local_size_source)
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: RPA_proc_map
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: RPA_proc_map
       TYPE(integ_mat_buffer_type), ALLOCATABLE, &
-         DIMENSION(:)                                    :: buffer_rec, buffer_send
-      INTEGER                                            :: number_of_rec, number_of_send
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: map_send_size, map_rec_size
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: local_size_source
+         DIMENSION(:), INTENT(INOUT)                     :: buffer_rec, buffer_send
+      INTEGER, INTENT(IN)                                :: number_of_rec, number_of_send
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: map_send_size, map_rec_size
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), &
+         INTENT(INOUT)                                   :: local_size_source
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'release_buffer', routineP = moduleN//':'//routineN
 
@@ -588,24 +594,23 @@ CONTAINS
       TYPE(cp_fm_type), POINTER                          :: fm_mat_Gamma_3
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: dbcsr_Gamma_3
       TYPE(cp_para_env_type), POINTER                    :: para_env_RPA, para_env_sub
-      INTEGER                                            :: homo, virtual
+      INTEGER, INTENT(IN)                                :: homo, virtual
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_o
-      INTEGER                                            :: ngroup, my_group_L_start, &
+      INTEGER, INTENT(IN)                                :: ngroup, my_group_L_start, &
                                                             my_group_L_end, my_group_L_size, &
                                                             dimen_RI
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'gamma_fm_to_dbcsr', &
          routineP = moduleN//':'//routineN
 
-      INTEGER :: dimen_ia, dummy_proc, handle, i, i_global, i_local, iaia, iib, iii, iproc, &
-         itmp(2), j_global, j_local, jjb, jjj, kkb, my_ia_end, my_ia_size, my_ia_start, mypcol, &
-         myprow, ncol_block, ncol_local, npcol, nprow, nrow_block, nrow_local, number_of_rec, &
+      INTEGER :: dimen_ia, dummy_proc, handle, i, i_global, i_local, iaia, iib, iii, itmp(2), &
+         j_global, j_local, jjb, jjj, kkb, my_ia_end, my_ia_size, my_ia_start, mypcol, myprow, &
+         ncol_block, ncol_local, npcol, nprow, nrow_block, nrow_local, number_of_rec, &
          number_of_send, proc_receive, proc_send, proc_shift, rec_counter, rec_iaia_end, &
          rec_iaia_size, rec_iaia_start, rec_pcol, rec_prow, ref_send_pcol, ref_send_prow, &
          send_counter, send_pcol, send_prow, size_rec_buffer, size_send_buffer
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: ends_ia, iii_vet, map_rec_size, &
-                                                            map_send_size, proc_map, req_send, &
-                                                            sizes_ia, starts_ia, sub_proc_map
+      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: iii_vet, map_rec_size, map_send_size, &
+                                                            proc_map, req_send, sub_proc_map
       INTEGER, ALLOCATABLE, DIMENSION(:, :) :: grid_2_mepos, grid_ref_2_send_pos, &
          group_grid_2_mepos, indices_map_my, mepos_2_grid, mepos_2_grid_group, sizes
       INTEGER, DIMENSION(:), POINTER                     :: col_indices, row_indices
@@ -614,6 +619,7 @@ CONTAINS
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env
       TYPE(cp_fm_struct_type), POINTER                   :: fm_struct
       TYPE(cp_fm_type), POINTER                          :: fm_ia
+      TYPE(group_dist_d1_type)                           :: gd_ia
       TYPE(index_map), ALLOCATABLE, DIMENSION(:)         :: indices_rec
       TYPE(integ_mat_buffer_type), ALLOCATABLE, &
          DIMENSION(:)                                    :: buffer_rec, buffer_send
@@ -623,28 +629,13 @@ CONTAINS
       dimen_ia = virtual*homo
 
       ! Prepare sizes for a 2D array
-      ALLOCATE (sizes_ia(0:para_env_sub%num_pe-1))
-      sizes_ia = 0
-      ALLOCATE (starts_ia(0:para_env_sub%num_pe-1))
-      starts_ia = 0
-      ALLOCATE (ends_ia(0:para_env_sub%num_pe-1))
-      ends_ia = 0
-
-      DO iproc = 0, para_env_sub%num_pe-1
-         itmp = get_limit(dimen_ia, para_env_sub%num_pe, iproc)
-         starts_ia(iproc) = itmp(1)
-         ends_ia(iproc) = itmp(2)
-         sizes_ia(iproc) = itmp(2)-itmp(1)+1
-      END DO
-
-      my_ia_start = starts_ia(para_env_sub%mepos)
-      my_ia_end = ends_ia(para_env_sub%mepos)
-      my_ia_size = sizes_ia(para_env_sub%mepos)
+      CALL create_group_dist(gd_ia, para_env_sub%num_pe, dimen_ia)
+      CALL get_group_dist(gd_ia, para_env_sub%mepos, my_ia_start, my_ia_end, my_ia_size)
 
       ! Make a 2D array intermediate
 
       CALL prepare_redistribution(para_env_RPA, para_env_sub, ngroup, &
-                                  proc_map, sizes, group_grid_2_mepos, mepos_2_grid_group, &
+                                  proc_map, group_grid_2_mepos, mepos_2_grid_group, sizes, &
                                   fm_mat_Gamma_3)
 
       CALL fm2array(Gamma_2D, dimen_ia, dimen_RI, para_env_RPA, proc_map, &
@@ -799,9 +790,7 @@ CONTAINS
             ! create the indices array
             ALLOCATE (indices_rec(rec_counter)%map(2, size_rec_buffer))
             indices_rec(rec_counter)%map = 0
-            rec_iaia_start = starts_ia(proc_receive)
-            rec_iaia_end = ends_ia(proc_receive)
-            rec_iaia_size = sizes_ia(proc_receive)
+            CALL get_group_dist(gd_ia, proc_receive, rec_iaia_start, rec_iaia_end, rec_iaia_size)
             iii = 0
             DO iaia = rec_iaia_start, rec_iaia_end
                i_global = (iaia-1)/virtual+1
@@ -968,6 +957,7 @@ CONTAINS
       DEALLOCATE (sub_proc_map)
       DEALLOCATE (grid_2_mepos)
       DEALLOCATE (mepos_2_grid)
+      CALL release_group_dist(gd_ia)
 
       ! release buffer matrix
       CALL cp_fm_release(fm_ia)
@@ -977,69 +967,5 @@ CONTAINS
       CALL timestop(handle)
 
    END SUBROUTINE gamma_fm_to_dbcsr
-
-! **************************************************************************************************
-!> \brief ...
-!> \param para_env ...
-!> \param para_env_sub ...
-!> \param ngroup ...
-!> \param proc_map ...
-!> \param sizes ...
-!> \param group_grid_2_mepos ...
-!> \param mepos_2_grid_group ...
-!> \param fm_mat_Gamma_3 ...
-! **************************************************************************************************
-   SUBROUTINE prepare_redistribution(para_env, para_env_sub, ngroup, &
-                                     proc_map, sizes, group_grid_2_mepos, mepos_2_grid_group, &
-                                     fm_mat_Gamma_3)
-      TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
-      INTEGER                                            :: ngroup
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: proc_map
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: sizes, group_grid_2_mepos, &
-                                                            mepos_2_grid_group
-      TYPE(cp_fm_type), POINTER                          :: fm_mat_Gamma_3
-
-      INTEGER                                            :: i, ncol_local, nrow_local, pos_group, &
-                                                            pos_sub
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: pos_info
-
-      ALLOCATE (proc_map(-para_env%num_pe:2*para_env%num_pe-1))
-      proc_map = 0
-      ALLOCATE (pos_info(0:para_env%num_pe-1))
-      pos_info = 0
-      pos_info(para_env%mepos) = para_env_sub%mepos
-      CALL mp_sum(pos_info, para_env%group)
-
-      ALLOCATE (group_grid_2_mepos(0:para_env_sub%num_pe-1, 0:ngroup-1))
-      group_grid_2_mepos = 0
-      ALLOCATE (mepos_2_grid_group(0:para_env%num_pe-1, 2))
-      mepos_2_grid_group = 0
-
-      DO i = 0, para_env%num_pe-1
-         proc_map(i) = i
-         proc_map(-i-1) = para_env%num_pe-i-1
-         proc_map(para_env%num_pe+i) = i
-         ! calculate postition of the group
-         pos_group = i/para_env_sub%num_pe
-         ! calculate postition in the subgroup
-         pos_sub = pos_info(i)
-         ! fill the map from the grid of groups to process
-         group_grid_2_mepos(pos_sub, pos_group) = i
-         ! and the opposite, from the global pos to the grid pos
-         mepos_2_grid_group(i, 1) = pos_sub
-         mepos_2_grid_group(i, 2) = pos_group
-      ENDDO
-
-      CALL cp_fm_get_info(matrix=fm_mat_Gamma_3, &
-                          nrow_local=nrow_local, &
-                          ncol_local=ncol_local)
-
-      ALLOCATE (sizes(2, 0:para_env%num_pe-1))
-      sizes = 0
-      sizes(1, para_env%mepos) = nrow_local
-      sizes(2, para_env%mepos) = ncol_local
-      CALL mp_sum(sizes, para_env%group)
-
-   END SUBROUTINE prepare_redistribution
 
 END MODULE rpa_communication

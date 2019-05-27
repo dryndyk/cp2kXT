@@ -112,7 +112,6 @@ CONTAINS
 !> \param Eigenval ...
 !> \param nmo ...
 !> \param num_integ_points ...
-!> \param jquad ...
 !> \param cut_memory ...
 !> \param unit_nr ...
 !> \param mp2_env ...
@@ -135,7 +134,7 @@ CONTAINS
                                     weights_cos_tf_t_to_w, &
                                     tj, tau_tj, e_fermi, eps_filter, &
                                     alpha, eps_filter_im_time, Eigenval, nmo, &
-                                    num_integ_points, jquad, cut_memory, unit_nr, &
+                                    num_integ_points, cut_memory, unit_nr, &
                                     mp2_env, para_env, &
                                     stabilize_exp, qs_env, index_to_cell_3c, cell_to_index_3c, &
                                     has_mat_P_blocks, do_ri_sos_laplace_mp2)
@@ -143,35 +142,39 @@ CONTAINS
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_P_omega
       TYPE(cp_fm_type), POINTER :: fm_scaled_dm_occ_tau, fm_scaled_dm_virt_tau, fm_mo_coeff_occ, &
          fm_mo_coeff_virt, fm_mo_coeff_occ_scaled, fm_mo_coeff_virt_scaled
-      TYPE(dbcsr_p_type)                                 :: mat_P_global
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_P_global
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: matrix_s, mao_coeff_occ, mao_coeff_virt
-      INTEGER                                            :: ispin
+      INTEGER, INTENT(IN)                                :: ispin
       TYPE(dbcsr_t_type), INTENT(INOUT)                  :: t_3c_M
       TYPE(dbcsr_t_type), ALLOCATABLE, &
          DIMENSION(:, :, :), INTENT(INOUT)               :: t_3c_O_cut
       INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: starts_array_mc_t, ends_array_mc_t
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: weights_cos_tf_t_to_w
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tj, tau_tj
-      REAL(KIND=dp)                                      :: e_fermi, eps_filter, alpha, &
+      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :), &
+         INTENT(IN)                                      :: weights_cos_tf_t_to_w
+      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:), &
+         INTENT(IN)                                      :: tj, tau_tj
+      REAL(KIND=dp), INTENT(IN)                          :: e_fermi, eps_filter, alpha, &
                                                             eps_filter_im_time
-      REAL(KIND=dp), DIMENSION(:)                        :: Eigenval
-      INTEGER                                            :: nmo, num_integ_points, jquad, &
-                                                            cut_memory, unit_nr
+      REAL(KIND=dp), DIMENSION(:), INTENT(IN)            :: Eigenval
+      INTEGER, INTENT(IN)                                :: nmo, num_integ_points, cut_memory, &
+                                                            unit_nr
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      REAL(KIND=dp)                                      :: stabilize_exp
+      REAL(KIND=dp), INTENT(IN)                          :: stabilize_exp
       TYPE(qs_environment_type), POINTER                 :: qs_env
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: index_to_cell_3c
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :, :, :)     :: has_mat_P_blocks
-      LOGICAL                                            :: do_ri_sos_laplace_mp2
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(IN)  :: index_to_cell_3c
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(IN)                                      :: cell_to_index_3c
+      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :, :, :), &
+         INTENT(INOUT)                                   :: has_mat_P_blocks
+      LOGICAL, INTENT(IN)                                :: do_ri_sos_laplace_mp2
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'compute_mat_P_omega_t', &
          routineP = moduleN//':'//routineN
 
       INTEGER :: handle, handle4, handle5, handle6, i_cell, i_cell_R_1, i_cell_R_1_minus_S, &
          i_cell_R_1_minus_T, i_cell_R_2, i_cell_R_2_minus_S_minus_T, i_cell_S, i_cell_T, i_mem, &
-         iquad, j_mem, num_3c_repl, num_cells_dm, unit_nr_prv
+         iquad, j_mem, jquad, num_3c_repl, num_cells_dm, unit_nr_prv
       INTEGER(KIND=int_8)                                :: num_flops_mat_P
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
       LOGICAL :: do_Gamma_RPA, do_kpoints_cubic_RPA, first_cycle_im_time, first_cycle_omega_loop, &
@@ -185,6 +188,7 @@ CONTAINS
 
       memory_info = mp2_env%ri_rpa_im_time%memory_info
       do_kpoints_cubic_RPA = qs_env%mp2_env%ri_rpa_im_time%do_im_time_kpoints
+      do_Gamma_RPA = .NOT. do_kpoints_cubic_RPA
       num_3c_repl = MAXVAL(cell_to_index_3c)
 
       CALL timeset(routineN, handle)
@@ -245,7 +249,7 @@ CONTAINS
                   IF (unit_nr_prv > 0) WRITE (UNIT=unit_nr_prv, FMT="(T3,A,I2,1X,I2)") &
                      "RPA_IM_TIME_INFO| Memory Cut iteration", i_mem, j_mem
 
-                  IF (do_gamma_RPA) THEN
+                  IF (do_Gamma_RPA) THEN
                      IF (.NOT. dbcsr_t_need_contract(t_3c_O_cut(j_mem, 1, 1), &
                                                      t_dm_occ_cut(i_mem, 1), &
                                                      [3], [1])) CYCLE
@@ -481,7 +485,6 @@ CONTAINS
 !> \param n_group_col ...
 !> \param group_size_P ...
 !> \param num_integ_points ...
-!> \param jquad ...
 !> \param cut_memory ...
 !> \param cut_RI ...
 !> \param unit_nr ...
@@ -533,7 +536,7 @@ CONTAINS
                                   mat_dm_loc_occ_cut, mat_dm_loc_virt_cut, weights_cos_tf_t_to_w, &
                                   tj, tau_tj, e_fermi, eps_filter, &
                                   alpha, eps_filter_im_time, Eigenval, nmo, n_group_col, &
-                                  group_size_P, num_integ_points, jquad, cut_memory, cut_RI, unit_nr, &
+                                  group_size_P, num_integ_points, cut_memory, cut_RI, unit_nr, &
                                   mp2_env, para_env, para_env_sub, &
                                   starts_array_prim_col, ends_array_prim_col, &
                                   starts_array_prim_row, ends_array_prim_row, &
@@ -571,8 +574,8 @@ CONTAINS
                                                             eps_filter_im_time
       REAL(KIND=dp), DIMENSION(:)                        :: Eigenval
       INTEGER                                            :: nmo, n_group_col, group_size_P, &
-                                                            num_integ_points, jquad, cut_memory, &
-                                                            cut_RI, unit_nr
+                                                            num_integ_points, cut_memory, cut_RI, &
+                                                            unit_nr
       TYPE(mp2_type), POINTER                            :: mp2_env
       TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
       INTEGER, ALLOCATABLE, DIMENSION(:, :) :: starts_array_prim_col, ends_array_prim_col, &
@@ -608,7 +611,7 @@ CONTAINS
 
       INTEGER :: handle, handle4, handle5, i_cell, i_cell_R_1, i_cell_R_1_minus_S, &
          i_cell_R_1_minus_T, i_cell_R_2, i_cell_R_2_minus_S_minus_T, i_cell_S, i_cell_T, i_cut_RI, &
-         i_mem, iquad, j_mem, my_group_L_size, num_cells_dm
+         i_mem, iquad, j_mem, jquad, my_group_L_size, num_cells_dm
       INTEGER(KIND=int_8)                                :: flop_occ, flop_virt, num_flops_mat_P
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
       LOGICAL :: do_kpoints_cubic_RPA, first_cycle_im_time, first_cycle_omega_loop, memory_info, &
@@ -629,7 +632,7 @@ CONTAINS
                                     weights_cos_tf_t_to_w, &
                                     tj, tau_tj, e_fermi, eps_filter, &
                                     alpha, eps_filter_im_time, Eigenval, nmo, &
-                                    num_integ_points, jquad, cut_memory, unit_nr, &
+                                    num_integ_points, cut_memory, unit_nr, &
                                     mp2_env, para_env, &
                                     stabilize_exp, qs_env, index_to_cell_3c, cell_to_index_3c, &
                                     has_mat_P_blocks, do_ri_sos_laplace_mp2)
@@ -951,13 +954,14 @@ CONTAINS
                                               jquad, i_mem, j_mem, i_cell_R_1, i_cell_R_2, &
                                               para_env, has_mat_P_blocks, num_flops_mat_P)
 
-      LOGICAL, ALLOCATABLE, DIMENSION(:)                 :: does_mat_P_T_tau_have_blocks
-      TYPE(dbcsr_p_type)                                 :: mat_P_global
-      INTEGER                                            :: i_cell_T, jquad, i_mem, j_mem, &
+      LOGICAL, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: does_mat_P_T_tau_have_blocks
+      TYPE(dbcsr_p_type), INTENT(IN)                     :: mat_P_global
+      INTEGER, INTENT(IN)                                :: i_cell_T, jquad, i_mem, j_mem, &
                                                             i_cell_R_1, i_cell_R_2
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :, :, :)     :: has_mat_P_blocks
-      INTEGER(KIND=int_8)                                :: num_flops_mat_P
+      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :, :, :), &
+         INTENT(INOUT)                                   :: has_mat_P_blocks
+      INTEGER(KIND=int_8), INTENT(INOUT)                 :: num_flops_mat_P
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'check_if_mat_P_T_tau_has_blocks', &
          routineP = moduleN//':'//routineN
@@ -999,9 +1003,9 @@ CONTAINS
    SUBROUTINE sync_does_mat_P_T_tau_have_blocks(does_mat_P_T_tau_have_blocks, para_env, unit_nr, i_cell_T, &
                                                 jquad, index_to_cell_dm)
 
-      LOGICAL, ALLOCATABLE, DIMENSION(:)                 :: does_mat_P_T_tau_have_blocks
+      LOGICAL, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: does_mat_P_T_tau_have_blocks
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER                                            :: unit_nr, i_cell_T, jquad
+      INTEGER, INTENT(IN)                                :: unit_nr, i_cell_T, jquad
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'sync_does_mat_P_T_tau_have_blocks', &
@@ -1082,7 +1086,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE zero_mat_P_omega(mat_P_omega, num_integ_points, nkp)
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_P_omega
-      INTEGER                                            :: num_integ_points, nkp
+      INTEGER, INTENT(IN)                                :: num_integ_points, nkp
 
       INTEGER                                            :: i_kp, jquad
 
@@ -1124,15 +1128,19 @@ CONTAINS
 
       TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_dm_global
-      INTEGER                                            :: nmo, jquad
+      INTEGER, INTENT(IN)                                :: nmo, jquad
       TYPE(dbcsr_p_type), DIMENSION(:, :, :), POINTER    :: mat_dm_loc_cut
-      INTEGER, DIMENSION(:)                              :: starts_array_cm, ends_array_cm
-      INTEGER                                            :: i_mem, cut_memory, cut_RI
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: non_zero_blocks_3c
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :, :)        :: non_zero_blocks_3c_cut
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: multiply_needed
-      LOGICAL                                            :: do_kpoints_cubic_RPA
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c
+      INTEGER, DIMENSION(:), INTENT(IN)                  :: starts_array_cm, ends_array_cm
+      INTEGER, INTENT(IN)                                :: i_mem, cut_memory, cut_RI
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(IN)                                      :: non_zero_blocks_3c
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :, :), &
+         INTENT(IN)                                      :: non_zero_blocks_3c_cut
+      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(INOUT)                                   :: multiply_needed
+      LOGICAL, INTENT(IN)                                :: do_kpoints_cubic_RPA
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(IN)                                      :: cell_to_index_3c
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'replicate_dm_to_subgroup', &
@@ -1547,10 +1555,10 @@ CONTAINS
    SUBROUTINE fill_mat_P_global_from_mat_P_local(mat_P_global, mat_P_global_copy, mat_P_local, para_env, &
                                                  eps_filter_im_time)
 
-      TYPE(dbcsr_p_type)                                 :: mat_P_global, mat_P_global_copy, &
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_P_global, mat_P_global_copy, &
                                                             mat_P_local
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      REAL(KIND=dp)                                      :: eps_filter_im_time
+      REAL(KIND=dp), INTENT(IN)                          :: eps_filter_im_time
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'fill_mat_P_global_from_mat_P_local', &
          routineP = moduleN//':'//routineN
@@ -1809,10 +1817,10 @@ CONTAINS
    SUBROUTINE print_occupation_3c(mat_munu_array, unit_nr, matrix_name, para_env, cut_RI)
 
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mat_munu_array
-      INTEGER                                            :: unit_nr
-      CHARACTER(len=*)                                   :: matrix_name
+      INTEGER, INTENT(IN)                                :: unit_nr
+      CHARACTER(len=*), INTENT(IN)                       :: matrix_name
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER                                            :: cut_RI
+      INTEGER, INTENT(IN)                                :: cut_RI
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'print_occupation_3c', &
          routineP = moduleN//':'//routineN
@@ -1903,10 +1911,10 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE print_occupation_2c(mat_munu, unit_nr, matrix_name, para_env, one_number)
       TYPE(dbcsr_type), POINTER                          :: mat_munu
-      INTEGER                                            :: unit_nr
-      CHARACTER(len=*)                                   :: matrix_name
+      INTEGER, INTENT(IN)                                :: unit_nr
+      CHARACTER(len=*), INTENT(IN)                       :: matrix_name
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      LOGICAL, OPTIONAL                                  :: one_number
+      LOGICAL, INTENT(IN), OPTIONAL                      :: one_number
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'print_occupation_2c', &
          routineP = moduleN//':'//routineN
@@ -2039,27 +2047,28 @@ CONTAINS
 
       TYPE(cp_fm_type), POINTER                          :: fm_scaled_dm_occ_tau, &
                                                             fm_scaled_dm_virt_tau
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tau_tj
-      INTEGER                                            :: num_integ_points, nmo
+      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:), &
+         INTENT(IN)                                      :: tau_tj
+      INTEGER, INTENT(IN)                                :: num_integ_points, nmo
       TYPE(cp_fm_type), POINTER                          :: fm_mo_coeff_occ, fm_mo_coeff_virt, &
                                                             fm_mo_coeff_occ_scaled, &
                                                             fm_mo_coeff_virt_scaled
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_dm_occ_global, mat_dm_virt_global
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: matrix_s, mao_coeff_occ, mao_coeff_virt
-      INTEGER                                            :: ispin
-      REAL(KIND=dp), DIMENSION(:)                        :: Eigenval
-      REAL(KIND=dp)                                      :: e_fermi, eps_filter
-      LOGICAL                                            :: memory_info
-      INTEGER                                            :: unit_nr
+      INTEGER, INTENT(IN)                                :: ispin
+      REAL(KIND=dp), DIMENSION(:), INTENT(IN)            :: Eigenval
+      REAL(KIND=dp), INTENT(IN)                          :: e_fermi, eps_filter
+      LOGICAL, INTENT(IN)                                :: memory_info
+      INTEGER, INTENT(IN)                                :: unit_nr
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER                                            :: jquad
-      LOGICAL                                            :: do_mao
-      REAL(KIND=dp)                                      :: stabilize_exp
-      LOGICAL                                            :: do_kpoints_cubic_RPA
+      INTEGER, INTENT(IN)                                :: jquad
+      LOGICAL, INTENT(IN)                                :: do_mao
+      REAL(KIND=dp), INTENT(IN)                          :: stabilize_exp
+      LOGICAL, INTENT(IN)                                :: do_kpoints_cubic_RPA
       TYPE(qs_environment_type), POINTER                 :: qs_env
-      INTEGER                                            :: num_cells_dm
+      INTEGER, INTENT(OUT)                               :: num_cells_dm
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
-      LOGICAL, ALLOCATABLE, DIMENSION(:)                 :: does_mat_P_T_tau_have_blocks
+      LOGICAL, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: does_mat_P_T_tau_have_blocks
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'compute_mat_dm_global', &
          routineP = moduleN//':'//routineN
@@ -2269,14 +2278,15 @@ CONTAINS
                                          ends_array_cm_mao_occ, ends_array_cm_mao_virt, &
                                          my_group_L_sizes_im_time, para_env, jquad)
 
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: cycle_due_to_sparse_dm
+      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(INOUT)                                   :: cycle_due_to_sparse_dm
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_dm_occ_global, mat_dm_virt_global
       TYPE(dbcsr_p_type), DIMENSION(:, :, :, :), POINTER :: mat_3c_overl_int_cut
-      INTEGER                                            :: num_integ_points, cut_memory, cut_RI
-      INTEGER, DIMENSION(:) :: starts_array_cm_mao_occ, starts_array_cm_mao_virt, &
+      INTEGER, INTENT(IN)                                :: num_integ_points, cut_memory, cut_RI
+      INTEGER, DIMENSION(:), INTENT(IN) :: starts_array_cm_mao_occ, starts_array_cm_mao_virt, &
          ends_array_cm_mao_occ, ends_array_cm_mao_virt, my_group_L_sizes_im_time
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER                                            :: jquad
+      INTEGER, INTENT(IN)                                :: jquad
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_cycle_due_to_sparse_dm', &
          routineP = moduleN//':'//routineN
@@ -2419,9 +2429,10 @@ CONTAINS
                                      starts_array_cm, ends_array_cm, para_env)
 
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_dm_global
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: non_zero_blocks_in_dm
-      INTEGER                                            :: cut_memory, natom, jquad
-      INTEGER, DIMENSION(:)                              :: starts_array_cm, ends_array_cm
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(INOUT)                                   :: non_zero_blocks_in_dm
+      INTEGER, INTENT(IN)                                :: cut_memory, natom, jquad
+      INTEGER, DIMENSION(:), INTENT(IN)                  :: starts_array_cm, ends_array_cm
       TYPE(cp_para_env_type), POINTER                    :: para_env
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_non_zero_blocks_dm', &
@@ -2516,22 +2527,23 @@ CONTAINS
                                               i_mem, j_mem, buffer_mat_M, eps_filter_im_time, &
                                               do_occ, do_virt)
 
-      TYPE(dbcsr_p_type)                                 :: mat_M_P_munu
+      TYPE(dbcsr_p_type), INTENT(INOUT)                  :: mat_M_P_munu
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mat_M_mu_Pnu
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: my_group_L_starts_im_time, &
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: my_group_L_starts_im_time, &
                                                             my_group_L_sizes_im_time, &
                                                             mepos_P_from_RI_row
-      INTEGER                                            :: n_group_col, cut_RI
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: row_from_LLL
-      INTEGER, ALLOCATABLE, DIMENSION(:, :) :: starts_array_prim_row, ends_array_prim_row, &
-         starts_array_prim_col, ends_array_prim_col, offset_combi_block, &
+      INTEGER, INTENT(IN)                                :: n_group_col, cut_RI
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: row_from_LLL
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(IN) :: starts_array_prim_row, &
+         ends_array_prim_row, starts_array_prim_col, ends_array_prim_col, offset_combi_block, &
          starts_array_prim_fullcol, ends_array_prim_fullcol, starts_array_prim_fullrow, &
          ends_array_prim_fullrow
-      INTEGER                                            :: group_size_P, i_mem, j_mem
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: buffer_mat_M
-      REAL(KIND=dp)                                      :: eps_filter_im_time
-      LOGICAL                                            :: do_occ, do_virt
+      INTEGER, INTENT(IN)                                :: group_size_P, i_mem, j_mem
+      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :), &
+         INTENT(INOUT)                                   :: buffer_mat_M
+      REAL(KIND=dp), INTENT(IN)                          :: eps_filter_im_time
+      LOGICAL, INTENT(IN)                                :: do_occ, do_virt
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'fill_mat_M_P_munu_from_M_mu_Pnu', &
          routineP = moduleN//':'//routineN
@@ -3275,12 +3287,12 @@ CONTAINS
 
       TYPE(dbcsr_p_type), DIMENSION(:, :, :, :), POINTER :: mat_3c_overl_int_cut
       TYPE(dbcsr_p_type), DIMENSION(:, :, :), POINTER    :: mat_3c_overl_int
-      INTEGER                                            :: cut_memory, cut_RI
-      INTEGER, DIMENSION(:)                              :: starts_array_cm, ends_array_cm, &
+      INTEGER, INTENT(IN)                                :: cut_memory, cut_RI
+      INTEGER, DIMENSION(:), INTENT(IN)                  :: starts_array_cm, ends_array_cm, &
                                                             my_group_L_sizes_im_time
-      REAL(KIND=dp)                                      :: eps_filter
-      LOGICAL                                            :: do_kpoints_cubic_RPA, do_gw_im_time
-      INTEGER                                            :: num_3c_repl
+      REAL(KIND=dp), INTENT(IN)                          :: eps_filter
+      LOGICAL, INTENT(IN)                                :: do_kpoints_cubic_RPA, do_gw_im_time
+      INTEGER, INTENT(IN)                                :: num_3c_repl
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'setup_mat_for_mem_cut_3c', &
          routineP = moduleN//':'//routineN
@@ -3523,11 +3535,11 @@ CONTAINS
                                  req_array, do_indx, do_msg)
 
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: num_entries_rec, num_entries_send
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: num_entries_rec, num_entries_send
       TYPE(integ_mat_buffer_type), ALLOCATABLE, &
-         DIMENSION(:)                                    :: buffer_rec, buffer_send
+         DIMENSION(:), INTENT(INOUT)                     :: buffer_rec, buffer_send
       INTEGER, DIMENSION(:, :), POINTER                  :: req_array
-      LOGICAL, OPTIONAL                                  :: do_indx, do_msg
+      LOGICAL, INTENT(IN), OPTIONAL                      :: do_indx, do_msg
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'communicate_buffer', &
          routineP = moduleN//':'//routineN
@@ -3628,19 +3640,19 @@ CONTAINS
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mat_3c_overl_int_gw
       TYPE(cp_fm_type), POINTER                          :: mo_coeff
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: matrix_s
-      INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_virt, homo, &
+      INTEGER, INTENT(IN)                                :: gw_corr_lev_occ, gw_corr_lev_virt, homo, &
                                                             nmo
       TYPE(dbcsr_p_type), INTENT(IN)                     :: mat_dm_virt_local
       TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
-      INTEGER                                            :: cut_RI
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: row_from_LLL, my_group_L_starts_im_time, &
+      INTEGER, INTENT(IN)                                :: cut_RI
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: row_from_LLL, my_group_L_starts_im_time, &
                                                             my_group_L_sizes_im_time
-      LOGICAL                                            :: do_ic_model, do_ic_opt_homo_lumo
+      LOGICAL, INTENT(IN)                                :: do_ic_model, do_ic_opt_homo_lumo
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: mat_3c_overl_nnP_ic, &
                                                             mat_3c_overl_nnP_ic_reflected
       TYPE(qs_environment_type), POINTER                 :: qs_env
-      INTEGER                                            :: unit_nr
-      LOGICAL, OPTIONAL                                  :: do_beta
+      INTEGER, INTENT(IN)                                :: unit_nr
+      LOGICAL, INTENT(IN), OPTIONAL                      :: do_beta
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_mat_3c_overl_int_gw', &
          routineP = moduleN//':'//routineN
@@ -3830,8 +3842,8 @@ CONTAINS
 
       TYPE(dbcsr_p_type), DIMENSION(:)                   :: mat_3c_overl_nnP_ic, mat_3c_overl_int_gw
       TYPE(dbcsr_type), POINTER                          :: mat_mo_coeff_gw
-      INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_virt, homo
-      LOGICAL                                            :: do_ic_opt_homo_lumo
+      INTEGER, INTENT(IN)                                :: gw_corr_lev_occ, gw_corr_lev_virt, homo
+      LOGICAL, INTENT(IN)                                :: do_ic_opt_homo_lumo
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'fill_mat_3c_overl_nnP_ic', &
          routineP = moduleN//':'//routineN
@@ -3949,11 +3961,11 @@ CONTAINS
 
       TYPE(dbcsr_p_type), DIMENSION(:)                   :: mat_3c_overl_int_gw, &
                                                             mat_3c_overl_int_gw_for_mult
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: row_from_LLL, my_group_L_starts_im_time, &
+      INTEGER, ALLOCATABLE, DIMENSION(:), INTENT(IN)     :: row_from_LLL, my_group_L_starts_im_time, &
                                                             my_group_L_sizes_im_time
-      INTEGER                                            :: cut_RI
+      INTEGER, INTENT(IN)                                :: cut_RI
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_virt, homo
+      INTEGER, INTENT(IN)                                :: gw_corr_lev_occ, gw_corr_lev_virt, homo
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'fill_mat_3c_overl_int_gw', &
          routineP = moduleN//':'//routineN
@@ -4328,7 +4340,7 @@ CONTAINS
 
       TYPE(cp_para_env_type), POINTER                    :: para_env, para_env_sub
       TYPE(dbcsr_type), POINTER                          :: mat_dm_global
-      INTEGER                                            :: nmo
+      INTEGER, INTENT(IN)                                :: nmo
       TYPE(dbcsr_type), POINTER                          :: mat_local
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'replicate_mat_to_subgroup_simple', &
@@ -4614,7 +4626,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE clean_up(mat_dm_occ_global, mat_dm_virt_global, does_mat_P_T_tau_have_blocks)
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_dm_occ_global, mat_dm_virt_global
-      LOGICAL, ALLOCATABLE, DIMENSION(:)                 :: does_mat_P_T_tau_have_blocks
+      LOGICAL, ALLOCATABLE, DIMENSION(:), INTENT(INOUT)  :: does_mat_P_T_tau_have_blocks
 
       CALL dbcsr_deallocate_matrix_set(mat_dm_occ_global)
       CALL dbcsr_deallocate_matrix_set(mat_dm_virt_global)
@@ -4633,11 +4645,12 @@ CONTAINS
 !> \param do_beta ...
 ! **************************************************************************************************
    SUBROUTINE reflect_mat_row(mat_reflected, mat_orig, para_env, qs_env, unit_nr, do_beta)
-      TYPE(dbcsr_type)                                   :: mat_reflected, mat_orig
+      TYPE(dbcsr_type), INTENT(INOUT)                    :: mat_reflected
+      TYPE(dbcsr_type), INTENT(IN)                       :: mat_orig
       TYPE(cp_para_env_type), POINTER                    :: para_env
       TYPE(qs_environment_type), POINTER                 :: qs_env
-      INTEGER                                            :: unit_nr
-      LOGICAL                                            :: do_beta
+      INTEGER, INTENT(IN)                                :: unit_nr
+      LOGICAL, INTENT(IN)                                :: do_beta
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'reflect_mat_row', &
          routineP = moduleN//':'//routineN
@@ -4937,8 +4950,8 @@ CONTAINS
    SUBROUTINE kpoint_density_matrices_rpa(kpoint, tau, e_fermi, stabilize_exp, remove_occ, remove_virt)
 
       TYPE(kpoint_type), POINTER                         :: kpoint
-      REAL(KIND=dp)                                      :: tau, e_fermi, stabilize_exp
-      LOGICAL                                            :: remove_occ, remove_virt
+      REAL(KIND=dp), INTENT(IN)                          :: tau, e_fermi, stabilize_exp
+      LOGICAL, INTENT(IN)                                :: remove_occ, remove_virt
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'kpoint_density_matrices_rpa', &
          routineP = moduleN//':'//routineN
@@ -5073,12 +5086,12 @@ CONTAINS
                                 first_jquad)
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_dm_global
       TYPE(qs_environment_type), POINTER                 :: qs_env
-      INTEGER                                            :: ispin, num_integ_points, jquad
-      REAL(KIND=dp)                                      :: e_fermi, tau, stabilize_exp, eps_filter
-      INTEGER                                            :: num_cells_dm
+      INTEGER, INTENT(IN)                                :: ispin, num_integ_points, jquad
+      REAL(KIND=dp), INTENT(IN)                          :: e_fermi, tau, stabilize_exp, eps_filter
+      INTEGER, INTENT(OUT)                               :: num_cells_dm
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
-      LOGICAL                                            :: remove_occ, remove_virt
-      INTEGER                                            :: first_jquad
+      LOGICAL, INTENT(IN)                                :: remove_occ, remove_virt
+      INTEGER, INTENT(IN)                                :: first_jquad
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'compute_transl_dm', &
          routineP = moduleN//':'//routineN
@@ -5290,7 +5303,7 @@ CONTAINS
 
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      REAL(KIND=dp)                                      :: gap, max_eig_diff, e_fermi
+      REAL(KIND=dp), INTENT(OUT)                         :: gap, max_eig_diff, e_fermi
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'gap_and_max_eig_diff_kpoints', &
          routineP = moduleN//':'//routineN
@@ -5376,7 +5389,7 @@ CONTAINS
 !> \param cell ...
 ! **************************************************************************************************
    SUBROUTINE init_cell_index_rpa(cell_grid, cell_to_index, index_to_cell, cell)
-      INTEGER, DIMENSION(3)                              :: cell_grid
+      INTEGER, DIMENSION(3), INTENT(IN)                  :: cell_grid
       INTEGER, DIMENSION(:, :, :), POINTER               :: cell_to_index
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell
       TYPE(cell_type), POINTER                           :: cell
@@ -5505,11 +5518,14 @@ CONTAINS
                                 cell_to_index_3c, index_to_cell_dm, R_minus_S_needed, &
                                 do_kpoints_cubic_RPA)
 
-      INTEGER                                            :: i_cell_R, i_cell_S, i_cell_R_minus_S
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: index_to_cell_3c
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c
+      INTEGER, INTENT(IN)                                :: i_cell_R, i_cell_S
+      INTEGER, INTENT(OUT)                               :: i_cell_R_minus_S
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(IN)  :: index_to_cell_3c
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(IN)                                      :: cell_to_index_3c
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
-      LOGICAL                                            :: R_minus_S_needed, do_kpoints_cubic_RPA
+      LOGICAL, INTENT(OUT)                               :: R_minus_S_needed
+      LOGICAL, INTENT(IN)                                :: do_kpoints_cubic_RPA
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_diff_index_3c', &
          routineP = moduleN//':'//routineN
@@ -5589,13 +5605,14 @@ CONTAINS
                                      R_minus_S_minus_T_needed, &
                                      do_kpoints_cubic_RPA)
 
-      INTEGER                                            :: i_cell_R, i_cell_S, i_cell_T, &
-                                                            i_cell_R_minus_S_minus_T
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: index_to_cell_3c
-      INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c
+      INTEGER, INTENT(IN)                                :: i_cell_R, i_cell_S, i_cell_T
+      INTEGER, INTENT(OUT)                               :: i_cell_R_minus_S_minus_T
+      INTEGER, ALLOCATABLE, DIMENSION(:, :), INTENT(IN)  :: index_to_cell_3c
+      INTEGER, ALLOCATABLE, DIMENSION(:, :, :), &
+         INTENT(IN)                                      :: cell_to_index_3c
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
-      LOGICAL                                            :: R_minus_S_minus_T_needed, &
-                                                            do_kpoints_cubic_RPA
+      LOGICAL, INTENT(OUT)                               :: R_minus_S_minus_T_needed
+      LOGICAL, INTENT(IN)                                :: do_kpoints_cubic_RPA
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_diff_diff_index_3c', &
          routineP = moduleN//':'//routineN
