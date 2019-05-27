@@ -1,7 +1,6 @@
 #!/usr/bin/bash
 
 cp  dftbXT/_build/prog/dftb+/*.mod dftbXT_libs/
-mv  dftbXT_libs/environment.mod dftbXT_libs/environment_1.mod
 cp  dftbXT/_build/prog/dftb+/*.o dftbXT_libs/
 rm  dftbXT_libs/dftbplus.o
 cp  dftbXT/_build/external/mpifx/libmpifx.a dftbXT_libs/

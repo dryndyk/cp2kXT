@@ -1,0 +1,54 @@
+Geometry = NoGeometry{}
+
+Transport {
+  Device {
+    AtomRange = 1 16
+    FirstLayerAtoms = 1
+    ContactPLs = 1 1        
+  }
+  Contact {
+    Id = "source"
+    AtomRange = 17 24
+    FermiLevel = -0.01756396865017   
+    Potential [eV] = 0.
+    Temperature [K] = 293.0
+  }
+  Contact {
+    Id = "drain"
+    AtomRange = 25 32
+    FermiLevel = -0.01756396865017   
+    Potential [eV] = 0.
+    Temperature [K] = 293.0
+  }
+  Task = UploadContacts{}
+}
+
+Hamiltonian = Model {
+  NumStates = 32                
+  HamiltonianFile = H.mtr
+  ReadOverlap = Yes
+  OverlapFile = S.mtr
+  Eigensolver = TransportOnly{}
+}
+
+Analysis = {
+  TransmissionAndDos {
+    Verbosity = 51
+    EnergyRange [eV] = -5.  6.
+    EnergyStep [eV] =0.03
+    TerminalCurrents{
+      EmitterCollector = {"drain" "source"}
+    }
+    WriteLDOS = Yes
+    Region = {
+      Atoms = 1:16
+    }
+  }
+}
+
+
+
+
+
+
+

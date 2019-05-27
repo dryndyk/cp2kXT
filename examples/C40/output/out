@@ -1,0 +1,1750 @@
+
+================================================================================
+==                                                                            ==
+==                              TraNaS OpenSuite                              ==
+==          (integrated open software suite for multiscale modeling)          ==
+==                                                                            ==
+================================================================================
+==                                                                            ==
+==                                CP2K+XT 1.03                                ==
+==                                                                            ==
+== CP2K eXTended version for atomistic quantum transport at nanoscale,        ==
+== many-body nonequilibrium phenomena, material & device modeling             ==
+== Uses the libraries of the DFTB+XT package                                  ==
+== Copyright (C) 2000-2019 CP2K developers group                              ==
+== Copyright (C) 2017-2019 DFTB+ developers group                             ==
+== Copyright (C) 2018-2019 Dmitry A. Ryndyk                                   ==
+==                                                                            ==
+================================================================================
+==                                                                            ==
+== Please cite as:                                                            ==
+== TraNaS OpenSuite [1], partially based on the DFTB+ [2,3] source code       ==
+== and the CP2K software package [4] with a Quickstep module [5].             ==
+==                                                                            ==
+== [1] TraNaS OpenSuite, tranas.org/opensuite                                 ==
+== [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ==
+==     J. Phys. Chem. A 111, 5678 (2007); dftbplus.org                        ==
+== [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ==
+==     New Journal of Physics 10, 065022 (2008)                               ==
+== [4] CP2K (Development Version), cp2k.org                                   ==
+== [5] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ==
+==     and J. Hutter, Comput. Phys. Commun. 167, 103 (2005)                   ==
+==                                                                            ==
+== Please find additional references in the end of this file.                 ==
+==                                                                            ==
+================================================================================
+
+ DBCSR| CPU Multiplication driver                                           XSMM
+ DBCSR| Multrec recursion limit                                              512
+ DBCSR| Multiplication stack size                                           1000
+ DBCSR| Maximum elements for images                                    UNLIMITED
+ DBCSR| Multiplicative factor virtual images                                   1
+ DBCSR| Use multiplication densification                                       T
+ DBCSR| Multiplication size stacks                                             3
+ DBCSR| Number of 3D layers                                               SINGLE
+ DBCSR| Use MPI memory allocation                                              T
+ DBCSR| Use RMA algorithm                                                      F
+ DBCSR| Use Communication thread                                               T
+ DBCSR| Communication thread load                                             87
+
+
+  **** **** ******  **  PROGRAM STARTED AT               2019-05-27 13:23:34.470
+ ***** ** ***  *** **   PROGRAM STARTED ON                                debian
+ **    ****   ******    PROGRAM STARTED BY                               dryndyk
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 21423
+  **** **  *******  **  PROGRAM STARTED IN       /home/dryndyk/CP2K_examples/C40
+
+ CP2K| version string:                    CP2K version 7.0 (Development Version)
+ CP2K| source code revision number:                                git:f647cb0fc
+ CP2K| cp2kflags: libint fftw3 libxc elpa=201705 parallel mpi3 scalapack xsmm li
+ CP2K|            bderiv_max_am1=5 libint_max_am=6 spglib json
+ CP2K| is freely available from                            https://www.cp2k.org/
+ CP2K| Program compiled at                      Mon 27 May 2019 11:14:05 AM CEST
+ CP2K| Program compiled on                                                debian
+ CP2K| Program compiled for                                                local
+ CP2K| Data directory path                   /home/dryndyk/OpenSuite/cp2kXT/data
+ CP2K| Input file name                                                   C40.inp
+
+ GLOBAL| Force Environment number                                              1
+ GLOBAL| Basis set file name                                        BASIS_MOLOPT
+ GLOBAL| Potential file name                                      GTH_POTENTIALS
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Force Environment number                                              2
+ GLOBAL| Basis set file name                                        BASIS_MOLOPT
+ GLOBAL| Potential file name                                      GTH_POTENTIALS
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Force Environment number                                              3
+ GLOBAL| Basis set file name                                        BASIS_MOLOPT
+ GLOBAL| Potential file name                                      GTH_POTENTIALS
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Method name                                                        CP2K
+ GLOBAL| Project name                                                        C40
+ GLOBAL| Preferred FFT library                                             FFTW3
+ GLOBAL| Preferred diagonalization lib.                                       SL
+ GLOBAL| Run type                                                           NEGF
+ GLOBAL| All-to-all communication in single precision                          F
+ GLOBAL| FFTs using library dependent lengths                                  T
+ GLOBAL| Global print level                                                  LOW
+ GLOBAL| MPI I/O enabled                                                       T
+ GLOBAL| Total number of message passing processes                             4
+ GLOBAL| Number of threads for this process                                    1
+ GLOBAL| This output is from process                                           0
+ GLOBAL| CPU model name :  Intel(R) Core(TM) i5-2310 CPU @ 2.90GHz
+
+ MEMORY| system memory details [Kb]
+ MEMORY|                        rank 0           min           max       average
+ MEMORY| MemTotal              8150304       8150304       8150304       8150304
+ MEMORY| MemFree               2953620       2953620       2953620       2953620
+ MEMORY| Buffers                101304        101304        101304        101304
+ MEMORY| Cached                3489592       3489592       3489592       3489592
+ MEMORY| Slab                   230388        230388        230388        230388
+ MEMORY| SReclaimable           164188        164188        164188        164188
+ MEMORY| MemLikelyFree         6708704       6708704       6708704       6708704
+
+
+ GENERATE|  Preliminary Number of Bonds generated:                            31
+ GENERATE|  Achieved consistency in connectivity generation.
+ GENERATE|  Number of Bonds generated:                                        31
+ GENERATE|  Preliminary Number of Bends generated:                            22
+ GENERATE|  Number of Bends generated:                                        22
+ GENERATE|  Number of UB generated:                                           22
+ GENERATE|  Preliminary Number of Torsions generated:                         13
+ GENERATE|  Number of Torsions generated:                                     13
+ GENERATE|  Number of 1-4 interactions generated:                             13
+
+ *******************************************************************************
+ *******************************************************************************
+ **                                                                           **
+ **     #####                         ##              ##                      **
+ **    ##   ##            ##          ##              ##                      **
+ **   ##     ##                       ##            ######                    **
+ **   ##     ##  ##   ##  ##   #####  ##  ##   ####   ##    #####    #####    **
+ **   ##     ##  ##   ##  ##  ##      ## ##   ##      ##   ##   ##  ##   ##   **
+ **   ##  ## ##  ##   ##  ##  ##      ####     ###    ##   ######   ######    **
+ **    ##  ###   ##   ##  ##  ##      ## ##      ##   ##   ##       ##        **
+ **     #######   #####   ##   #####  ##  ##  ####    ##    #####   ##        **
+ **           ##                                                    ##        **
+ **                                                                           **
+ **                                                ... make the atoms dance   **
+ **                                                                           **
+ **            Copyright (C) by CP2K developers group (2000 - 2019)           **
+ **                                                                           **
+ *******************************************************************************
+
+ *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** available. The full set of unoccupied MOs will be used.           ***
+
+
+
+ TOTAL NUMBERS AND MAXIMUM NUMBERS
+
+  Total number of            - Atomic kinds:                                   1
+                             - Atoms:                                         40
+                             - Shell sets:                                    40
+                             - Shells:                                        80
+                             - Primitive Cartesian functions:                280
+                             - Cartesian basis functions:                    160
+                             - Spherical basis functions:                    160
+
+  Maximum angular momentum of- Orbital basis functions:                        1
+                             - Local part of the GTH pseudopotential:          2
+                             - Non-local part of the GTH pseudopotential:      0
+
+
+ SCF PARAMETERS         Density guess:                                   RESTART
+                        --------------------------------------------------------
+                        max_scf:                                             100
+                        max_scf_history:                                       0
+                        max_diis:                                              4
+                        --------------------------------------------------------
+                        eps_scf:                                        1.00E-06
+                        eps_scf_history:                                0.00E+00
+                        eps_diis:                                       1.00E-01
+                        eps_eigval:                                     1.00E-05
+                        --------------------------------------------------------
+                        level_shift [a.u.]:                                 0.00
+                        added MOs                                        80    0
+                        --------------------------------------------------------
+                        Mixing method:                            BROYDEN_MIXING
+                                                charge density mixing in g-space
+                        --------------------------------------------------------
+                        Smear method:                                FERMI_DIRAC
+                        Electronic temperature [K]:                        293.0
+                        Electronic temperature [a.u.]:                  9.28E-04
+                        Accuracy threshold:                             1.00E-10
+                        --------------------------------------------------------
+                        No outer SCF
+
+ GENERATE|  Preliminary Number of Bonds generated:                             4
+ GENERATE|  Achieved consistency in connectivity generation.
+ GENERATE|  Number of Bonds generated:                                         4
+ GENERATE|  Preliminary Number of Bends generated:                             4
+ GENERATE|  Number of Bends generated:                                         4
+ GENERATE|  Number of UB generated:                                            4
+ GENERATE|  Preliminary Number of Torsions generated:                          4
+ GENERATE|  Number of Torsions generated:                                      4
+
+ *** WARNING in cryssym.F:169 :: Version of Symmetry Library SPGLIB not ***
+ *** tested                                                             ***
+
+
+ *******************************************************************************
+ *******************************************************************************
+ **                                                                           **
+ **     #####                         ##              ##                      **
+ **    ##   ##            ##          ##              ##                      **
+ **   ##     ##                       ##            ######                    **
+ **   ##     ##  ##   ##  ##   #####  ##  ##   ####   ##    #####    #####    **
+ **   ##     ##  ##   ##  ##  ##      ## ##   ##      ##   ##   ##  ##   ##   **
+ **   ##  ## ##  ##   ##  ##  ##      ####     ###    ##   ######   ######    **
+ **    ##  ###   ##   ##  ##  ##      ## ##      ##   ##   ##       ##        **
+ **     #######   #####   ##   #####  ##  ##  ####    ##    #####   ##        **
+ **           ##                                                    ##        **
+ **                                                                           **
+ **                                                ... make the atoms dance   **
+ **                                                                           **
+ **            Copyright (C) by CP2K developers group (2000 - 2019)           **
+ **                                                                           **
+ *******************************************************************************
+
+ *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** available. The full set of unoccupied MOs will be used.           ***
+
+
+
+ TOTAL NUMBERS AND MAXIMUM NUMBERS
+
+  Total number of            - Atomic kinds:                                   1
+                             - Atoms:                                          4
+                             - Shell sets:                                     4
+                             - Shells:                                         8
+                             - Primitive Cartesian functions:                 28
+                             - Cartesian basis functions:                     16
+                             - Spherical basis functions:                     16
+
+  Maximum angular momentum of- Orbital basis functions:                        1
+                             - Local part of the GTH pseudopotential:          2
+                             - Non-local part of the GTH pseudopotential:      0
+
+
+ SCF PARAMETERS         Density guess:                                   RESTART
+                        --------------------------------------------------------
+                        max_scf:                                             100
+                        max_scf_history:                                       0
+                        max_diis:                                              4
+                        --------------------------------------------------------
+                        eps_scf:                                        1.00E-06
+                        eps_scf_history:                                0.00E+00
+                        eps_diis:                                       1.00E-01
+                        eps_eigval:                                     1.00E-05
+                        --------------------------------------------------------
+                        level_shift [a.u.]:                                 0.00
+                        added MOs                                         8    0
+                        --------------------------------------------------------
+                        Mixing method:                            BROYDEN_MIXING
+                                                charge density mixing in g-space
+                        --------------------------------------------------------
+                        Smear method:                                FERMI_DIRAC
+                        Electronic temperature [K]:                        293.0
+                        Electronic temperature [a.u.]:                  9.28E-04
+                        Accuracy threshold:                             1.00E-10
+                        --------------------------------------------------------
+                        No outer SCF
+
+ KPOINTS| Number of kpoint groups                                              4
+ KPOINTS| Size of each kpoint group                                            1
+ KPOINTS| Number of kpoints per group                                          1
+
+ GENERATE|  Preliminary Number of Bonds generated:                             4
+ GENERATE|  Achieved consistency in connectivity generation.
+ GENERATE|  Number of Bonds generated:                                         4
+ GENERATE|  Preliminary Number of Bends generated:                             4
+ GENERATE|  Number of Bends generated:                                         4
+ GENERATE|  Number of UB generated:                                            4
+ GENERATE|  Preliminary Number of Torsions generated:                          4
+ GENERATE|  Number of Torsions generated:                                      4
+
+ *** WARNING in cryssym.F:169 :: Version of Symmetry Library SPGLIB not ***
+ *** tested                                                             ***
+
+
+ *******************************************************************************
+ *******************************************************************************
+ **                                                                           **
+ **     #####                         ##              ##                      **
+ **    ##   ##            ##          ##              ##                      **
+ **   ##     ##                       ##            ######                    **
+ **   ##     ##  ##   ##  ##   #####  ##  ##   ####   ##    #####    #####    **
+ **   ##     ##  ##   ##  ##  ##      ## ##   ##      ##   ##   ##  ##   ##   **
+ **   ##  ## ##  ##   ##  ##  ##      ####     ###    ##   ######   ######    **
+ **    ##  ###   ##   ##  ##  ##      ## ##      ##   ##   ##       ##        **
+ **     #######   #####   ##   #####  ##  ##  ####    ##    #####   ##        **
+ **           ##                                                    ##        **
+ **                                                                           **
+ **                                                ... make the atoms dance   **
+ **                                                                           **
+ **            Copyright (C) by CP2K developers group (2000 - 2019)           **
+ **                                                                           **
+ *******************************************************************************
+
+ *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** available. The full set of unoccupied MOs will be used.           ***
+
+
+
+ TOTAL NUMBERS AND MAXIMUM NUMBERS
+
+  Total number of            - Atomic kinds:                                   1
+                             - Atoms:                                          4
+                             - Shell sets:                                     4
+                             - Shells:                                         8
+                             - Primitive Cartesian functions:                 28
+                             - Cartesian basis functions:                     16
+                             - Spherical basis functions:                     16
+
+  Maximum angular momentum of- Orbital basis functions:                        1
+                             - Local part of the GTH pseudopotential:          2
+                             - Non-local part of the GTH pseudopotential:      0
+
+
+ SCF PARAMETERS         Density guess:                                   RESTART
+                        --------------------------------------------------------
+                        max_scf:                                             100
+                        max_scf_history:                                       0
+                        max_diis:                                              4
+                        --------------------------------------------------------
+                        eps_scf:                                        1.00E-06
+                        eps_scf_history:                                0.00E+00
+                        eps_diis:                                       1.00E-01
+                        eps_eigval:                                     1.00E-05
+                        --------------------------------------------------------
+                        level_shift [a.u.]:                                 0.00
+                        added MOs                                         8    0
+                        --------------------------------------------------------
+                        Mixing method:                            BROYDEN_MIXING
+                                                charge density mixing in g-space
+                        --------------------------------------------------------
+                        Smear method:                                FERMI_DIRAC
+                        Electronic temperature [K]:                        293.0
+                        Electronic temperature [a.u.]:                  9.28E-04
+                        Accuracy threshold:                             1.00E-10
+                        --------------------------------------------------------
+                        No outer SCF
+
+ KPOINTS| Number of kpoint groups                                              4
+ KPOINTS| Size of each kpoint group                                            1
+ KPOINTS| Number of kpoints per group                                          1
+
+--------------------------------------------------------------------------------
+-- read_negf_control is started                                               --
+--------------------------------------------------------------------------------
+
+ Atoms in electrode region 1:  12
+    1    2    3    4    5    6    7    8    9   10   11   12
+ Atoms in electrode region 2:  12
+   29   30   31   32   33   34   35   36   37   38   39   40
+ Atoms in full scattering region:  16
+   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28
+
+--------------------------------------------------------------------------------
+-- read_negf_control is finished                                              --
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- negf_env_create is started                                                 --
+--------------------------------------------------------------------------------
+
+ NEGF| Construct the Kohn-Sham matrix for the contact                          1
+
+ Number of electrons:                                                         16
+ Number of occupied orbitals:                                                  8
+ Number of molecular orbitals:                                                16
+
+ Number of orbital functions:                                                 16
+ Number of independent orbital functions:                                     16
+
+ Extrapolation method: initial_guess
+
+ *** WARNING in qs_initial_guess.F:267 :: User requested to restart the    ***
+ *** wavefunction from the file named: C40-RESTART_1.kp. This file does    ***
+ *** not exist. Please check the existence of the file or change properly  ***
+ *** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
+ *** using ATOMIC GUESS.                                                   ***
+
+
+
+ SCF WAVEFUNCTION OPTIMIZATION
+
+  Step     Update method      Time    Convergence         Total energy    Change
+  ------------------------------------------------------------------------------
+     1 NoMix/Diag. 0.30E+00    0.2     1.20561847       -21.5104996427 -2.15E+01
+     2 Broy./Diag. 0.30E+00    0.3     0.00111173       -22.2690896293 -7.59E-01
+     3 Broy./Diag. 0.30E+00    0.3     0.00196530       -21.8910189846  3.78E-01
+     4 Broy./Diag. 0.30E+00    0.3     0.00005629       -21.8804719346  1.05E-02
+     5 Broy./Diag. 0.30E+00    0.3     0.00012711       -21.8593130349  2.12E-02
+     6 Broy./Diag. 0.30E+00    0.3     0.00000362       -21.8593820565 -6.90E-05
+     7 Broy./Diag. 0.30E+00    0.3     0.00001008       -21.8596702335 -2.88E-04
+     8 Broy./Diag. 0.30E+00    0.3     0.00000963       -21.8596731673 -2.93E-06
+     9 Broy./Diag. 0.30E+00    0.3     0.00000158       -21.8596734110 -2.44E-07
+    10 Broy./Diag. 0.30E+00    0.3     0.00000011       -21.8596737175 -3.07E-07
+
+  *** SCF run converged in    10 steps ***
+
+
+  Electronic density on regular grids:        -15.9999999164        0.0000000836
+  Core density on regular grids:               15.9999999987       -0.0000000013
+  Total charge density on r-space grids:        0.0000000823
+  Total charge density g-space grids:           0.0000000823
+
+  Overlap energy of the core charge distribution:               0.00000000082819
+  Self energy of the core charge distribution:                -53.34003170706085
+  Core Hamiltonian energy:                                     16.53599273571820
+  Hartree energy:                                              21.43946700908409
+  Exchange-correlation energy:                                 -6.49510163102287
+  Electronic entropic energy:                                  -0.00000012509046
+  Fermi energy:                                                 0.13605621943911
+
+  Total energy:                                               -21.85967371754395
+
+ NEGF| Extract relevant matrix blocks for the contact                          1
+
+ NEGF| Construct the Kohn-Sham matrix for the contact                          2
+
+ Number of electrons:                                                         16
+ Number of occupied orbitals:                                                  8
+ Number of molecular orbitals:                                                16
+
+ Number of orbital functions:                                                 16
+ Number of independent orbital functions:                                     16
+
+ Extrapolation method: initial_guess
+
+ *** WARNING in qs_initial_guess.F:267 :: User requested to restart the    ***
+ *** wavefunction from the file named: C40-RESTART_2.kp. This file does    ***
+ *** not exist. Please check the existence of the file or change properly  ***
+ *** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
+ *** using ATOMIC GUESS.                                                   ***
+
+
+
+ SCF WAVEFUNCTION OPTIMIZATION
+
+  Step     Update method      Time    Convergence         Total energy    Change
+  ------------------------------------------------------------------------------
+     1 NoMix/Diag. 0.30E+00    0.2     1.20561847       -21.5104996427 -2.15E+01
+     2 Broy./Diag. 0.30E+00    0.3     0.00111173       -22.2690896293 -7.59E-01
+     3 Broy./Diag. 0.30E+00    0.3     0.00196530       -21.8910189846  3.78E-01
+     4 Broy./Diag. 0.30E+00    0.3     0.00005629       -21.8804719346  1.05E-02
+     5 Broy./Diag. 0.30E+00    0.3     0.00012711       -21.8593130349  2.12E-02
+     6 Broy./Diag. 0.30E+00    0.3     0.00000362       -21.8593820565 -6.90E-05
+     7 Broy./Diag. 0.30E+00    0.3     0.00001007       -21.8596702359 -2.88E-04
+     8 Broy./Diag. 0.30E+00    0.3     0.00000962       -21.8596731673 -2.93E-06
+     9 Broy./Diag. 0.30E+00    0.3     0.00000158       -21.8596734110 -2.44E-07
+    10 Broy./Diag. 0.30E+00    0.3     0.00000011       -21.8596737175 -3.07E-07
+
+  *** SCF run converged in    10 steps ***
+
+
+  Electronic density on regular grids:        -15.9999999164        0.0000000836
+  Core density on regular grids:               15.9999999987       -0.0000000013
+  Total charge density on r-space grids:        0.0000000823
+  Total charge density g-space grids:           0.0000000823
+
+  Overlap energy of the core charge distribution:               0.00000000082819
+  Self energy of the core charge distribution:                -53.34003170706085
+  Core Hamiltonian energy:                                     16.53599273571819
+  Hartree energy:                                              21.43946700907851
+  Exchange-correlation energy:                                 -6.49510163101523
+  Electronic entropic energy:                                  -0.00000012509046
+  Fermi energy:                                                 0.13605621943899
+
+  Total energy:                                               -21.85967371754190
+
+ NEGF| Extract relevant matrix blocks for the contact                          2
+
+ NEGF| CONTACTS CALCULATED
+
+ NEGF| Construct the Kohn-Sham matrix for the scattering region 
+
+ Number of electrons:                                                        160
+ Number of occupied orbitals:                                                 80
+ Number of molecular orbitals:                                               160
+
+ Number of orbital functions:                                                160
+ Number of independent orbital functions:                                    160
+
+ Extrapolation method: initial_guess
+
+ *** WARNING in qs_initial_guess.F:267 :: User requested to restart the    ***
+ *** wavefunction from the file named: C40-RESTART_0.wfn. This file does   ***
+ *** not exist. Please check the existence of the file or change properly  ***
+ *** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
+ *** using ATOMIC GUESS.                                                   ***
+
+
+
+ SCF WAVEFUNCTION OPTIMIZATION
+
+  Step     Update method      Time    Convergence         Total energy    Change
+  ------------------------------------------------------------------------------
+     1 NoMix/Diag. 0.30E+00    1.0     0.78677277      -218.1825628631 -2.18E+02
+     2 Broy./Diag. 0.30E+00    2.0     0.00147018      -223.0765566981 -4.89E+00
+     3 Broy./Diag. 0.30E+00    2.0     0.00297059      -219.0227370032  4.05E+00
+     4 Broy./Diag. 0.30E+00    2.0     0.00147380      -218.8784969788  1.44E-01
+     5 Broy./Diag. 0.30E+00    2.0     0.00562937      -218.6909822152  1.88E-01
+     6 Broy./Diag. 0.30E+00    2.0     0.01742898      -218.6362250828  5.48E-02
+     7 Broy./Diag. 0.30E+00    2.0     0.01631128      -218.5777091403  5.85E-02
+     8 Broy./Diag. 0.30E+00    2.0     0.00083563      -218.5805861959 -2.88E-03
+     9 Broy./Diag. 0.30E+00    2.0     0.00034492      -218.5805614930  2.47E-05
+    10 Broy./Diag. 0.30E+00    2.0     0.00028864      -218.5804431876  1.18E-04
+    11 Broy./Diag. 0.30E+00    2.0     0.00047850      -218.5804555634 -1.24E-05
+    12 Broy./Diag. 0.30E+00    2.0     0.00046950      -218.5804631547 -7.59E-06
+    13 Broy./Diag. 0.30E+00    2.0     0.00013957      -218.5803803023  8.29E-05
+    14 Broy./Diag. 0.30E+00    2.0     0.00005653      -218.5804421321 -6.18E-05
+    15 Broy./Diag. 0.30E+00    2.0     0.00003007      -218.5804375743  4.56E-06
+    16 Broy./Diag. 0.30E+00    2.0     0.00000678      -218.5804484692 -1.09E-05
+    17 Broy./Diag. 0.30E+00    2.0     0.00000373      -218.5804621456 -1.37E-05
+    18 Broy./Diag. 0.30E+00    2.0     0.00000536      -218.5804654036 -3.26E-06
+    19 Broy./Diag. 0.30E+00    2.0     0.00000542      -218.5804801960 -1.48E-05
+    20 Broy./Diag. 0.30E+00    2.0     0.00000322      -218.5804847412 -4.55E-06
+    21 Broy./Diag. 0.30E+00    2.0     0.00000190      -218.5804854049 -6.64E-07
+    22 Broy./Diag. 0.30E+00    2.0     0.00000225      -218.5804860233 -6.18E-07
+    23 Broy./Diag. 0.30E+00    2.0     0.00000168      -218.5804862173 -1.94E-07
+    24 Broy./Diag. 0.30E+00    2.0     0.00000072      -218.5804865388 -3.21E-07
+
+  *** SCF run converged in    24 steps ***
+
+
+  Electronic density on regular grids:       -159.9999991739        0.0000008261
+  Core density on regular grids:              159.9999999868       -0.0000000132
+  Total charge density on r-space grids:        0.0000008129
+  Total charge density g-space grids:           0.0000008129
+
+  Overlap energy of the core charge distribution:               0.00000000828189
+  Self energy of the core charge distribution:               -533.40031707060848
+  Core Hamiltonian energy:                                    165.40812612316137
+  Hartree energy:                                             214.37067564697924
+  Exchange-correlation energy:                                -64.95479701688217
+  Electronic entropic energy:                                  -0.00417422970807
+  Fermi energy:                                                 0.13939446360879
+
+  Total energy:                                              -218.58048653877626
+
+--------------------------------------------------------------------------------
+-- negf_env_create is finished                                                --
+--------------------------------------------------------------------------------
+
+ NEGF| Contact No. 1
+ NEGF|    Fermi level at 293.000 Kelvin (a.u.):                      0.13604359
+ NEGF|    Electric potential (V):                                    0.00000000
+
+ NEGF| Contact No. 2
+ NEGF|    Fermi level at 293.000 Kelvin (a.u.):                      0.13604359
+ NEGF|    Electric potential (V):                                   -0.00000000
+
+Number of central states = 64
+Number of states in contact 1 = 32
+Number of states in contact 2 = 32
+Full number of states = 128
+
+ NEGF SELF-CONSISTENT PROCEDURE
+
+ Initial electronic density of the scattering region:        -63.27000347799691
+
+  Step     Integration method      Time     Electronic density      Convergence
+  ------------------------------------------------------------------------------
+     1     CC 86     2.43E-06       0.1           -63.25505194      1.49515E-02
+     2     CC 86     2.42E-06       2.0           -63.35478099     -9.97290E-02
+     3     CC 86     2.43E-06       2.0           -63.26350222      9.12788E-02
+     4     CC 86     2.43E-06       2.0           -63.27307425     -9.57203E-03
+     5     CC 86     2.43E-06       2.0           -63.26912038      3.95387E-03
+     6     CC 86     2.43E-06       2.0           -63.26900469      1.15691E-04
+     7     CC 86     2.43E-06       2.0           -63.26932934     -3.24649E-04
+     8     CC 86     2.43E-06       2.0           -63.26936177     -3.24242E-05
+     9     CC 86     2.43E-06       2.0           -63.26938783     -2.60603E-05
+    10     CC 86     2.43E-06       2.0           -63.26955985     -1.72021E-04
+    11     CC 86     2.43E-06       2.0           -63.26975171     -1.91862E-04
+    12     CC 86     2.43E-06       2.0           -63.26981838     -6.66759E-05
+    13     CC 86     2.43E-06       2.0           -63.26978796      3.04294E-05
+    14     CC 86     2.43E-06       2.0           -63.26990000     -1.12041E-04
+    15     CC 86     2.43E-06       2.0           -63.26986004      3.99564E-05
+    16     CC 86     2.43E-06       2.0           -63.26992724     -6.71957E-05
+    17     CC 86     2.43E-06       2.0           -63.26988181      4.54238E-05
+    18     CC 86     2.43E-06       2.0           -63.26988893     -7.11986E-06
+
+           *** NEGF run converged in 18 iteration(s) ***
+
+ NEGF|  Electric current (A)                                      0.0000000E+00
+The Hamiltonian is written to file H.mtr
+The Overlap is written to file S.mtr
+
+================================================================================
+==                         CP2K is switched to DFTB+XT                        ==
+================================================================================
+Reading input file 'dftb_in.hsd'
+--------------------------------------------------------------------------------
+-- Parsing is started                                                         --
+--------------------------------------------------------------------------------
+
+Parser version: 7
+
+--------------------------------------------------------------------------------
+
+-NoGeometry- option is activated.
+Only transport with the external Hamiltonian [and overlap].
+Reading transport options.
+Number of states (with electrodes)      =   128
+Number of states in the central region  =     0
+Hamiltonian File Name  = H.mtr                                                                      
+Energy units           =                                                                            
+Overlap File Name      = S.mtr                                                                                                                                                                                                   
+> readTransportGeometry_NoGeom is started
+AtomRange              =      1    64
+Number of PLs          =      1
+FirstLayerAtoms        =      1
+Task                   = uploadcontacts
+Number of contacts     =      2
+Name of contact 1 : source                                            
+   AtomRange           =     65    96
+   Temperature         =     0.000928
+   Potential           =     0.000000
+   tWideBand           =            F
+   LevelSpacing        =     0.000000
+   FermiLevel          =    -0.017564
+   tWriteSelfEnergy    =            F
+   tReadSelfEnergy     =            F
+   tWriteSurfaceGF     =            F
+   tReadSurfaceGF      =            F
+   tUnformatted        =            F
+   tWriteSeparatedSGF  =            F
+   tReadSeparatedSGF   =            F
+Name of contact 2 : drain                                             
+   AtomRange           =     97   128
+   Temperature         =     0.000928
+   Potential           =     0.000000
+   tWideBand           =            F
+   LevelSpacing        =     0.000000
+   FermiLevel          =    -0.017564
+   tWriteSelfEnergy    =            F
+   tReadSelfEnergy     =            F
+   tWriteSurfaceGF     =            F
+   tReadSurfaceGF      =            F
+   tUnformatted        =            F
+   tWriteSeparatedSGF  =            F
+   tReadSeparatedSGF   =            F
+> readTransportGeometry_NoGeom is finished
+Verbosity           =     81
+EnergyRange         =    -0.183747    0.220496
+EnergyStep          =     0.001102
+
+--------------------------------------------------------------------------------
+-- Parsing is finished                                                        --
+--------------------------------------------------------------------------------
+
+
+Processed input in HSD format written to 'dftb_pin.hsd'
+--------------------------------------------------------------------------------
+-- TraNaS parameters are defined from CP2K                                   --
+--------------------------------------------------------------------------------
+ Hamiltonian%NumStates                    =      128
+ Transport%Device                         =    1  64
+ Transport%Contact(1)                     =   65  96
+ Transport%Contact(2)                     =   97 128
+--------------------------------------------------------------------------------
+-- Initialization is started (without geometry)                               --
+--------------------------------------------------------------------------------
+
+(negf_init) CONTACT INFO #1
+   Temperature:    9.2787689615719230E-004
+   Potential (with built-in):    0.0000000000000000     
+   eFermi:   -1.7563968650170000E-002
+
+(negf_init) CONTACT INFO #2
+   Temperature:    9.2787689615719230E-004
+   Potential (with built-in):    0.0000000000000000     
+   eFermi:   -1.7563968650170000E-002
+
+   Electro-chemical potentials:   -1.7563968650170000E-002  -1.7563968650170000E-002
+
+Structure info:
+   Number of PLs:           1
+   PLs coupled to contacts:           1           1
+--------------------------------------------------------------------------------
+-- Initialization is finished                                                 --
+--------------------------------------------------------------------------------
+
+================================================================================
+                             COMPUTATION OF TRANSPORT         
+================================================================================
+
+Transport is started.
+Number of states (with electrodes)      =   128
+Number of states in the central region  =    64
+ Overlap is red from the file S.mtr
+
+--------------------------------------------------------------------------------
+                          TraNaS: Current calculation
+--------------------------------------------------------------------------------
+
+>>> The Landauer transport (transmission [and DOS]) is started.
+  INTEGRAL: point # 1/368  CPU= 0  E=-1.83746623E-01
+  Compute Contact SE .................................
+  Computing SGF 001       ............................   1.00000005E-03 sec
+  Computing SGF 001       ............................   1.00000005E-03 sec
+  ....................................................   2.40000002E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 2/368  CPU= 1  E=-1.82644143E-01
+  INTEGRAL: point # 3/368  CPU= 2  E=-1.81541663E-01
+  INTEGRAL: point # 4/368  CPU= 3  E=-1.80439183E-01
+  INTEGRAL: point # 5/368  CPU= 0  E=-1.79336704E-01
+  Compute Contact SE .................................
+  Computing SGF 005       ............................   0.00000000     sec
+  Computing SGF 005       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 6/368  CPU= 1  E=-1.78234224E-01
+  INTEGRAL: point # 7/368  CPU= 2  E=-1.77131744E-01
+  INTEGRAL: point # 8/368  CPU= 3  E=-1.76029265E-01
+  INTEGRAL: point # 9/368  CPU= 0  E=-1.74926785E-01
+  Compute Contact SE .................................
+  Computing SGF 009       ............................   1.00000005E-03 sec
+  Computing SGF 009       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 10/368  CPU= 1  E=-1.73824305E-01
+  INTEGRAL: point # 11/368  CPU= 2  E=-1.72721825E-01
+  INTEGRAL: point # 12/368  CPU= 3  E=-1.71619346E-01
+  INTEGRAL: point # 13/368  CPU= 0  E=-1.70516866E-01
+  Compute Contact SE .................................
+  Computing SGF 013       ............................   1.00000005E-03 sec
+  Computing SGF 013       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 14/368  CPU= 1  E=-1.69414386E-01
+  INTEGRAL: point # 15/368  CPU= 2  E=-1.68311906E-01
+  INTEGRAL: point # 16/368  CPU= 3  E=-1.67209427E-01
+  INTEGRAL: point # 17/368  CPU= 0  E=-1.66106947E-01
+  Compute Contact SE .................................
+  Computing SGF 017       ............................   1.00000005E-03 sec
+  Computing SGF 017       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 18/368  CPU= 1  E=-1.65004467E-01
+  INTEGRAL: point # 19/368  CPU= 2  E=-1.63901987E-01
+  INTEGRAL: point # 20/368  CPU= 3  E=-1.62799508E-01
+  INTEGRAL: point # 21/368  CPU= 0  E=-1.61697028E-01
+  Compute Contact SE .................................
+  Computing SGF 021       ............................   1.00000005E-03 sec
+  Computing SGF 021       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.00000005E-03 sec
+  INTEGRAL: point # 22/368  CPU= 1  E=-1.60594548E-01
+  INTEGRAL: point # 23/368  CPU= 2  E=-1.59492068E-01
+  INTEGRAL: point # 24/368  CPU= 3  E=-1.58389589E-01
+  INTEGRAL: point # 25/368  CPU= 0  E=-1.57287109E-01
+  Compute Contact SE .................................
+  Computing SGF 025       ............................   0.00000000     sec
+  Computing SGF 025       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 26/368  CPU= 1  E=-1.56184629E-01
+  INTEGRAL: point # 27/368  CPU= 2  E=-1.55082150E-01
+  INTEGRAL: point # 28/368  CPU= 3  E=-1.53979670E-01
+  INTEGRAL: point # 29/368  CPU= 0  E=-1.52877190E-01
+  Compute Contact SE .................................
+  Computing SGF 029       ............................   1.00000005E-03 sec
+  Computing SGF 029       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 30/368  CPU= 1  E=-1.51774710E-01
+  INTEGRAL: point # 31/368  CPU= 2  E=-1.50672231E-01
+  INTEGRAL: point # 32/368  CPU= 3  E=-1.49569751E-01
+  INTEGRAL: point # 33/368  CPU= 0  E=-1.48467271E-01
+  Compute Contact SE .................................
+  Computing SGF 033       ............................   1.30000003E-02 sec
+  Computing SGF 033       ............................   1.00000005E-03 sec
+  ....................................................   1.40000004E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 34/368  CPU= 1  E=-1.47364791E-01
+  INTEGRAL: point # 35/368  CPU= 2  E=-1.46262312E-01
+  INTEGRAL: point # 36/368  CPU= 3  E=-1.45159832E-01
+  INTEGRAL: point # 37/368  CPU= 0  E=-1.44057352E-01
+  Compute Contact SE .................................
+  Computing SGF 037       ............................   1.00000005E-03 sec
+  Computing SGF 037       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 38/368  CPU= 1  E=-1.42954872E-01
+  INTEGRAL: point # 39/368  CPU= 2  E=-1.41852393E-01
+  INTEGRAL: point # 40/368  CPU= 3  E=-1.40749913E-01
+  INTEGRAL: point # 41/368  CPU= 0  E=-1.39647433E-01
+  Compute Contact SE .................................
+  Computing SGF 041       ............................   1.00000005E-03 sec
+  Computing SGF 041       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 42/368  CPU= 1  E=-1.38544953E-01
+  INTEGRAL: point # 43/368  CPU= 2  E=-1.37442474E-01
+  INTEGRAL: point # 44/368  CPU= 3  E=-1.36339994E-01
+  INTEGRAL: point # 45/368  CPU= 0  E=-1.35237514E-01
+  Compute Contact SE .................................
+  Computing SGF 045       ............................   0.00000000     sec
+  Computing SGF 045       ............................   1.00000005E-03 sec
+  ....................................................   1.20000001E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 46/368  CPU= 1  E=-1.34135035E-01
+  INTEGRAL: point # 47/368  CPU= 2  E=-1.33032555E-01
+  INTEGRAL: point # 48/368  CPU= 3  E=-1.31930075E-01
+  INTEGRAL: point # 49/368  CPU= 0  E=-1.30827595E-01
+  Compute Contact SE .................................
+  Computing SGF 049       ............................   0.00000000     sec
+  Computing SGF 049       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 50/368  CPU= 1  E=-1.29725116E-01
+  INTEGRAL: point # 51/368  CPU= 2  E=-1.28622636E-01
+  INTEGRAL: point # 52/368  CPU= 3  E=-1.27520156E-01
+  INTEGRAL: point # 53/368  CPU= 0  E=-1.26417676E-01
+  Compute Contact SE .................................
+  Computing SGF 053       ............................   0.00000000     sec
+  Computing SGF 053       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 54/368  CPU= 1  E=-1.25315197E-01
+  INTEGRAL: point # 55/368  CPU= 2  E=-1.24212717E-01
+  INTEGRAL: point # 56/368  CPU= 3  E=-1.23110237E-01
+  INTEGRAL: point # 57/368  CPU= 0  E=-1.22007757E-01
+  Compute Contact SE .................................
+  Computing SGF 057       ............................   0.00000000     sec
+  Computing SGF 057       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 58/368  CPU= 1  E=-1.20905278E-01
+  INTEGRAL: point # 59/368  CPU= 2  E=-1.19802798E-01
+  INTEGRAL: point # 60/368  CPU= 3  E=-1.18700318E-01
+  INTEGRAL: point # 61/368  CPU= 0  E=-1.17597839E-01
+  Compute Contact SE .................................
+  Computing SGF 061       ............................   1.00000005E-03 sec
+  Computing SGF 061       ............................   0.00000000     sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 62/368  CPU= 1  E=-1.16495359E-01
+  INTEGRAL: point # 63/368  CPU= 2  E=-1.15392879E-01
+  INTEGRAL: point # 64/368  CPU= 3  E=-1.14290399E-01
+  INTEGRAL: point # 65/368  CPU= 0  E=-1.13187920E-01
+  Compute Contact SE .................................
+  Computing SGF 065       ............................   0.00000000     sec
+  Computing SGF 065       ............................   0.00000000     sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.09999999E-02 sec
+  INTEGRAL: point # 66/368  CPU= 1  E=-1.12085440E-01
+  INTEGRAL: point # 67/368  CPU= 2  E=-1.10982960E-01
+  INTEGRAL: point # 68/368  CPU= 3  E=-1.09880480E-01
+  INTEGRAL: point # 69/368  CPU= 0  E=-1.08778001E-01
+  Compute Contact SE .................................
+  Computing SGF 069       ............................   0.00000000     sec
+  Computing SGF 069       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 70/368  CPU= 1  E=-1.07675521E-01
+  INTEGRAL: point # 71/368  CPU= 2  E=-1.06573041E-01
+  INTEGRAL: point # 72/368  CPU= 3  E=-1.05470561E-01
+  INTEGRAL: point # 73/368  CPU= 0  E=-1.04368082E-01
+  Compute Contact SE .................................
+  Computing SGF 073       ............................   0.00000000     sec
+  Computing SGF 073       ............................   0.00000000     sec
+  ....................................................   4.99999989E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 74/368  CPU= 1  E=-1.03265602E-01
+  INTEGRAL: point # 75/368  CPU= 2  E=-1.02163122E-01
+  INTEGRAL: point # 76/368  CPU= 3  E=-1.01060642E-01
+  INTEGRAL: point # 77/368  CPU= 0  E=-9.99581627E-02
+  Compute Contact SE .................................
+  Computing SGF 077       ............................   0.00000000     sec
+  Computing SGF 077       ............................   0.00000000     sec
+  ....................................................   1.09999999E-02 sec
+  Compute Transmission and DOS........................   1.00000005E-03 sec
+  INTEGRAL: point # 78/368  CPU= 1  E=-9.88556830E-02
+  INTEGRAL: point # 79/368  CPU= 2  E=-9.77532033E-02
+  INTEGRAL: point # 80/368  CPU= 3  E=-9.66507235E-02
+  INTEGRAL: point # 81/368  CPU= 0  E=-9.55482438E-02
+  Compute Contact SE .................................
+  Computing SGF 081       ............................   0.00000000     sec
+  Computing SGF 081       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 82/368  CPU= 1  E=-9.44457641E-02
+  INTEGRAL: point # 83/368  CPU= 2  E=-9.33432843E-02
+  INTEGRAL: point # 84/368  CPU= 3  E=-9.22408046E-02
+  INTEGRAL: point # 85/368  CPU= 0  E=-9.11383248E-02
+  Compute Contact SE .................................
+  Computing SGF 085       ............................   0.00000000     sec
+  Computing SGF 085       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 86/368  CPU= 1  E=-9.00358451E-02
+  INTEGRAL: point # 87/368  CPU= 2  E=-8.89333654E-02
+  INTEGRAL: point # 88/368  CPU= 3  E=-8.78308856E-02
+  INTEGRAL: point # 89/368  CPU= 0  E=-8.67284059E-02
+  Compute Contact SE .................................
+  Computing SGF 089       ............................   1.00000005E-03 sec
+  Computing SGF 089       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 90/368  CPU= 1  E=-8.56259262E-02
+  INTEGRAL: point # 91/368  CPU= 2  E=-8.45234464E-02
+  INTEGRAL: point # 92/368  CPU= 3  E=-8.34209667E-02
+  INTEGRAL: point # 93/368  CPU= 0  E=-8.23184870E-02
+  Compute Contact SE .................................
+  Computing SGF 093       ............................   0.00000000     sec
+  Computing SGF 093       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 94/368  CPU= 1  E=-8.12160072E-02
+  INTEGRAL: point # 95/368  CPU= 2  E=-8.01135275E-02
+  INTEGRAL: point # 96/368  CPU= 3  E=-7.90110477E-02
+  INTEGRAL: point # 97/368  CPU= 0  E=-7.79085680E-02
+  Compute Contact SE .................................
+  Computing SGF 097       ............................   0.00000000     sec
+  Computing SGF 097       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 98/368  CPU= 1  E=-7.68060883E-02
+  INTEGRAL: point # 99/368  CPU= 2  E=-7.57036085E-02
+  INTEGRAL: point # 100/368  CPU= 3  E=-7.46011288E-02
+  INTEGRAL: point # 101/368  CPU= 0  E=-7.34986491E-02
+  Compute Contact SE .................................
+  Computing SGF 101       ............................   1.00000005E-03 sec
+  Computing SGF 101       ............................   0.00000000     sec
+  ....................................................   1.09999999E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 102/368  CPU= 1  E=-7.23961693E-02
+  INTEGRAL: point # 103/368  CPU= 2  E=-7.12936896E-02
+  INTEGRAL: point # 104/368  CPU= 3  E=-7.01912099E-02
+  INTEGRAL: point # 105/368  CPU= 0  E=-6.90887301E-02
+  Compute Contact SE .................................
+  Computing SGF 105       ............................   1.00000005E-03 sec
+  Computing SGF 105       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 106/368  CPU= 1  E=-6.79862504E-02
+  INTEGRAL: point # 107/368  CPU= 2  E=-6.68837707E-02
+  INTEGRAL: point # 108/368  CPU= 3  E=-6.57812909E-02
+  INTEGRAL: point # 109/368  CPU= 0  E=-6.46788112E-02
+  Compute Contact SE .................................
+  Computing SGF 109       ............................   0.00000000     sec
+  Computing SGF 109       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 110/368  CPU= 1  E=-6.35763314E-02
+  INTEGRAL: point # 111/368  CPU= 2  E=-6.24738517E-02
+  INTEGRAL: point # 112/368  CPU= 3  E=-6.13713720E-02
+  INTEGRAL: point # 113/368  CPU= 0  E=-6.02688922E-02
+  Compute Contact SE .................................
+  Computing SGF 113       ............................   0.00000000     sec
+  Computing SGF 113       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 114/368  CPU= 1  E=-5.91664125E-02
+  INTEGRAL: point # 115/368  CPU= 2  E=-5.80639328E-02
+  INTEGRAL: point # 116/368  CPU= 3  E=-5.69614530E-02
+  INTEGRAL: point # 117/368  CPU= 0  E=-5.58589733E-02
+  Compute Contact SE .................................
+  Computing SGF 117       ............................   1.00000005E-03 sec
+  Computing SGF 117       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 118/368  CPU= 1  E=-5.47564936E-02
+  INTEGRAL: point # 119/368  CPU= 2  E=-5.36540138E-02
+  INTEGRAL: point # 120/368  CPU= 3  E=-5.25515341E-02
+  INTEGRAL: point # 121/368  CPU= 0  E=-5.14490543E-02
+  Compute Contact SE .................................
+  Computing SGF 121       ............................   0.00000000     sec
+  Computing SGF 121       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 122/368  CPU= 1  E=-5.03465746E-02
+  INTEGRAL: point # 123/368  CPU= 2  E=-4.92440949E-02
+  INTEGRAL: point # 124/368  CPU= 3  E=-4.81416151E-02
+  INTEGRAL: point # 125/368  CPU= 0  E=-4.70391354E-02
+  Compute Contact SE .................................
+  Computing SGF 125       ............................   0.00000000     sec
+  Computing SGF 125       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 126/368  CPU= 1  E=-4.59366557E-02
+  INTEGRAL: point # 127/368  CPU= 2  E=-4.48341759E-02
+  INTEGRAL: point # 128/368  CPU= 3  E=-4.37316962E-02
+  INTEGRAL: point # 129/368  CPU= 0  E=-4.26292165E-02
+  Compute Contact SE .................................
+  Computing SGF 129       ............................   0.00000000     sec
+  Computing SGF 129       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 130/368  CPU= 1  E=-4.15267367E-02
+  INTEGRAL: point # 131/368  CPU= 2  E=-4.04242570E-02
+  INTEGRAL: point # 132/368  CPU= 3  E=-3.93217773E-02
+  INTEGRAL: point # 133/368  CPU= 0  E=-3.82192975E-02
+  Compute Contact SE .................................
+  Computing SGF 133       ............................   0.00000000     sec
+  Computing SGF 133       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 134/368  CPU= 1  E=-3.71168178E-02
+  INTEGRAL: point # 135/368  CPU= 2  E=-3.60143380E-02
+  INTEGRAL: point # 136/368  CPU= 3  E=-3.49118583E-02
+  INTEGRAL: point # 137/368  CPU= 0  E=-3.38093786E-02
+  Compute Contact SE .................................
+  Computing SGF 137       ............................   0.00000000     sec
+  Computing SGF 137       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 138/368  CPU= 1  E=-3.27068988E-02
+  INTEGRAL: point # 139/368  CPU= 2  E=-3.16044191E-02
+  INTEGRAL: point # 140/368  CPU= 3  E=-3.05019394E-02
+  INTEGRAL: point # 141/368  CPU= 0  E=-2.93994596E-02
+  Compute Contact SE .................................
+  Computing SGF 141       ............................   0.00000000     sec
+  Computing SGF 141       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 142/368  CPU= 1  E=-2.82969799E-02
+  INTEGRAL: point # 143/368  CPU= 2  E=-2.71945002E-02
+  INTEGRAL: point # 144/368  CPU= 3  E=-2.60920204E-02
+  INTEGRAL: point # 145/368  CPU= 0  E=-2.49895407E-02
+  Compute Contact SE .................................
+  Computing SGF 145       ............................   0.00000000     sec
+  Computing SGF 145       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 146/368  CPU= 1  E=-2.38870609E-02
+  INTEGRAL: point # 147/368  CPU= 2  E=-2.27845812E-02
+  INTEGRAL: point # 148/368  CPU= 3  E=-2.16821015E-02
+  INTEGRAL: point # 149/368  CPU= 0  E=-2.05796217E-02
+  Compute Contact SE .................................
+  Computing SGF 149       ............................   0.00000000     sec
+  Computing SGF 149       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 150/368  CPU= 1  E=-1.94771420E-02
+  INTEGRAL: point # 151/368  CPU= 2  E=-1.83746623E-02
+  INTEGRAL: point # 152/368  CPU= 3  E=-1.72721825E-02
+  INTEGRAL: point # 153/368  CPU= 0  E=-1.61697028E-02
+  Compute Contact SE .................................
+  Computing SGF 153       ............................   0.00000000     sec
+  Computing SGF 153       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 154/368  CPU= 1  E=-1.50672231E-02
+  INTEGRAL: point # 155/368  CPU= 2  E=-1.39647433E-02
+  INTEGRAL: point # 156/368  CPU= 3  E=-1.28622636E-02
+  INTEGRAL: point # 157/368  CPU= 0  E=-1.17597839E-02
+  Compute Contact SE .................................
+  Computing SGF 157       ............................   0.00000000     sec
+  Computing SGF 157       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 158/368  CPU= 1  E=-1.06573041E-02
+  INTEGRAL: point # 159/368  CPU= 2  E=-9.55482438E-03
+  INTEGRAL: point # 160/368  CPU= 3  E=-8.45234464E-03
+  INTEGRAL: point # 161/368  CPU= 0  E=-7.34986491E-03
+  Compute Contact SE .................................
+  Computing SGF 161       ............................   0.00000000     sec
+  Computing SGF 161       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   3.00000003E-03 sec
+  INTEGRAL: point # 162/368  CPU= 1  E=-6.24738517E-03
+  INTEGRAL: point # 163/368  CPU= 2  E=-5.14490543E-03
+  INTEGRAL: point # 164/368  CPU= 3  E=-4.04242570E-03
+  INTEGRAL: point # 165/368  CPU= 0  E=-2.93994596E-03
+  Compute Contact SE .................................
+  Computing SGF 165       ............................   0.00000000     sec
+  Computing SGF 165       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 166/368  CPU= 1  E=-1.83746623E-03
+  INTEGRAL: point # 167/368  CPU= 2  E=-7.34986491E-04
+  INTEGRAL: point # 168/368  CPU= 3  E= 3.67493245E-04
+  INTEGRAL: point # 169/368  CPU= 0  E= 1.46997298E-03
+  Compute Contact SE .................................
+  Computing SGF 169       ............................   0.00000000     sec
+  Computing SGF 169       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 170/368  CPU= 1  E= 2.57245272E-03
+  INTEGRAL: point # 171/368  CPU= 2  E= 3.67493245E-03
+  INTEGRAL: point # 172/368  CPU= 3  E= 4.77741219E-03
+  INTEGRAL: point # 173/368  CPU= 0  E= 5.87989193E-03
+  Compute Contact SE .................................
+  Computing SGF 173       ............................   0.00000000     sec
+  Computing SGF 173       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 174/368  CPU= 1  E= 6.98237166E-03
+  INTEGRAL: point # 175/368  CPU= 2  E= 8.08485140E-03
+  INTEGRAL: point # 176/368  CPU= 3  E= 9.18733113E-03
+  INTEGRAL: point # 177/368  CPU= 0  E= 1.02898109E-02
+  Compute Contact SE .................................
+  Computing SGF 177       ............................   0.00000000     sec
+  Computing SGF 177       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 178/368  CPU= 1  E= 1.13922906E-02
+  INTEGRAL: point # 179/368  CPU= 2  E= 1.24947703E-02
+  INTEGRAL: point # 180/368  CPU= 3  E= 1.35972501E-02
+  INTEGRAL: point # 181/368  CPU= 0  E= 1.46997298E-02
+  Compute Contact SE .................................
+  Computing SGF 181       ............................   0.00000000     sec
+  Computing SGF 181       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 182/368  CPU= 1  E= 1.58022095E-02
+  INTEGRAL: point # 183/368  CPU= 2  E= 1.69046893E-02
+  INTEGRAL: point # 184/368  CPU= 3  E= 1.80071690E-02
+  INTEGRAL: point # 185/368  CPU= 0  E= 1.91096488E-02
+  Compute Contact SE .................................
+  Computing SGF 185       ............................   0.00000000     sec
+  Computing SGF 185       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 186/368  CPU= 1  E= 2.02121285E-02
+  INTEGRAL: point # 187/368  CPU= 2  E= 2.13146082E-02
+  INTEGRAL: point # 188/368  CPU= 3  E= 2.24170880E-02
+  INTEGRAL: point # 189/368  CPU= 0  E= 2.35195677E-02
+  Compute Contact SE .................................
+  Computing SGF 189       ............................   0.00000000     sec
+  Computing SGF 189       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 190/368  CPU= 1  E= 2.46220474E-02
+  INTEGRAL: point # 191/368  CPU= 2  E= 2.57245272E-02
+  INTEGRAL: point # 192/368  CPU= 3  E= 2.68270069E-02
+  INTEGRAL: point # 193/368  CPU= 0  E= 2.79294866E-02
+  Compute Contact SE .................................
+  Computing SGF 193       ............................   1.00000005E-03 sec
+  Computing SGF 193       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 194/368  CPU= 1  E= 2.90319664E-02
+  INTEGRAL: point # 195/368  CPU= 2  E= 3.01344461E-02
+  INTEGRAL: point # 196/368  CPU= 3  E= 3.12369259E-02
+  INTEGRAL: point # 197/368  CPU= 0  E= 3.23394056E-02
+  Compute Contact SE .................................
+  Computing SGF 197       ............................   0.00000000     sec
+  Computing SGF 197       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 198/368  CPU= 1  E= 3.34418853E-02
+  INTEGRAL: point # 199/368  CPU= 2  E= 3.45443651E-02
+  INTEGRAL: point # 200/368  CPU= 3  E= 3.56468448E-02
+  INTEGRAL: point # 201/368  CPU= 0  E= 3.67493245E-02
+  Compute Contact SE .................................
+  Computing SGF 201       ............................   0.00000000     sec
+  Computing SGF 201       ............................   0.00000000     sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 202/368  CPU= 1  E= 3.78518043E-02
+  INTEGRAL: point # 203/368  CPU= 2  E= 3.89542840E-02
+  INTEGRAL: point # 204/368  CPU= 3  E= 4.00567637E-02
+  INTEGRAL: point # 205/368  CPU= 0  E= 4.11592435E-02
+  Compute Contact SE .................................
+  Computing SGF 205       ............................   0.00000000     sec
+  Computing SGF 205       ............................   0.00000000     sec
+  ....................................................   1.20000001E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 206/368  CPU= 1  E= 4.22617232E-02
+  INTEGRAL: point # 207/368  CPU= 2  E= 4.33642029E-02
+  INTEGRAL: point # 208/368  CPU= 3  E= 4.44666827E-02
+  INTEGRAL: point # 209/368  CPU= 0  E= 4.55691624E-02
+  Compute Contact SE .................................
+  Computing SGF 209       ............................   0.00000000     sec
+  Computing SGF 209       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 210/368  CPU= 1  E= 4.66716422E-02
+  INTEGRAL: point # 211/368  CPU= 2  E= 4.77741219E-02
+  INTEGRAL: point # 212/368  CPU= 3  E= 4.88766016E-02
+  INTEGRAL: point # 213/368  CPU= 0  E= 4.99790814E-02
+  Compute Contact SE .................................
+  Computing SGF 213       ............................   1.00000005E-03 sec
+  Computing SGF 213       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 214/368  CPU= 1  E= 5.10815611E-02
+  INTEGRAL: point # 215/368  CPU= 2  E= 5.21840408E-02
+  INTEGRAL: point # 216/368  CPU= 3  E= 5.32865206E-02
+  INTEGRAL: point # 217/368  CPU= 0  E= 5.43890003E-02
+  Compute Contact SE .................................
+  Computing SGF 217       ............................   1.00000005E-03 sec
+  Computing SGF 217       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 218/368  CPU= 1  E= 5.54914800E-02
+  INTEGRAL: point # 219/368  CPU= 2  E= 5.65939598E-02
+  INTEGRAL: point # 220/368  CPU= 3  E= 5.76964395E-02
+  INTEGRAL: point # 221/368  CPU= 0  E= 5.87989193E-02
+  Compute Contact SE .................................
+  Computing SGF 221       ............................   1.00000005E-03 sec
+  Computing SGF 221       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.00000005E-03 sec
+  INTEGRAL: point # 222/368  CPU= 1  E= 5.99013990E-02
+  INTEGRAL: point # 223/368  CPU= 2  E= 6.10038787E-02
+  INTEGRAL: point # 224/368  CPU= 3  E= 6.21063585E-02
+  INTEGRAL: point # 225/368  CPU= 0  E= 6.32088382E-02
+  Compute Contact SE .................................
+  Computing SGF 225       ............................   1.00000005E-03 sec
+  Computing SGF 225       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 226/368  CPU= 1  E= 6.43113179E-02
+  INTEGRAL: point # 227/368  CPU= 2  E= 6.54137977E-02
+  INTEGRAL: point # 228/368  CPU= 3  E= 6.65162774E-02
+  INTEGRAL: point # 229/368  CPU= 0  E= 6.76187571E-02
+  Compute Contact SE .................................
+  Computing SGF 229       ............................   0.00000000     sec
+  Computing SGF 229       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 230/368  CPU= 1  E= 6.87212369E-02
+  INTEGRAL: point # 231/368  CPU= 2  E= 6.98237166E-02
+  INTEGRAL: point # 232/368  CPU= 3  E= 7.09261963E-02
+  INTEGRAL: point # 233/368  CPU= 0  E= 7.20286761E-02
+  Compute Contact SE .................................
+  Computing SGF 233       ............................   1.00000005E-03 sec
+  Computing SGF 233       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 234/368  CPU= 1  E= 7.31311558E-02
+  INTEGRAL: point # 235/368  CPU= 2  E= 7.42336356E-02
+  INTEGRAL: point # 236/368  CPU= 3  E= 7.53361153E-02
+  INTEGRAL: point # 237/368  CPU= 0  E= 7.64385950E-02
+  Compute Contact SE .................................
+  Computing SGF 237       ............................   1.00000005E-03 sec
+  Computing SGF 237       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 238/368  CPU= 1  E= 7.75410748E-02
+  INTEGRAL: point # 239/368  CPU= 2  E= 7.86435545E-02
+  INTEGRAL: point # 240/368  CPU= 3  E= 7.97460342E-02
+  INTEGRAL: point # 241/368  CPU= 0  E= 8.08485140E-02
+  Compute Contact SE .................................
+  Computing SGF 241       ............................   1.00000005E-03 sec
+  Computing SGF 241       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 242/368  CPU= 1  E= 8.19509937E-02
+  INTEGRAL: point # 243/368  CPU= 2  E= 8.30534734E-02
+  INTEGRAL: point # 244/368  CPU= 3  E= 8.41559532E-02
+  INTEGRAL: point # 245/368  CPU= 0  E= 8.52584329E-02
+  Compute Contact SE .................................
+  Computing SGF 245       ............................   1.00000005E-03 sec
+  Computing SGF 245       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 246/368  CPU= 1  E= 8.63609127E-02
+  INTEGRAL: point # 247/368  CPU= 2  E= 8.74633924E-02
+  INTEGRAL: point # 248/368  CPU= 3  E= 8.85658721E-02
+  INTEGRAL: point # 249/368  CPU= 0  E= 8.96683519E-02
+  Compute Contact SE .................................
+  Computing SGF 249       ............................   1.00000005E-03 sec
+  Computing SGF 249       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 250/368  CPU= 1  E= 9.07708316E-02
+  INTEGRAL: point # 251/368  CPU= 2  E= 9.18733113E-02
+  INTEGRAL: point # 252/368  CPU= 3  E= 9.29757911E-02
+  INTEGRAL: point # 253/368  CPU= 0  E= 9.40782708E-02
+  Compute Contact SE .................................
+  Computing SGF 253       ............................   0.00000000     sec
+  Computing SGF 253       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 254/368  CPU= 1  E= 9.51807505E-02
+  INTEGRAL: point # 255/368  CPU= 2  E= 9.62832303E-02
+  INTEGRAL: point # 256/368  CPU= 3  E= 9.73857100E-02
+  INTEGRAL: point # 257/368  CPU= 0  E= 9.84881898E-02
+  Compute Contact SE .................................
+  Computing SGF 257       ............................   1.00000005E-03 sec
+  Computing SGF 257       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 258/368  CPU= 1  E= 9.95906695E-02
+  INTEGRAL: point # 259/368  CPU= 2  E= 1.00693149E-01
+  INTEGRAL: point # 260/368  CPU= 3  E= 1.01795629E-01
+  INTEGRAL: point # 261/368  CPU= 0  E= 1.02898109E-01
+  Compute Contact SE .................................
+  Computing SGF 261       ............................   1.00000005E-03 sec
+  Computing SGF 261       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.20000001E-02 sec
+  INTEGRAL: point # 262/368  CPU= 1  E= 1.04000588E-01
+  INTEGRAL: point # 263/368  CPU= 2  E= 1.05103068E-01
+  INTEGRAL: point # 264/368  CPU= 3  E= 1.06205548E-01
+  INTEGRAL: point # 265/368  CPU= 0  E= 1.07308028E-01
+  Compute Contact SE .................................
+  Computing SGF 265       ............................   1.00000005E-03 sec
+  Computing SGF 265       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 266/368  CPU= 1  E= 1.08410507E-01
+  INTEGRAL: point # 267/368  CPU= 2  E= 1.09512987E-01
+  INTEGRAL: point # 268/368  CPU= 3  E= 1.10615467E-01
+  INTEGRAL: point # 269/368  CPU= 0  E= 1.11717947E-01
+  Compute Contact SE .................................
+  Computing SGF 269       ............................   1.00000005E-03 sec
+  Computing SGF 269       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 270/368  CPU= 1  E= 1.12820426E-01
+  INTEGRAL: point # 271/368  CPU= 2  E= 1.13922906E-01
+  INTEGRAL: point # 272/368  CPU= 3  E= 1.15025386E-01
+  INTEGRAL: point # 273/368  CPU= 0  E= 1.16127866E-01
+  Compute Contact SE .................................
+  Computing SGF 273       ............................   0.00000000     sec
+  Computing SGF 273       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 274/368  CPU= 1  E= 1.17230345E-01
+  INTEGRAL: point # 275/368  CPU= 2  E= 1.18332825E-01
+  INTEGRAL: point # 276/368  CPU= 3  E= 1.19435305E-01
+  INTEGRAL: point # 277/368  CPU= 0  E= 1.20537784E-01
+  Compute Contact SE .................................
+  Computing SGF 277       ............................   1.00000005E-03 sec
+  Computing SGF 277       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 278/368  CPU= 1  E= 1.21640264E-01
+  INTEGRAL: point # 279/368  CPU= 2  E= 1.22742744E-01
+  INTEGRAL: point # 280/368  CPU= 3  E= 1.23845224E-01
+  INTEGRAL: point # 281/368  CPU= 0  E= 1.24947703E-01
+  Compute Contact SE .................................
+  Computing SGF 281       ............................   1.00000005E-03 sec
+  Computing SGF 281       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 282/368  CPU= 1  E= 1.26050183E-01
+  INTEGRAL: point # 283/368  CPU= 2  E= 1.27152663E-01
+  INTEGRAL: point # 284/368  CPU= 3  E= 1.28255143E-01
+  INTEGRAL: point # 285/368  CPU= 0  E= 1.29357622E-01
+  Compute Contact SE .................................
+  Computing SGF 285       ............................   1.00000005E-03 sec
+  Computing SGF 285       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 286/368  CPU= 1  E= 1.30460102E-01
+  INTEGRAL: point # 287/368  CPU= 2  E= 1.31562582E-01
+  INTEGRAL: point # 288/368  CPU= 3  E= 1.32665062E-01
+  INTEGRAL: point # 289/368  CPU= 0  E= 1.33767541E-01
+  Compute Contact SE .................................
+  Computing SGF 289       ............................   1.00000005E-03 sec
+  Computing SGF 289       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 290/368  CPU= 1  E= 1.34870021E-01
+  INTEGRAL: point # 291/368  CPU= 2  E= 1.35972501E-01
+  INTEGRAL: point # 292/368  CPU= 3  E= 1.37074981E-01
+  INTEGRAL: point # 293/368  CPU= 0  E= 1.38177460E-01
+  Compute Contact SE .................................
+  Computing SGF 293       ............................   1.00000005E-03 sec
+  Computing SGF 293       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 294/368  CPU= 1  E= 1.39279940E-01
+  INTEGRAL: point # 295/368  CPU= 2  E= 1.40382420E-01
+  INTEGRAL: point # 296/368  CPU= 3  E= 1.41484899E-01
+  INTEGRAL: point # 297/368  CPU= 0  E= 1.42587379E-01
+  Compute Contact SE .................................
+  Computing SGF 297       ............................   1.00000005E-03 sec
+  Computing SGF 297       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 298/368  CPU= 1  E= 1.43689859E-01
+  INTEGRAL: point # 299/368  CPU= 2  E= 1.44792339E-01
+  INTEGRAL: point # 300/368  CPU= 3  E= 1.45894818E-01
+  INTEGRAL: point # 301/368  CPU= 0  E= 1.46997298E-01
+  Compute Contact SE .................................
+  Computing SGF 301       ............................   1.00000005E-03 sec
+  Computing SGF 301       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 302/368  CPU= 1  E= 1.48099778E-01
+  INTEGRAL: point # 303/368  CPU= 2  E= 1.49202258E-01
+  INTEGRAL: point # 304/368  CPU= 3  E= 1.50304737E-01
+  INTEGRAL: point # 305/368  CPU= 0  E= 1.51407217E-01
+  Compute Contact SE .................................
+  Computing SGF 305       ............................   1.00000005E-03 sec
+  Computing SGF 305       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 306/368  CPU= 1  E= 1.52509697E-01
+  INTEGRAL: point # 307/368  CPU= 2  E= 1.53612177E-01
+  INTEGRAL: point # 308/368  CPU= 3  E= 1.54714656E-01
+  INTEGRAL: point # 309/368  CPU= 0  E= 1.55817136E-01
+  Compute Contact SE .................................
+  Computing SGF 309       ............................   0.00000000     sec
+  Computing SGF 309       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 310/368  CPU= 1  E= 1.56919616E-01
+  INTEGRAL: point # 311/368  CPU= 2  E= 1.58022095E-01
+  INTEGRAL: point # 312/368  CPU= 3  E= 1.59124575E-01
+  INTEGRAL: point # 313/368  CPU= 0  E= 1.60227055E-01
+  Compute Contact SE .................................
+  Computing SGF 313       ............................   1.20000001E-02 sec
+  Computing SGF 313       ............................   1.00000005E-03 sec
+  ....................................................   1.30000003E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 314/368  CPU= 1  E= 1.61329535E-01
+  INTEGRAL: point # 315/368  CPU= 2  E= 1.62432014E-01
+  INTEGRAL: point # 316/368  CPU= 3  E= 1.63534494E-01
+  INTEGRAL: point # 317/368  CPU= 0  E= 1.64636974E-01
+  Compute Contact SE .................................
+  Computing SGF 317       ............................   1.00000005E-03 sec
+  Computing SGF 317       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 318/368  CPU= 1  E= 1.65739454E-01
+  INTEGRAL: point # 319/368  CPU= 2  E= 1.66841933E-01
+  INTEGRAL: point # 320/368  CPU= 3  E= 1.67944413E-01
+  INTEGRAL: point # 321/368  CPU= 0  E= 1.69046893E-01
+  Compute Contact SE .................................
+  Computing SGF 321       ............................   1.00000005E-03 sec
+  Computing SGF 321       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 322/368  CPU= 1  E= 1.70149373E-01
+  INTEGRAL: point # 323/368  CPU= 2  E= 1.71251852E-01
+  INTEGRAL: point # 324/368  CPU= 3  E= 1.72354332E-01
+  INTEGRAL: point # 325/368  CPU= 0  E= 1.73456812E-01
+  Compute Contact SE .................................
+  Computing SGF 325       ............................   1.00000005E-03 sec
+  Computing SGF 325       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 326/368  CPU= 1  E= 1.74559292E-01
+  INTEGRAL: point # 327/368  CPU= 2  E= 1.75661771E-01
+  INTEGRAL: point # 328/368  CPU= 3  E= 1.76764251E-01
+  INTEGRAL: point # 329/368  CPU= 0  E= 1.77866731E-01
+  Compute Contact SE .................................
+  Computing SGF 329       ............................   1.00000005E-03 sec
+  Computing SGF 329       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.00000005E-03 sec
+  INTEGRAL: point # 330/368  CPU= 1  E= 1.78969210E-01
+  INTEGRAL: point # 331/368  CPU= 2  E= 1.80071690E-01
+  INTEGRAL: point # 332/368  CPU= 3  E= 1.81174170E-01
+  INTEGRAL: point # 333/368  CPU= 0  E= 1.82276650E-01
+  Compute Contact SE .................................
+  Computing SGF 333       ............................   1.00000005E-03 sec
+  Computing SGF 333       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 334/368  CPU= 1  E= 1.83379129E-01
+  INTEGRAL: point # 335/368  CPU= 2  E= 1.84481609E-01
+  INTEGRAL: point # 336/368  CPU= 3  E= 1.85584089E-01
+  INTEGRAL: point # 337/368  CPU= 0  E= 1.86686569E-01
+  Compute Contact SE .................................
+  Computing SGF 337       ............................   1.00000005E-03 sec
+  Computing SGF 337       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 338/368  CPU= 1  E= 1.87789048E-01
+  INTEGRAL: point # 339/368  CPU= 2  E= 1.88891528E-01
+  INTEGRAL: point # 340/368  CPU= 3  E= 1.89994008E-01
+  INTEGRAL: point # 341/368  CPU= 0  E= 1.91096488E-01
+  Compute Contact SE .................................
+  Computing SGF 341       ............................   1.00000005E-03 sec
+  Computing SGF 341       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 342/368  CPU= 1  E= 1.92198967E-01
+  INTEGRAL: point # 343/368  CPU= 2  E= 1.93301447E-01
+  INTEGRAL: point # 344/368  CPU= 3  E= 1.94403927E-01
+  INTEGRAL: point # 345/368  CPU= 0  E= 1.95506407E-01
+  Compute Contact SE .................................
+  Computing SGF 345       ............................   1.00000005E-03 sec
+  Computing SGF 345       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 346/368  CPU= 1  E= 1.96608886E-01
+  INTEGRAL: point # 347/368  CPU= 2  E= 1.97711366E-01
+  INTEGRAL: point # 348/368  CPU= 3  E= 1.98813846E-01
+  INTEGRAL: point # 349/368  CPU= 0  E= 1.99916325E-01
+  Compute Contact SE .................................
+  Computing SGF 349       ............................   1.00000005E-03 sec
+  Computing SGF 349       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 350/368  CPU= 1  E= 2.01018805E-01
+  INTEGRAL: point # 351/368  CPU= 2  E= 2.02121285E-01
+  INTEGRAL: point # 352/368  CPU= 3  E= 2.03223765E-01
+  INTEGRAL: point # 353/368  CPU= 0  E= 2.04326244E-01
+  Compute Contact SE .................................
+  Computing SGF 353       ............................   1.00000005E-03 sec
+  Computing SGF 353       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 354/368  CPU= 1  E= 2.05428724E-01
+  INTEGRAL: point # 355/368  CPU= 2  E= 2.06531204E-01
+  INTEGRAL: point # 356/368  CPU= 3  E= 2.07633684E-01
+  INTEGRAL: point # 357/368  CPU= 0  E= 2.08736163E-01
+  Compute Contact SE .................................
+  Computing SGF 357       ............................   1.00000005E-03 sec
+  Computing SGF 357       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 358/368  CPU= 1  E= 2.09838643E-01
+  INTEGRAL: point # 359/368  CPU= 2  E= 2.10941123E-01
+  INTEGRAL: point # 360/368  CPU= 3  E= 2.12043603E-01
+  INTEGRAL: point # 361/368  CPU= 0  E= 2.13146082E-01
+  Compute Contact SE .................................
+  Computing SGF 361       ............................   1.00000005E-03 sec
+  Computing SGF 361       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 362/368  CPU= 1  E= 2.14248562E-01
+  INTEGRAL: point # 363/368  CPU= 2  E= 2.15351042E-01
+  INTEGRAL: point # 364/368  CPU= 3  E= 2.16453522E-01
+  INTEGRAL: point # 365/368  CPU= 0  E= 2.17556001E-01
+  Compute Contact SE .................................
+  Computing SGF 365       ............................   1.00000005E-03 sec
+  Computing SGF 365       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
+  INTEGRAL: point # 366/368  CPU= 1  E= 2.18658481E-01
+  INTEGRAL: point # 367/368  CPU= 2  E= 2.19760961E-01
+  INTEGRAL: point # 368/368  CPU= 3  E= 2.20863440E-01
+>>> The Landauer transport (transmission [and DOS]) is finished.
+
+--------------------------------------------------------------------------------
+                            TraNaS: Current finished
+--------------------------------------------------------------------------------
+
+Current is calculated
+  contacts:   2  1   current:    0.00000E+00 A       
+
+================================================================================
+==                  DFTB+XT is finished, switch back to CP2K                  ==
+================================================================================
+
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                                DBCSR STATISTICS                             -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ COUNTER                                    TOTAL       BLAS       SMM       ACC
+ flops     4 x     4 x    64             15728640       0.0%    100.0%      0.0%
+ flops     4 x     4 x    96             23592960       0.0%    100.0%      0.0%
+ flops inhomo. stacks                           0       0.0%      0.0%      0.0%
+ flops total                        39.321600E+06       0.0%    100.0%      0.0%
+ flops max/rank                      9.830400E+06       0.0%    100.0%      0.0%
+ matmuls inhomo. stacks                         0       0.0%      0.0%      0.0%
+ matmuls total                              15360       0.0%    100.0%      0.0%
+ number of processed stacks                   192       0.0%    100.0%      0.0%
+ average stack size                                     0.0      80.0       0.0
+ marketing flops                   109.363200E+06
+ -------------------------------------------------------------------------------
+ # multiplications                             24
+ max memory usage/rank             168.865792E+06
+ # max total images/rank                        1
+ # max 3D layers                                1
+ # MPI messages exchanged                     192
+ MPI messages size (bytes):
+  total size                         9.830400E+06
+  min size                          40.960000E+03
+  max size                          61.440000E+03
+  average size                      51.200000E+03
+ MPI breakdown and total messages size (bytes):
+             size <=      128                   0                        0
+       128 < size <=     8192                   0                        0
+      8192 < size <=    32768                   0                        0
+     32768 < size <=   131072                 192                  9830400
+    131072 < size <=  4194304                   0                        0
+   4194304 < size <= 16777216                   0                        0
+  16777216 < size                               0                        0
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                      DBCSR MESSAGE PASSING PERFORMANCE                      -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+
+ ROUTINE             CALLS      AVE VOLUME [Bytes]
+ MP_Group              838
+ MP_Bcast                3                     12.
+ MP_Allreduce         9994                      8.
+ MP_Alltoall         13124                   1418.
+ MP_Wait               768
+ MP_ISend              192                  16050.
+ MP_IRecv              192                  10930.
+ MP_Memory            1776
+ -------------------------------------------------------------------------------
+
+
+ MEMORY| Estimated peak process memory [MiB]                                 193
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                         MESSAGE PASSING PERFORMANCE                         -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+
+ ROUTINE             CALLS      AVE VOLUME [Bytes]
+ MP_Group               14
+ MP_Bcast            12747                  40679.
+ MP_Allreduce         6071                    283.
+ MP_Sync                12
+ MP_Alltoall          1232                2507139.
+ MP_ISendRecv         1014                  25882.
+ MP_Wait             11331
+ MP_comm_split           1
+ MP_ISend            11194                  11036.
+ MP_IRecv            15727                   7739.
+ MP_Recv               496                   1507.
+ -------------------------------------------------------------------------------
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                           R E F E R E N C E S                               -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ 
+ CP2K version 7.0 (Development Version), the CP2K developers group (2018).
+ CP2K is freely available from https://www.cp2k.org/ .
+
+ Togo, Atsushi; Tanaka, Isao. arXiv, 1808.01590 (2018). 
+ Spglib : a software library for crystal symmetry search.
+ https://dx.doi.org/xxx
+
+
+ Papior, N; Lorente, N; Frederiksen, T; Garcia, A; Brandbyge, M. 
+ COMPUTER PHYSICS COMMUNICATIONS, 212, 8-24 (2017). 
+ Improvements on non-equilibrium and transport Green function techniques.
+ https://dx.doi.org/10.1016/j.cpc.2016.09.022
+
+
+ Schuett, Ole; Messmer, Peter; Hutter, Juerg; VandeVondele, Joost. 
+ Electronic Structure Calculations on Graphics Processing Units, John Wiley & Sons, Ltd, 173-190 (2016). 
+ GPU-Accelerated Sparse Matrix-Matrix Multiplication for Linear Scaling Density Functional Theory.
+ https://dx.doi.org/10.1002/9781118670712.ch8
+
+
+ Borstnik, U; VandeVondele, J; Weber, V; Hutter, J. 
+ PARALLEL COMPUTING, 40 (5-6), 47-58 (2014). 
+ Sparse matrix multiplication: The distributed block-compressed sparse
+ row library.
+ https://dx.doi.org/10.1016/j.parco.2014.03.012
+
+
+ Hutter, J; Iannuzzi, M; Schiffmann, F; VandeVondele, J. 
+ WILEY INTERDISCIPLINARY REVIEWS-COMPUTATIONAL MOLECULAR SCIENCE, 4 (1), 15-25 (2014). 
+ CP2K: atomistic simulations of condensed matter systems.
+ https://dx.doi.org/10.1002/wcms.1159
+
+
+ VandeVondele, J; Hutter, J. 
+ JOURNAL OF CHEMICAL PHYSICS, 127 (11), 114105 (2007). 
+ Gaussian basis sets for accurate calculations on molecular systems in
+ gas and condensed phases.
+ https://dx.doi.org/10.1063/1.2770708
+
+
+ Rocha, AR; Garcia-Suarez, VM; Bailey, S; Lambert, C; Ferrer, J;
+ Sanvito, S. PHYSICAL REVIEW B, 73, 085414 (2006). 
+ Spin and molecular electronics in atomically generated orbital landscapes.
+ https://dx.doi.org/10.1103/PhysRevB.73.085414
+
+
+ Krack, M. 
+ THEORETICAL CHEMISTRY ACCOUNTS, 114 (1-3), 145-152 (2005). 
+ Pseudopotentials for H to Kr optimized for gradient-corrected
+ exchange-correlation functionals.
+ https://dx.doi.org/10.1007/s00214-005-0655-y
+
+
+ VandeVondele, J; Krack, M; Mohamed, F; Parrinello, M; Chassaing, T;
+ Hutter, J. COMPUTER PHYSICS COMMUNICATIONS, 167 (2), 103-128 (2005). 
+ QUICKSTEP: Fast and accurate density functional calculations using a
+ mixed Gaussian and plane waves approach.
+ https://dx.doi.org/10.1016/j.cpc.2004.12.014
+
+
+ Frigo, M; Johnson, SG. 
+ PROCEEDINGS OF THE IEEE, 93 (2), 216-231 (2005). 
+ The design and implementation of FFTW3.
+ https://dx.doi.org/10.1109/JPROC.2004.840301
+
+
+ Hartwigsen, C; Goedecker, S; Hutter, J. 
+ PHYSICAL REVIEW B, 58 (7), 3641-3662 (1998). 
+ Relativistic separable dual-space Gaussian pseudopotentials from H to Rn.
+ https://dx.doi.org/10.1103/PhysRevB.58.3641
+
+
+ Lippert, G; Hutter, J; Parrinello, M. 
+ MOLECULAR PHYSICS, 92 (3), 477-487 (1997). 
+ A hybrid Gaussian and plane wave density functional scheme.
+ https://dx.doi.org/10.1080/002689797170220
+
+
+ Perdew, JP; Burke, K; Ernzerhof, M. 
+ PHYSICAL REVIEW LETTERS, 77 (18), 3865-3868 (1996). 
+ Generalized gradient approximation made simple.
+ https://dx.doi.org/10.1103/PhysRevLett.77.3865
+
+
+ Goedecker, S; Teter, M; Hutter, J. 
+ PHYSICAL REVIEW B, 54 (3), 1703-1710 (1996). 
+ Separable dual-space Gaussian pseudopotentials.
+ https://dx.doi.org/10.1103/PhysRevB.54.1703
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                                T I M I N G                                  -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ SUBROUTINE                       CALLS  ASD         SELF TIME        TOTAL TIME
+                                MAXIMUM       AVERAGE  MAXIMUM  AVERAGE  MAXIMUM
+ CP2K                                 1  1.0    0.012    0.022   93.746   93.755
+ do_negf                              1  2.0    0.754    0.759   93.391   93.401
+ negf_env_create                      1  3.0    0.000    0.002   57.627   57.630
+ qs_energies                          3  4.0    0.001    0.001   56.290   56.293
+ scf_env_do_scf                       3  5.0    0.000    0.001   54.140   54.143
+ scf_env_do_scf_inner_loop           44  6.0    0.008    0.017   54.140   54.143
+ qs_rho_update_rho                   64  6.2    0.000    0.000   46.147   46.151
+ calculate_rho_elec                  64  7.2   42.983   44.616   46.147   46.150
+ qs_ks_build_kohn_sham_matrix        61  7.6    0.012    0.013   39.999   40.388
+ converge_density                     1  3.0    0.007    0.028   34.379   34.381
+ integrate_v_rspace                  62  9.5   32.468   32.914   33.468   33.857
+ sum_up_and_integrate                61  8.6    0.016    0.016   32.717   33.105
+ qs_ks_update_qs_env                 44  7.0    0.000    0.000   24.362   24.750
+ rebuild_ks_matrix                   44  8.0    0.000    0.000   24.328   24.716
+ qs_vxc_create                       61  8.6    0.001    0.002    6.473    6.495
+ xc_vxc_pw_create                    61  9.6    0.066    0.068    6.472    6.494
+ pw_transfer                       1240 10.2    0.076    0.089    5.910    5.988
+ fft_wrap_pw1pw2                   1118 11.3    0.010    0.012    5.758    5.838
+ fft_wrap_pw1pw2_100                740 12.2    0.504    0.521    5.585    5.675
+ xc_rho_set_and_dset_create          61 10.6    0.040    0.044    4.133    4.416
+ fft3d_ps                          1118 13.3    2.453    2.642    4.203    4.320
+ density_rs2pw                       64  8.2    0.003    0.003    3.106    4.112
+ rs_pw_transfer                     508 10.3    0.004    0.005    2.357    3.510
+ rs_pw_transfer_RS2PW_100            68 10.1    0.034    0.038    2.207    3.356
+ xc_functional_eval                  61 11.6    0.001    0.001    2.435    2.737
+ pbe_lda_eval                        61 12.6    2.434    2.737    2.434    2.737
+ -------------------------------------------------------------------------------
+
+ The number of warnings for this run is : 8
+ 
+ -------------------------------------------------------------------------------
+  **** **** ******  **  PROGRAM ENDED AT                 2019-05-27 13:25:08.314
+ ***** ** ***  *** **   PROGRAM RAN ON                                    debian
+ **    ****   ******    PROGRAM RAN BY                                   dryndyk
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 21423
+  **** **  *******  **  PROGRAM STOPPED IN       /home/dryndyk/CP2K_examples/C40

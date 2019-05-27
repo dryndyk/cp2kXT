@@ -16,7 +16,6 @@ The object, mod and lib files must be copied from <MAIN>/dftbXT to <MAIN>/dftbXT
 $ cd <MAIN>
 $ mkdir dftbXT_libs
 $ cp  dftbXT/_build/prog/dftb+/*.mod dftbXT_libs/
-$ mv  dftbXT_libs/environment.mod dftbXT_libs/environment_1.mod
 $ cp  dftbXT/_build/prog/dftb+/*.o dftbXT_libs/
 $ rm  dftbXT_libs/dftbplus.o
 $ cp  dftbXT/_build/external/fsockets/libfsockets.a dftbXT_libs/    # if DFTB+XT is compiled with sockets

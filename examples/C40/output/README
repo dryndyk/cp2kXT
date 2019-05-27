@@ -1,0 +1,3 @@
+"localDOS.dat" and "transmission.dat" are produced by DFTB+XT transport.
+"C40-device-0-1.dos" and "C40-transm-0-1.transm" are produced by internal CP2K transport.
+"H.mtr" and "S.mtr" are transformed from CP2K to DFTB+XT.

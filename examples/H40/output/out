@@ -1,0 +1,871 @@
+
+================================================================================
+==                                                                            ==
+==                              TraNaS OpenSuite                              ==
+==          (integrated open software suite for multiscale modeling)          ==
+==                                                                            ==
+================================================================================
+==                                                                            ==
+==                                CP2K+XT 1.03                                ==
+==                                                                            ==
+== CP2K eXTended version for atomistic quantum transport at nanoscale,        ==
+== many-body nonequilibrium phenomena, material & device modeling             ==
+== Uses the libraries of the DFTB+XT package                                  ==
+== Copyright (C) 2000-2019 CP2K developers group                              ==
+== Copyright (C) 2017-2019 DFTB+ developers group                             ==
+== Copyright (C) 2018-2019 Dmitry A. Ryndyk                                   ==
+==                                                                            ==
+================================================================================
+==                                                                            ==
+== Please cite as:                                                            ==
+== TraNaS OpenSuite [1], partially based on the DFTB+ [2,3] source code       ==
+== and the CP2K software package [4] with a Quickstep module [5].             ==
+==                                                                            ==
+== [1] TraNaS OpenSuite, tranas.org/opensuite                                 ==
+== [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ==
+==     J. Phys. Chem. A 111, 5678 (2007); dftbplus.org                        ==
+== [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ==
+==     New Journal of Physics 10, 065022 (2008)                               ==
+== [4] CP2K (Development Version), cp2k.org                                   ==
+== [5] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ==
+==     and J. Hutter, Comput. Phys. Commun. 167, 103 (2005)                   ==
+==                                                                            ==
+== Please find additional references in the end of this file.                 ==
+==                                                                            ==
+================================================================================
+
+ DBCSR| CPU Multiplication driver                                           XSMM
+ DBCSR| Multrec recursion limit                                              512
+ DBCSR| Multiplication stack size                                           1000
+ DBCSR| Maximum elements for images                                    UNLIMITED
+ DBCSR| Multiplicative factor virtual images                                   1
+ DBCSR| Use multiplication densification                                       T
+ DBCSR| Multiplication size stacks                                             3
+ DBCSR| Number of 3D layers                                               SINGLE
+ DBCSR| Use MPI memory allocation                                              T
+ DBCSR| Use RMA algorithm                                                      F
+ DBCSR| Use Communication thread                                               T
+ DBCSR| Communication thread load                                             87
+
+
+  **** **** ******  **  PROGRAM STARTED AT               2019-05-27 12:04:58.936
+ ***** ** ***  *** **   PROGRAM STARTED ON                                debian
+ **    ****   ******    PROGRAM STARTED BY                               dryndyk
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 20756
+  **** **  *******  **  PROGRAM STARTED IN       /home/dryndyk/CP2K_examples/H40
+
+ CP2K| version string:                    CP2K version 7.0 (Development Version)
+ CP2K| source code revision number:                                git:f647cb0fc
+ CP2K| cp2kflags: libint fftw3 libxc elpa=201705 parallel mpi3 scalapack xsmm li
+ CP2K|            bderiv_max_am1=5 libint_max_am=6 spglib json
+ CP2K| is freely available from                            https://www.cp2k.org/
+ CP2K| Program compiled at                      Mon 27 May 2019 11:14:05 AM CEST
+ CP2K| Program compiled on                                                debian
+ CP2K| Program compiled for                                                local
+ CP2K| Data directory path                   /home/dryndyk/OpenSuite/cp2kXT/data
+ CP2K| Input file name                                                   H40.inp
+
+ GLOBAL| Force Environment number                                              1
+ GLOBAL| Basis set file name                                        BASIS_MOLOPT
+ GLOBAL| Potential file name                                      GTH_POTENTIALS
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Force Environment number                                              2
+ GLOBAL| Basis set file name                                        BASIS_MOLOPT
+ GLOBAL| Potential file name                                      GTH_POTENTIALS
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Force Environment number                                              3
+ GLOBAL| Basis set file name                                        BASIS_MOLOPT
+ GLOBAL| Potential file name                                      GTH_POTENTIALS
+ GLOBAL| MM Potential file name                                     MM_POTENTIAL
+ GLOBAL| Coordinate file name                                      __STD_INPUT__
+ GLOBAL| Method name                                                        CP2K
+ GLOBAL| Project name                                                        H40
+ GLOBAL| Preferred FFT library                                             FFTW3
+ GLOBAL| Preferred diagonalization lib.                                       SL
+ GLOBAL| Run type                                                           NEGF
+ GLOBAL| All-to-all communication in single precision                          F
+ GLOBAL| FFTs using library dependent lengths                                  T
+ GLOBAL| Global print level                                                  LOW
+ GLOBAL| MPI I/O enabled                                                       T
+ GLOBAL| Total number of message passing processes                             4
+ GLOBAL| Number of threads for this process                                    1
+ GLOBAL| This output is from process                                           0
+ GLOBAL| CPU model name :  Intel(R) Core(TM) i5-2310 CPU @ 2.90GHz
+
+ MEMORY| system memory details [Kb]
+ MEMORY|                        rank 0           min           max       average
+ MEMORY| MemTotal              8150304       8150304       8150304       8150304
+ MEMORY| MemFree               3826964       3826964       3826964       3826964
+ MEMORY| Buffers                 94520         94520         94520         94520
+ MEMORY| Cached                2657080       2657080       2657080       2657080
+ MEMORY| Slab                   208604        208604        208604        208604
+ MEMORY| SReclaimable           142324        142324        142324        142324
+ MEMORY| MemLikelyFree         6720888       6720888       6720888       6720888
+
+
+ GENERATE|  Preliminary Number of Bonds generated:                            31
+ GENERATE|  Achieved consistency in connectivity generation.
+ GENERATE|  Number of Bonds generated:                                        31
+ GENERATE|  Preliminary Number of Bends generated:                            22
+ GENERATE|  Number of Bends generated:                                        22
+ GENERATE|  Number of UB generated:                                           22
+ GENERATE|  Preliminary Number of Torsions generated:                         13
+ GENERATE|  Number of Torsions generated:                                     13
+ GENERATE|  Number of 1-4 interactions generated:                             13
+
+ *******************************************************************************
+ *******************************************************************************
+ **                                                                           **
+ **     #####                         ##              ##                      **
+ **    ##   ##            ##          ##              ##                      **
+ **   ##     ##                       ##            ######                    **
+ **   ##     ##  ##   ##  ##   #####  ##  ##   ####   ##    #####    #####    **
+ **   ##     ##  ##   ##  ##  ##      ## ##   ##      ##   ##   ##  ##   ##   **
+ **   ##  ## ##  ##   ##  ##  ##      ####     ###    ##   ######   ######    **
+ **    ##  ###   ##   ##  ##  ##      ## ##      ##   ##   ##       ##        **
+ **     #######   #####   ##   #####  ##  ##  ####    ##    #####   ##        **
+ **           ##                                                    ##        **
+ **                                                                           **
+ **                                                ... make the atoms dance   **
+ **                                                                           **
+ **            Copyright (C) by CP2K developers group (2000 - 2019)           **
+ **                                                                           **
+ *******************************************************************************
+
+ *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** available. The full set of unoccupied MOs will be used.           ***
+
+
+
+ TOTAL NUMBERS AND MAXIMUM NUMBERS
+
+  Total number of            - Atomic kinds:                                   1
+                             - Atoms:                                         40
+                             - Shell sets:                                    40
+                             - Shells:                                        40
+                             - Primitive Cartesian functions:                280
+                             - Cartesian basis functions:                     40
+                             - Spherical basis functions:                     40
+
+  Maximum angular momentum of- Orbital basis functions:                        0
+                             - Local part of the GTH pseudopotential:          2
+
+
+ SCF PARAMETERS         Density guess:                                   RESTART
+                        --------------------------------------------------------
+                        max_scf:                                             100
+                        max_scf_history:                                       0
+                        max_diis:                                              4
+                        --------------------------------------------------------
+                        eps_scf:                                        1.00E-06
+                        eps_scf_history:                                0.00E+00
+                        eps_diis:                                       1.00E-01
+                        eps_eigval:                                     1.00E-05
+                        --------------------------------------------------------
+                        level_shift [a.u.]:                                 0.00
+                        added MOs                                        20    0
+                        --------------------------------------------------------
+                        Mixing method:                            BROYDEN_MIXING
+                                                charge density mixing in g-space
+                        --------------------------------------------------------
+                        Smear method:                                FERMI_DIRAC
+                        Electronic temperature [K]:                        293.0
+                        Electronic temperature [a.u.]:                  9.28E-04
+                        Accuracy threshold:                             1.00E-10
+                        --------------------------------------------------------
+                        No outer SCF
+
+ GENERATE|  Preliminary Number of Bonds generated:                             3
+ GENERATE|  Achieved consistency in connectivity generation.
+ GENERATE|  Number of Bonds generated:                                         3
+ GENERATE|  Preliminary Number of Bends generated:                             2
+ GENERATE|  Number of Bends generated:                                         2
+ GENERATE|  Number of UB generated:                                            2
+ GENERATE|  Preliminary Number of Torsions generated:                          1
+ GENERATE|  Number of Torsions generated:                                      1
+ GENERATE|  Number of 1-4 interactions generated:                              1
+
+ *** WARNING in cryssym.F:169 :: Version of Symmetry Library SPGLIB not ***
+ *** tested                                                             ***
+
+
+ *******************************************************************************
+ *******************************************************************************
+ **                                                                           **
+ **     #####                         ##              ##                      **
+ **    ##   ##            ##          ##              ##                      **
+ **   ##     ##                       ##            ######                    **
+ **   ##     ##  ##   ##  ##   #####  ##  ##   ####   ##    #####    #####    **
+ **   ##     ##  ##   ##  ##  ##      ## ##   ##      ##   ##   ##  ##   ##   **
+ **   ##  ## ##  ##   ##  ##  ##      ####     ###    ##   ######   ######    **
+ **    ##  ###   ##   ##  ##  ##      ## ##      ##   ##   ##       ##        **
+ **     #######   #####   ##   #####  ##  ##  ####    ##    #####   ##        **
+ **           ##                                                    ##        **
+ **                                                                           **
+ **                                                ... make the atoms dance   **
+ **                                                                           **
+ **            Copyright (C) by CP2K developers group (2000 - 2019)           **
+ **                                                                           **
+ *******************************************************************************
+
+ *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** available. The full set of unoccupied MOs will be used.           ***
+
+
+
+ TOTAL NUMBERS AND MAXIMUM NUMBERS
+
+  Total number of            - Atomic kinds:                                   1
+                             - Atoms:                                          4
+                             - Shell sets:                                     4
+                             - Shells:                                         4
+                             - Primitive Cartesian functions:                 28
+                             - Cartesian basis functions:                      4
+                             - Spherical basis functions:                      4
+
+  Maximum angular momentum of- Orbital basis functions:                        0
+                             - Local part of the GTH pseudopotential:          2
+
+
+ SCF PARAMETERS         Density guess:                                   RESTART
+                        --------------------------------------------------------
+                        max_scf:                                             100
+                        max_scf_history:                                       0
+                        max_diis:                                              4
+                        --------------------------------------------------------
+                        eps_scf:                                        1.00E-06
+                        eps_scf_history:                                0.00E+00
+                        eps_diis:                                       1.00E-01
+                        eps_eigval:                                     1.00E-05
+                        --------------------------------------------------------
+                        level_shift [a.u.]:                                 0.00
+                        added MOs                                         2    0
+                        --------------------------------------------------------
+                        Mixing method:                            BROYDEN_MIXING
+                                                charge density mixing in g-space
+                        --------------------------------------------------------
+                        Smear method:                                FERMI_DIRAC
+                        Electronic temperature [K]:                        293.0
+                        Electronic temperature [a.u.]:                  9.28E-04
+                        Accuracy threshold:                             1.00E-10
+                        --------------------------------------------------------
+                        No outer SCF
+
+ KPOINTS| Number of kpoint groups                                              4
+ KPOINTS| Size of each kpoint group                                            1
+ KPOINTS| Number of kpoints per group                                          1
+
+ GENERATE|  Preliminary Number of Bonds generated:                             3
+ GENERATE|  Achieved consistency in connectivity generation.
+ GENERATE|  Number of Bonds generated:                                         3
+ GENERATE|  Preliminary Number of Bends generated:                             2
+ GENERATE|  Number of Bends generated:                                         2
+ GENERATE|  Number of UB generated:                                            2
+ GENERATE|  Preliminary Number of Torsions generated:                          1
+ GENERATE|  Number of Torsions generated:                                      1
+ GENERATE|  Number of 1-4 interactions generated:                              1
+
+ *** WARNING in cryssym.F:169 :: Version of Symmetry Library SPGLIB not ***
+ *** tested                                                             ***
+
+
+ *******************************************************************************
+ *******************************************************************************
+ **                                                                           **
+ **     #####                         ##              ##                      **
+ **    ##   ##            ##          ##              ##                      **
+ **   ##     ##                       ##            ######                    **
+ **   ##     ##  ##   ##  ##   #####  ##  ##   ####   ##    #####    #####    **
+ **   ##     ##  ##   ##  ##  ##      ## ##   ##      ##   ##   ##  ##   ##   **
+ **   ##  ## ##  ##   ##  ##  ##      ####     ###    ##   ######   ######    **
+ **    ##  ###   ##   ##  ##  ##      ## ##      ##   ##   ##       ##        **
+ **     #######   #####   ##   #####  ##  ##  ####    ##    #####   ##        **
+ **           ##                                                    ##        **
+ **                                                                           **
+ **                                                ... make the atoms dance   **
+ **                                                                           **
+ **            Copyright (C) by CP2K developers group (2000 - 2019)           **
+ **                                                                           **
+ *******************************************************************************
+
+ *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** available. The full set of unoccupied MOs will be used.           ***
+
+
+
+ TOTAL NUMBERS AND MAXIMUM NUMBERS
+
+  Total number of            - Atomic kinds:                                   1
+                             - Atoms:                                          4
+                             - Shell sets:                                     4
+                             - Shells:                                         4
+                             - Primitive Cartesian functions:                 28
+                             - Cartesian basis functions:                      4
+                             - Spherical basis functions:                      4
+
+  Maximum angular momentum of- Orbital basis functions:                        0
+                             - Local part of the GTH pseudopotential:          2
+
+
+ SCF PARAMETERS         Density guess:                                   RESTART
+                        --------------------------------------------------------
+                        max_scf:                                             100
+                        max_scf_history:                                       0
+                        max_diis:                                              4
+                        --------------------------------------------------------
+                        eps_scf:                                        1.00E-06
+                        eps_scf_history:                                0.00E+00
+                        eps_diis:                                       1.00E-01
+                        eps_eigval:                                     1.00E-05
+                        --------------------------------------------------------
+                        level_shift [a.u.]:                                 0.00
+                        added MOs                                         2    0
+                        --------------------------------------------------------
+                        Mixing method:                            BROYDEN_MIXING
+                                                charge density mixing in g-space
+                        --------------------------------------------------------
+                        Smear method:                                FERMI_DIRAC
+                        Electronic temperature [K]:                        293.0
+                        Electronic temperature [a.u.]:                  9.28E-04
+                        Accuracy threshold:                             1.00E-10
+                        --------------------------------------------------------
+                        No outer SCF
+
+ KPOINTS| Number of kpoint groups                                              4
+ KPOINTS| Size of each kpoint group                                            1
+ KPOINTS| Number of kpoints per group                                          1
+
+--------------------------------------------------------------------------------
+-- read_negf_control is started                                               --
+--------------------------------------------------------------------------------
+
+ Atoms in electrode region 1:  12
+    1    2    3    4    5    6    7    8    9   10   11   12
+ Atoms in electrode region 2:  12
+   29   30   31   32   33   34   35   36   37   38   39   40
+ Atoms in full scattering region:  16
+   13   14   15   16   17   18   19   20   21   22   23   24   25   26   27   28
+
+--------------------------------------------------------------------------------
+-- read_negf_control is finished                                              --
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- negf_env_create is started                                                 --
+--------------------------------------------------------------------------------
+
+ NEGF| Construct the Kohn-Sham matrix for the contact                          1
+
+ Number of electrons:                                                          4
+ Number of occupied orbitals:                                                  2
+ Number of molecular orbitals:                                                 4
+
+ Number of orbital functions:                                                  4
+ Number of independent orbital functions:                                      4
+
+ Extrapolation method: initial_guess
+
+
+ SCF WAVEFUNCTION OPTIMIZATION
+
+  Step     Update method      Time    Convergence         Total energy    Change
+  ------------------------------------------------------------------------------
+     1 NoMix/Diag. 0.30E+00    0.1     0.00000270        -1.8536176984 -1.85E+00
+     2 Broy./Diag. 0.30E+00    0.1     0.00000182        -1.8536176985 -8.28E-11
+     3 Broy./Diag. 0.30E+00    0.1     0.00000064        -1.8536176985 -1.15E-12
+
+  *** SCF run converged in     3 steps ***
+
+
+  Electronic density on regular grids:         -4.0000031336       -0.0000031336
+  Core density on regular grids:                4.0000035836        0.0000035836
+  Total charge density on r-space grids:        0.0000004500
+  Total charge density g-space grids:           0.0000004500
+
+  Overlap energy of the core charge distribution:               0.00000000000000
+  Self energy of the core charge distribution:                 -5.64189583547756
+  Core Hamiltonian energy:                                      2.72806820903877
+  Hartree energy:                                               2.46651946358578
+  Exchange-correlation energy:                                 -1.40630953558344
+  Electronic entropic energy:                                  -0.00000000008355
+  Fermi energy:                                                -0.01737614446891
+
+  Total energy:                                                -1.85361769852000
+
+ NEGF| Extract relevant matrix blocks for the contact                          1
+
+ NEGF| Construct the Kohn-Sham matrix for the contact                          2
+
+ Number of electrons:                                                          4
+ Number of occupied orbitals:                                                  2
+ Number of molecular orbitals:                                                 4
+
+ Number of orbital functions:                                                  4
+ Number of independent orbital functions:                                      4
+
+ Extrapolation method: initial_guess
+
+
+ SCF WAVEFUNCTION OPTIMIZATION
+
+  Step     Update method      Time    Convergence         Total energy    Change
+  ------------------------------------------------------------------------------
+     1 NoMix/Diag. 0.30E+00    0.1     0.00000270        -1.8536176984 -1.85E+00
+     2 Broy./Diag. 0.30E+00    0.1     0.00000182        -1.8536176985 -8.28E-11
+     3 Broy./Diag. 0.30E+00    0.1     0.00000064        -1.8536176985 -1.15E-12
+
+  *** SCF run converged in     3 steps ***
+
+
+  Electronic density on regular grids:         -4.0000031336       -0.0000031336
+  Core density on regular grids:                4.0000035836        0.0000035836
+  Total charge density on r-space grids:        0.0000004500
+  Total charge density g-space grids:           0.0000004500
+
+  Overlap energy of the core charge distribution:               0.00000000000000
+  Self energy of the core charge distribution:                 -5.64189583547756
+  Core Hamiltonian energy:                                      2.72806820903877
+  Hartree energy:                                               2.46651946358578
+  Exchange-correlation energy:                                 -1.40630953558344
+  Electronic entropic energy:                                  -0.00000000008355
+  Fermi energy:                                                -0.01737614446891
+
+  Total energy:                                                -1.85361769852000
+
+ NEGF| Extract relevant matrix blocks for the contact                          2
+
+ NEGF| CONTACTS CALCULATED
+
+ NEGF| Construct the Kohn-Sham matrix for the scattering region 
+
+ Number of electrons:                                                         40
+ Number of occupied orbitals:                                                 20
+ Number of molecular orbitals:                                                40
+
+ Number of orbital functions:                                                 40
+ Number of independent orbital functions:                                     40
+
+ Extrapolation method: initial_guess
+
+
+ SCF WAVEFUNCTION OPTIMIZATION
+
+  Step     Update method      Time    Convergence         Total energy    Change
+  ------------------------------------------------------------------------------
+     1 NoMix/Diag. 0.30E+00    0.3     0.00001184       -18.5202247196 -1.85E+01
+     2 Broy./Diag. 0.30E+00    0.7     0.00006143       -18.5227973401 -2.57E-03
+     3 Broy./Diag. 0.30E+00    0.7     0.00004923       -18.5227973294  1.06E-08
+     4 Broy./Diag. 0.30E+00    0.7     0.00000341       -18.5227973408 -1.14E-08
+     5 Broy./Diag. 0.30E+00    0.7     0.00000182       -18.5227973408  2.74E-11
+     6 Broy./Diag. 0.30E+00    0.7     0.00000050       -18.5227973407  4.94E-11
+
+  *** SCF run converged in     6 steps ***
+
+
+  Electronic density on regular grids:        -40.0000278307       -0.0000278307
+  Core density on regular grids:               40.0000343402        0.0000343402
+  Total charge density on r-space grids:        0.0000065095
+  Total charge density g-space grids:           0.0000065095
+
+  Overlap energy of the core charge distribution:               0.00000000000000
+  Self energy of the core charge distribution:                -56.41895835477563
+  Core Hamiltonian energy:                                     27.30863860295799
+  Hartree energy:                                              24.65689371199907
+  Exchange-correlation energy:                                -14.06679867990208
+  Electronic entropic energy:                                  -0.00257262101633
+  Fermi energy:                                                -0.01756396861621
+
+  Total energy:                                               -18.52279734073695
+
+--------------------------------------------------------------------------------
+-- negf_env_create is finished                                                --
+--------------------------------------------------------------------------------
+
+ NEGF| Contact No. 1
+ NEGF|    Fermi level at 293.000 Kelvin (a.u.):                     -0.01756397
+ NEGF|    Electric potential (V):                                    0.00000000
+
+ NEGF| Contact No. 2
+ NEGF|    Fermi level at 293.000 Kelvin (a.u.):                     -0.01756397
+ NEGF|    Electric potential (V):                                   -0.00000000
+
+Number of central states = 16
+Number of states in contact 1 = 8
+Number of states in contact 2 = 8
+Full number of states = 32
+
+ NEGF SELF-CONSISTENT PROCEDURE
+
+ Initial electronic density of the scattering region:        -15.85242657326851
+
+  Step     Integration method      Time     Electronic density      Convergence
+  ------------------------------------------------------------------------------
+     1     CC 58     1.68E-06       0.1           -15.85163060      7.95971E-04
+     2     CC 58     1.68E-06       0.7           -15.85358054     -1.94994E-03
+     3     CC 58     1.68E-06       0.7           -15.85137167      2.20887E-03
+     4     CC 58     1.68E-06       0.7           -15.85175974     -3.88076E-04
+     5     CC 58     1.68E-06       0.7           -15.85244629     -6.86550E-04
+     6     CC 58     1.68E-06       0.7           -15.85256395     -1.17655E-04
+     7     CC 58     1.68E-06       0.7           -15.85232496      2.38994E-04
+     8     CC 58     1.68E-06       0.7           -15.85236475     -3.97909E-05
+     9     CC 58     1.68E-06       0.7           -15.85241734     -5.25961E-05
+    10     CC 58     1.68E-06       0.7           -15.85241324      4.10090E-06
+
+           *** NEGF run converged in 10 iteration(s) ***
+
+ NEGF|  Electric current (A)                                      0.0000000E+00
+The Hamiltonian is written to file H.mtr
+The Overlap is written to file S.mtr
+
+================================================================================
+==                         CP2K is switched to DFTB+XT                        ==
+================================================================================
+Reading input file 'dftb_in.hsd'
+--------------------------------------------------------------------------------
+-- Parsing is started                                                         --
+--------------------------------------------------------------------------------
+
+Parser version: 7
+
+--------------------------------------------------------------------------------
+
+-NoGeometry- option is activated.
+Only transport with the external Hamiltonian [and overlap].
+Reading transport options.
+Number of states (with electrodes)      =    32
+Number of states in the central region  =     0
+Energy units =                                                                            
+> readTransportGeometry_NoGeom is started
+AtomRange              =      1    16
+Number of PLs          =      1
+FirstLayerAtoms        =      1
+Task                   = uploadcontacts
+Number of contacts     =      2
+Name of contact 1 : source                                            
+   AtomRange           =     17    24
+   Temperature         =     0.000928
+   Potential           =     0.000000
+   tWideBand           =            F
+   LevelSpacing        =     0.000000
+   FermiLevel          =    -0.017564
+   tWriteSelfEnergy    =            F
+   tReadSelfEnergy     =            F
+   tWriteSurfaceGF     =            F
+   tReadSurfaceGF      =            F
+   tUnformatted        =            F
+   tWriteSeparatedSGF  =            F
+   tReadSeparatedSGF   =            F
+Name of contact 2 : drain                                             
+   AtomRange           =     25    32
+   Temperature         =     0.000928
+   Potential           =     0.000000
+   tWideBand           =            F
+   LevelSpacing        =     0.000000
+   FermiLevel          =    -0.017564
+   tWriteSelfEnergy    =            F
+   tReadSelfEnergy     =            F
+   tWriteSurfaceGF     =            F
+   tReadSurfaceGF      =            F
+   tUnformatted        =            F
+   tWriteSeparatedSGF  =            F
+   tReadSeparatedSGF   =            F
+> readTransportGeometry_NoGeom is finished
+Verbosity           =     51
+EnergyRange         =    -0.183747    0.220496
+EnergyStep          =     0.001102
+
+--------------------------------------------------------------------------------
+-- Parsing is finished                                                        --
+--------------------------------------------------------------------------------
+
+
+Processed input in HSD format written to 'dftb_pin.hsd'
+--------------------------------------------------------------------------------
+-- TraNaS parameters are defined from CP2K                                   --
+--------------------------------------------------------------------------------
+ Hamiltonian%NumStates                    =       32
+ Transport%Device                         =    1  16
+ Transport%Contact(1)                     =   17  24
+ Transport%Contact(2)                     =   25  32
+--------------------------------------------------------------------------------
+-- Initialization is started (without geometry)                               --
+--------------------------------------------------------------------------------
+
+(negf_init) CONTACT INFO #1
+   Temperature:    9.2787689615719230E-004
+   Potential (with built-in):    0.0000000000000000     
+   eFermi:   -1.7563968650170000E-002
+
+(negf_init) CONTACT INFO #2
+   Temperature:    9.2787689615719230E-004
+   Potential (with built-in):    0.0000000000000000     
+   eFermi:   -1.7563968650170000E-002
+
+   Electro-chemical potentials:   -1.7563968650170000E-002  -1.7563968650170000E-002
+
+Structure info:
+   Number of PLs:           1
+   PLs coupled to contacts:           1           1
+--------------------------------------------------------------------------------
+-- Initialization is finished                                                 --
+--------------------------------------------------------------------------------
+
+================================================================================
+                             COMPUTATION OF TRANSPORT         
+================================================================================
+
+Transport is started.
+Number of states (with electrodes)      =    32
+Number of states in the central region  =    16
+
+--------------------------------------------------------------------------------
+                          TraNaS: Current calculation
+--------------------------------------------------------------------------------
+
+>>> The Landauer transport (transmission [and DOS]) is started.
+>>> The Landauer transport (transmission [and DOS]) is finished.
+
+--------------------------------------------------------------------------------
+                            TraNaS: Current finished
+--------------------------------------------------------------------------------
+
+Current is calculated
+  contacts:   2  1   current:    0.00000E+00 A       
+
+================================================================================
+==                  DFTB+XT is finished, switch back to CP2K                  ==
+================================================================================
+
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                                DBCSR STATISTICS                             -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ COUNTER                                    TOTAL       BLAS       SMM       ACC
+ flops     1 x     8 x     1                 7040       0.0%    100.0%      0.0%
+ flops     1 x     1 x     8                26880       0.0%    100.0%      0.0%
+ flops     1 x    32 x     1                28160       0.0%    100.0%      0.0%
+ flops     1 x     1 x    32               107520       0.0%    100.0%      0.0%
+ flops inhomo. stacks                           0       0.0%      0.0%      0.0%
+ flops total                       169.600000E+03       0.0%    100.0%      0.0%
+ flops max/rank                     53.280000E+03       0.0%    100.0%      0.0%
+ matmuls inhomo. stacks                         0       0.0%      0.0%      0.0%
+ matmuls total                               4240       0.0%    100.0%      0.0%
+ number of processed stacks                    64       0.0%    100.0%      0.0%
+ average stack size                                     0.0      66.2       0.0
+ marketing flops                   598.400000E+03
+ -------------------------------------------------------------------------------
+ # multiplications                              8
+ max memory usage/rank             156.303360E+06
+ # max total images/rank                        1
+ # max 3D layers                                1
+ # MPI messages exchanged                      64
+ MPI messages size (bytes):
+  total size                       195.520000E+03
+  min size                         800.000000E+00
+  max size                           5.120000E+03
+  average size                       3.055000E+03
+ MPI breakdown and total messages size (bytes):
+             size <=      128                   0                        0
+       128 < size <=     8192                  64                   195520
+      8192 < size <=    32768                   0                        0
+     32768 < size <=   131072                   0                        0
+    131072 < size <=  4194304                   0                        0
+   4194304 < size <= 16777216                   0                        0
+  16777216 < size                               0                        0
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                      DBCSR MESSAGE PASSING PERFORMANCE                      -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+
+ ROUTINE             CALLS      AVE VOLUME [Bytes]
+ MP_Group              331
+ MP_Bcast                5                     12.
+ MP_Allreduce         1421                      8.
+ MP_Alltoall          6441                    147.
+ MP_Wait               256
+ MP_ISend               64                   1586.
+ MP_IRecv               64                    740.
+ MP_Memory             510
+ -------------------------------------------------------------------------------
+
+
+ MEMORY| Estimated peak process memory [MiB]                                 178
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                         MESSAGE PASSING PERFORMANCE                         -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+
+ ROUTINE             CALLS      AVE VOLUME [Bytes]
+ MP_Group               14
+ MP_Bcast             5633                  76936.
+ MP_Allreduce         1404                    278.
+ MP_Sync                12
+ MP_Alltoall           460                2474749.
+ MP_ISendRecv          366                  26447.
+ MP_Wait              4161
+ MP_comm_split           1
+ MP_ISend             4140                   9201.
+ MP_IRecv             5751                   6605.
+ MP_Recv               225                     92.
+ -------------------------------------------------------------------------------
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                           R E F E R E N C E S                               -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ 
+ CP2K version 7.0 (Development Version), the CP2K developers group (2018).
+ CP2K is freely available from https://www.cp2k.org/ .
+
+ Togo, Atsushi; Tanaka, Isao. arXiv, 1808.01590 (2018). 
+ Spglib : a software library for crystal symmetry search.
+ https://dx.doi.org/xxx
+
+
+ Papior, N; Lorente, N; Frederiksen, T; Garcia, A; Brandbyge, M. 
+ COMPUTER PHYSICS COMMUNICATIONS, 212, 8-24 (2017). 
+ Improvements on non-equilibrium and transport Green function techniques.
+ https://dx.doi.org/10.1016/j.cpc.2016.09.022
+
+
+ Schuett, Ole; Messmer, Peter; Hutter, Juerg; VandeVondele, Joost. 
+ Electronic Structure Calculations on Graphics Processing Units, John Wiley & Sons, Ltd, 173-190 (2016). 
+ GPU-Accelerated Sparse Matrix-Matrix Multiplication for Linear Scaling Density Functional Theory.
+ https://dx.doi.org/10.1002/9781118670712.ch8
+
+
+ Borstnik, U; VandeVondele, J; Weber, V; Hutter, J. 
+ PARALLEL COMPUTING, 40 (5-6), 47-58 (2014). 
+ Sparse matrix multiplication: The distributed block-compressed sparse
+ row library.
+ https://dx.doi.org/10.1016/j.parco.2014.03.012
+
+
+ Hutter, J; Iannuzzi, M; Schiffmann, F; VandeVondele, J. 
+ WILEY INTERDISCIPLINARY REVIEWS-COMPUTATIONAL MOLECULAR SCIENCE, 4 (1), 15-25 (2014). 
+ CP2K: atomistic simulations of condensed matter systems.
+ https://dx.doi.org/10.1002/wcms.1159
+
+
+ VandeVondele, J; Hutter, J. 
+ JOURNAL OF CHEMICAL PHYSICS, 127 (11), 114105 (2007). 
+ Gaussian basis sets for accurate calculations on molecular systems in
+ gas and condensed phases.
+ https://dx.doi.org/10.1063/1.2770708
+
+
+ Rocha, AR; Garcia-Suarez, VM; Bailey, S; Lambert, C; Ferrer, J;
+ Sanvito, S. PHYSICAL REVIEW B, 73, 085414 (2006). 
+ Spin and molecular electronics in atomically generated orbital landscapes.
+ https://dx.doi.org/10.1103/PhysRevB.73.085414
+
+
+ Krack, M. 
+ THEORETICAL CHEMISTRY ACCOUNTS, 114 (1-3), 145-152 (2005). 
+ Pseudopotentials for H to Kr optimized for gradient-corrected
+ exchange-correlation functionals.
+ https://dx.doi.org/10.1007/s00214-005-0655-y
+
+
+ VandeVondele, J; Krack, M; Mohamed, F; Parrinello, M; Chassaing, T;
+ Hutter, J. COMPUTER PHYSICS COMMUNICATIONS, 167 (2), 103-128 (2005). 
+ QUICKSTEP: Fast and accurate density functional calculations using a
+ mixed Gaussian and plane waves approach.
+ https://dx.doi.org/10.1016/j.cpc.2004.12.014
+
+
+ Frigo, M; Johnson, SG. 
+ PROCEEDINGS OF THE IEEE, 93 (2), 216-231 (2005). 
+ The design and implementation of FFTW3.
+ https://dx.doi.org/10.1109/JPROC.2004.840301
+
+
+ Hartwigsen, C; Goedecker, S; Hutter, J. 
+ PHYSICAL REVIEW B, 58 (7), 3641-3662 (1998). 
+ Relativistic separable dual-space Gaussian pseudopotentials from H to Rn.
+ https://dx.doi.org/10.1103/PhysRevB.58.3641
+
+
+ Lippert, G; Hutter, J; Parrinello, M. 
+ MOLECULAR PHYSICS, 92 (3), 477-487 (1997). 
+ A hybrid Gaussian and plane wave density functional scheme.
+ https://dx.doi.org/10.1080/002689797170220
+
+
+ Perdew, JP; Burke, K; Ernzerhof, M. 
+ PHYSICAL REVIEW LETTERS, 77 (18), 3865-3868 (1996). 
+ Generalized gradient approximation made simple.
+ https://dx.doi.org/10.1103/PhysRevLett.77.3865
+
+
+ Goedecker, S; Teter, M; Hutter, J. 
+ PHYSICAL REVIEW B, 54 (3), 1703-1710 (1996). 
+ Separable dual-space Gaussian pseudopotentials.
+ https://dx.doi.org/10.1103/PhysRevB.54.1703
+
+
+ -------------------------------------------------------------------------------
+ -                                                                             -
+ -                                T I M I N G                                  -
+ -                                                                             -
+ -------------------------------------------------------------------------------
+ SUBROUTINE                       CALLS  ASD         SELF TIME        TOTAL TIME
+                                MAXIMUM       AVERAGE  MAXIMUM  AVERAGE  MAXIMUM
+ CP2K                                 1  1.0    0.026    0.050   12.846   12.857
+ do_negf                              1  2.0    0.082    0.083   12.600   12.602
+ converge_density                     1  3.0    0.003    0.013    6.303    6.303
+ negf_env_create                      1  3.0    0.000    0.001    5.987    5.987
+ qs_energies                          3  4.0    0.001    0.001    5.624    5.625
+ qs_rho_update_rho                   24  5.9    0.000    0.000    5.566    5.567
+ calculate_rho_elec                  24  6.9    4.661    4.920    5.566    5.566
+ qs_ks_build_kohn_sham_matrix        21  6.9    0.003    0.003    5.278    5.295
+ scf_env_do_scf                       3  5.0    0.000    0.001    4.856    4.856
+ scf_env_do_scf_inner_loop           12  6.0    0.001    0.003    4.856    4.856
+ integrate_v_rspace                  22  8.7    2.305    2.347    2.685    2.702
+ sum_up_and_integrate                21  7.9    0.006    0.006    2.536    2.553
+ qs_vxc_create                       21  7.9    0.000    0.001    2.439    2.448
+ xc_vxc_pw_create                    21  8.9    0.024    0.028    2.439    2.448
+ pw_transfer                        440  9.6    0.027    0.030    2.307    2.379
+ fft_wrap_pw1pw2                    398 10.6    0.004    0.004    2.253    2.328
+ qs_ks_update_qs_env                 12  7.0    0.000    0.000    2.282    2.298
+ rebuild_ks_matrix                   12  8.0    0.000    0.000    2.260    2.277
+ fft_wrap_pw1pw2_100                260 11.6    0.190    0.202    2.180    2.254
+ fft3d_ps                           398 12.6    0.913    0.987    1.664    1.763
+ xc_rho_set_and_dset_create          21  9.9    0.014    0.016    1.508    1.601
+ density_rs2pw                       24  7.9    0.001    0.001    0.889    1.078
+ xc_functional_eval                  21 10.9    0.000    0.000    0.889    0.987
+ pbe_lda_eval                        21 11.9    0.889    0.987    0.889    0.987
+ rs_pw_transfer                     188  9.7    0.002    0.002    0.628    0.816
+ rs_pw_transfer_RS2PW_100            28  9.7    0.013    0.014    0.547    0.734
+ mp_alltoall_z22v                   398 14.6    0.438    0.564    0.438    0.564
+ init_scf_run                         3  5.0    0.000    0.001    0.551    0.552
+ scf_env_initial_rho_setup            3  6.0    0.003    0.012    0.550    0.551
+ yz_to_x                            185 13.4    0.090    0.098    0.391    0.490
+ mp_waitany                         396 11.0    0.364    0.465    0.364    0.465
+ gspace_mixing                       18  5.5    0.006    0.006    0.424    0.424
+ qs_energies_init_hamiltonians        4  4.8    0.000    0.000    0.399    0.399
+ x_to_yz                            213 13.8    0.214    0.244    0.351    0.372
+ potential_pw2rs                     22  9.7    0.001    0.001    0.312    0.312
+ qs_env_update_s_mstruct              4  5.8    0.000    0.000    0.269    0.304
+ mp_waitall_1                      4021  8.9    0.199    0.296    0.199    0.296
+ broyden_mixing                      18  6.5    0.263    0.268    0.266    0.269
+ -------------------------------------------------------------------------------
+
+ The number of warnings for this run is : 5
+ 
+ -------------------------------------------------------------------------------
+  **** **** ******  **  PROGRAM ENDED AT                 2019-05-27 12:05:11.907
+ ***** ** ***  *** **   PROGRAM RAN ON                                    debian
+ **    ****   ******    PROGRAM RAN BY                                   dryndyk
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 20756
+  **** **  *******  **  PROGRAM STOPPED IN       /home/dryndyk/CP2K_examples/H40

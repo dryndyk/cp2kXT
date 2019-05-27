@@ -1,8 +1,9 @@
 # CP2K+XT 
 
 CP2K+XT is the extension of the CP2K for atomistic quantum transport at nanoscale, many-body nonequilibrium phenomena, material & device modeling. It should be used together with the DFTB+XT package.
+CP2K+XT is a part of TraNaS OpenSuite - integrated open software suite for multiscale modeling.
 
-http://quantranspro.org/opensuite/
+http://tranas.org/opensuite/
 
 # CP2K
 
@@ -10,27 +11,22 @@ CP2K is a quantum chemistry and solid state physics software package that can pe
 
 CP2K is written in Fortran 2008 and can be run efficiently in parallel using a combination of multi-threading, MPI, and CUDA.
 
-## Downloading CP2K source code
+## Downloading CP2K+XT source code
 
 To clone the current master (development version):
 ```console
-$ git clone --recursive https://github.com/cp2k/cp2k.git cp2k
+$ git clone --recursive https://github.com/tranas-open/cp2kXT.git
 ```
 Note the ``--recursive`` flag that is needed because CP2K uses git submodules.
 
-To clone a release version v*x.y*:
-```console
-$ git clone -b support/vx.y https://github.com/cp2k/cp2k.git cp2k
-```
-
-For more information on downloading CP2K, see [Downloading CP2K](https://www.cp2k.org/download).
+For information on downloading CP2K, see [Downloading CP2K](https://www.cp2k.org/download).
 For help on git, see [Git Tips & Tricks](https://github.com/cp2k/cp2k/wiki/Git-Tips-&-Tricks).
 
-## Install CP2K
+## Install CP2K+XT
 
 See [installation instructions](./INSTALL.md)
 
-## Links
+## CP2K Links
 
 * [CP2K.org](https://www.cp2k.org) for showcases of scientific work, tutorials, exercises, presentation slides, etc.
 * [The manual](https://manual.cp2k.org/) with descriptions of all the keywords for the CP2K input file

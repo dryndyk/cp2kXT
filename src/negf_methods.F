@@ -124,17 +124,17 @@ MODULE negf_methods
    !DAR begin 
    !-----------------------------------------------------------------------------------------------!
    use, intrinsic :: iso_fortran_env
-   use globalenv   
-   use environment_1   
-   use main, only : runDftbPlus
-   use inputdata_module, only : inputData
-   use formatout, only : printDftbHeader
-   use parser, only : parseHsdInput
-   use initprogram, only : initProgramVariables, negf_init_nogeom, negf_init_str, tranasNoGeom 
+   use dftbp_globalenv   
+   use dftbp_environment   
+   use dftbp_main, only : runDftbPlus
+   use dftbp_inputdata_module, only : inputData
+   use dftbp_formatout, only : printDftbHeader
+   use dftbp_hsdhelpers, only : parseHsdInput
+   use dftbp_initprogram, only : initProgramVariables, negf_init_nogeom, negf_init_str, tranasNoGeom 
    use libmpifx_module 
    use tranas_vars 
-   use periodic   
-   use densedescr
+   use dftbp_periodic   
+   use dftbp_densedescr
    !-----------------------------------------------------------------------------------------------!
    !DAR end
    !-----------------------------------------------------------------------------------------------!

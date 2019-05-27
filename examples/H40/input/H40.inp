@@ -1,0 +1,400 @@
+@SET project      H40
+@SET fermi_level  -0.01756396865017 #-0.01126
+@SET v_bias_volt  0.0
+@SET temperature  293.0
+
+@SET basis_set_path BASIS_MOLOPT
+@SET potential_path GTH_POTENTIALS
+@SET basis_set_h    SZV-MOLOPT-GTH
+@SET potential_h    GTH-PBE-q1
+
+@SET xc_functional  pbe
+
+@SET cutoff         200
+@SET added_mos      100
+@SET max_scf        100
+@SET eps_scf        1e-6
+
+@SET lx             3.0
+@SET ly             3.0
+
+&GLOBAL
+  PROJECT              ${project}
+  RUN_TYPE             negf
+  PRINT_LEVEL          low
+  EXTENDED_FFT_LENGTHS .true.
+&END GLOBAL
+
+&MULTIPLE_FORCE_EVALS
+   # Order in which the input file parser stores different force environments
+   # within the 'global_env' variable.
+   #
+   # 'FORCE_EVAL_ORDER 1 2 3' means that the 1st force environment --
+   # which holds the entire system -- will have the internal index '0',
+   # while the 2nd and 3rd force environments -- which correspond to the
+   # 1st and 2nd semi-infinite electrodes respectively -- will have
+   # the internal indices '1' and '2'.
+   # (note that the internal indices start from 0, which is not intuitive indeed)
+   #
+   FORCE_EVAL_ORDER 1 2 3
+
+   # Different force environments contain non-identical molecular structures.
+   # By default, the input parser ignores 'subsys' sections from all but the force
+   # environment with the internal index '0'.
+   MULTIPLE_SUBSYS .true.
+&END
+
+&NEGF
+   &CONTACT
+      # the force environment with the internal index '1' should be used
+      # to compute 'bulk' properties of this (1st) semi-infinite electrode.
+      FORCE_EVAL_SECTION 1
+
+      &BULK_REGION
+         # Need this to map matrix elements between the primary (with index 0)
+         # and the 'bulk' (with index 1) force environments because we do need
+         # to construct the correct off-diagonal (scattering -- contact) block
+         # of the Kohn-Sham and overlap matrices.
+         #
+         # Atomic indices (and/or names of molecular fragments) are relative
+         # to the primary force environment.
+         MOLNAME L1 L2 L3
+      &END
+      &SCREENING_REGION
+         MOLNAME L0
+      &END
+
+      FERMI_LEVEL  ${fermi_level}
+      #REFINE_FERMI_LEVEL
+      ELECTRIC_POTENTIAL [eV] ${v_bias_volt}/2
+
+      # each contact has its own temperature
+      TEMPERATURE [K] ${temperature}
+    &END CONTACT
+
+    &CONTACT
+      # the second semi-infinite electrode
+      FORCE_EVAL_SECTION 2
+
+      &BULK_REGION
+         MOLNAME R1 R2 R3
+      &END
+      &SCREENING_REGION
+         MOLNAME R0
+      &END
+
+      FERMI_LEVEL  ${fermi_level}
+      #REFINE_FERMI_LEVEL
+      ELECTRIC_POTENTIAL [eV] -${v_bias_volt}/2
+
+      TEMPERATURE [K] ${temperature}
+    &END CONTACT
+
+    
+    &SCATTERING_REGION
+       MOLNAME S
+    &END SCATTERING_REGION
+
+    # Density mixing is not needed in zero-bias case, as NEGF self-consistent
+    # procedure will converge in one iteration. However, when an external bias
+    # is applied, a density mixing scheme in inverse space is typically
+    # much stable then the default direct mixing of new and old density matrices.
+    &MIXING
+       ALPHA   0.2
+       METHOD  broyden_mixing
+       NBUFFER 8
+    &END MIXING
+
+    # Integration lower bound (in Hartree)
+    ENERGY_LBOUND -2.0
+
+    # Maximum error in each matrix element of the density matrix
+    EPS_DENSITY    1e-5
+
+    MAX_SCF        100
+
+    # The boundary conditions define solution of the Poisson equation up to
+    # an additive constant, which affects Hamiltonian matrix elements within
+    # the NEGF procedure. A straighforward way to determine a correct shift
+    # for matrix elements -- which converges zero-bias NEGF procedure in
+    # one iteration -- is to do it iteratively.
+    # V_SHIFT_ALPHA -- mixing factor (lower number means slower convergence
+    #          but better numerical stability). The optimal value changes
+    #          at every iteration, so an algorithm that automatically picks
+    #          the correct number needs to be implemented, instead of asking
+    #          users to guess it
+    # V_SHIFT_MAX_ITERS -- maximum number of iterations
+    #
+    V_SHIFT_ALPHA     0.03
+    V_SHIFT_OFFSET     0.03
+    V_SHIFT_MAX_ITERS   70
+
+    &PRINT
+       &DOS
+          FILENAME device
+          FROM_ENERGY [eV] -5
+          TILL_ENERGY [eV] 6
+          N_GRIDPOINTS 401
+       &END
+       &TRANSMISSION
+          FILENAME transm
+          FROM_ENERGY [eV] -5
+          TILL_ENERGY [eV] 6
+          N_GRIDPOINTS 401
+       &END
+    &END
+
+    # Number of parallel processes per energy point.
+    # 'NPROC_POINT 1' means that if you run this job using 8 MPI processes,
+    # than Green's functions at up to 8 (8 / NPROC_POINT) energy points
+    # will be computed simultaneously.
+    #
+    # This is a good choice as the actual NEGF matrices are very small
+    # (up to 16 x 16 elements)
+    # 
+    NPROC_POINT 1
+&END NEGF
+
+# *** Primary force environment ***
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME ${basis_set_path}
+    POTENTIAL_FILE_NAME ${potential_path}
+
+    &MGRID
+      CUTOFF ${cutoff}
+    &END MGRID
+
+    &SCF
+      MAX_SCF   ${max_scf}
+      EPS_SCF   ${eps_scf}
+      SCF_GUESS restart
+      ADDED_MOS ${added_mos}
+
+      &SMEAR
+         ELECTRONIC_TEMPERATURE [K] ${temperature}
+         METHOD fermi_dirac
+      &END SMEAR
+
+      &MIXING
+         ALPHA   0.3
+         METHOD  broyden_mixing
+         NBUFFER 8
+      &END MIXING
+
+      &PRINT
+         &RESTART
+            FILENAME RESTART_0
+         &END RESTART
+      &END PRINT
+    &END SCF
+
+    &POISSON
+       PERIODIC xyz
+    &END POISSON
+
+    &XC
+      &XC_FUNCTIONAL ${xc_functional}
+      &END XC_FUNCTIONAL
+    &END XC
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      ABC    ${lx} ${ly} 66.880 #53.504 
+      PERIODIC xyz
+    &END CELL
+
+    &COORD
+H            0.00000000           0.00000000           0.00000000 L3
+H            0.00000000           0.00000000           1.67200000 L3
+H            0.00000000           0.00000000           3.34400000 L3
+H            0.00000000           0.00000000           5.01600000 L3
+H            0.00000000           0.00000000           6.68800000 L2
+H            0.00000000           0.00000000           8.36000000 L2
+H            0.00000000           0.00000000          10.03200000 L2
+H            0.00000000           0.00000000          11.70400000 L2
+H            0.00000000           0.00000000          13.37600000 L1
+H            0.00000000           0.00000000          15.04800000 L1
+H            0.00000000           0.00000000          16.72000000 L1
+H            0.00000000           0.00000000          18.39200000 L1
+H            0.00000000           0.00000000          20.06400000 L0
+H            0.00000000           0.00000000          21.73600000 L0
+H            0.00000000           0.00000000          23.40800000 L0
+H            0.00000000           0.00000000          25.08000000 L0
+H            0.00000000           0.00000000          26.75200000 S
+H            0.00000000           0.00000000          28.42400000 S
+H            0.00000000           0.00000000          30.09600000 S
+H            0.00000000           0.00000000          31.76800000 S
+H            0.00000000           0.00000000          33.44000000 S
+H            0.00000000           0.00000000          35.11200000 S
+H            0.00000000           0.00000000          36.78400000 S
+H            0.00000000           0.00000000          38.45600000 S
+H            0.00000000           0.00000000          40.12800000 R0
+H            0.00000000           0.00000000          41.80000000 R0
+H            0.00000000           0.00000000          43.47200000 R0
+H            0.00000000           0.00000000          45.14400000 R0
+H            0.00000000           0.00000000          46.81600000 R1
+H            0.00000000           0.00000000          48.48800000 R1
+H            0.00000000           0.00000000          50.16000000 R1
+H            0.00000000           0.00000000          51.83200000 R1
+H            0.00000000           0.00000000          53.50400000 R2
+H            0.00000000           0.00000000          55.17600000 R2
+H            0.00000000           0.00000000          56.84800000 R2
+H            0.00000000           0.00000000          58.52000000 R2
+H            0.00000000           0.00000000          60.19200000 R3
+H            0.00000000           0.00000000          61.86400000 R3
+H            0.00000000           0.00000000          63.53600000 R3
+H            0.00000000           0.00000000          65.20800000 R3
+    &END COORD
+
+    &KIND H
+      BASIS_SET ${basis_set_h}
+      POTENTIAL ${potential_h}
+    &END KIND
+  &END SUBSYS
+&END FORCE_EVAL
+
+# *** The 1st (left) semi-infinite electrode ***
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME ${basis_set_path}
+    POTENTIAL_FILE_NAME ${potential_path}
+
+    &MGRID
+      CUTOFF ${cutoff}
+    &END MGRID
+
+    &SCF
+      MAX_SCF   ${max_scf}
+      EPS_SCF   ${eps_scf}
+      SCF_GUESS restart
+      ADDED_MOS ${added_mos}
+
+      &SMEAR
+         ELECTRONIC_TEMPERATURE [K] ${temperature}
+         METHOD fermi_dirac
+      &END SMEAR
+
+      &MIXING
+         ALPHA   0.3
+         METHOD  broyden_mixing
+         NBUFFER 8
+      &END MIXING
+
+      &PRINT
+         &RESTART
+            FILENAME RESTART_1
+         &END RESTART
+      &END PRINT
+    &END SCF
+
+    &POISSON
+       PERIODIC xyz
+    &END POISSON
+
+    &XC
+      &XC_FUNCTIONAL ${xc_functional}
+      &END XC_FUNCTIONAL
+    &END XC
+
+    &KPOINTS
+       SCHEME  MONKHORST-PACK  1 1 8
+    &END KPOINTS
+  &END DFT
+
+  &SUBSYS
+    # a primary unit cell of the 1st semi-infinite electrode
+    &CELL
+      ABC    ${lx} ${ly} 6.688
+      PERIODIC xyz
+    &END CELL
+
+    &COORD
+H            0.00000000           0.00000000          13.37600000 L1
+H            0.00000000           0.00000000          15.04800000 L1
+H            0.00000000           0.00000000          16.72000000 L1
+H            0.00000000           0.00000000          18.39200000 L1
+    &END COORD
+
+    &KIND H
+      BASIS_SET ${basis_set_h}
+      POTENTIAL ${potential_h}
+    &END KIND
+  &END SUBSYS
+&END FORCE_EVAL
+
+# *** The 2nd (right) semi-infinite electrode ***
+&FORCE_EVAL
+  METHOD Quickstep
+
+  &DFT
+    BASIS_SET_FILE_NAME ${basis_set_path}
+    POTENTIAL_FILE_NAME ${potential_path}
+
+    &MGRID
+      CUTOFF ${cutoff}
+    &END MGRID
+
+    &SCF
+      MAX_SCF   ${max_scf}
+      EPS_SCF   ${eps_scf}
+      SCF_GUESS restart
+      ADDED_MOS ${added_mos}
+
+      &SMEAR
+         ELECTRONIC_TEMPERATURE [K] ${temperature}
+         METHOD fermi_dirac
+      &END SMEAR
+
+      &MIXING
+         ALPHA   0.3
+         METHOD  broyden_mixing
+         NBUFFER 8
+      &END MIXING
+
+      &PRINT
+         &RESTART
+            FILENAME RESTART_2
+         &END RESTART
+      &END PRINT
+    &END SCF
+
+    &POISSON
+       PERIODIC xyz
+    &END POISSON
+
+    &XC
+      &XC_FUNCTIONAL ${xc_functional}
+      &END XC_FUNCTIONAL
+    &END XC
+
+    &KPOINTS
+       SCHEME  MONKHORST-PACK 1 1 8
+    &END KPOINTS
+  &END DFT
+
+  &SUBSYS
+    # a primary unit cell of the 2nd semi-infinite electrode
+    &CELL
+      ABC    ${lx} ${ly} 6.688
+      PERIODIC xyz
+    &END CELL
+
+    &COORD
+H            0.00000000           0.00000000          46.81600000 R1
+H            0.00000000           0.00000000          48.48800000 R1
+H            0.00000000           0.00000000          50.16000000 R1
+H            0.00000000           0.00000000          51.83200000 R1
+    &END COORD
+
+    &KIND H
+      BASIS_SET ${basis_set_h}
+      POTENTIAL ${potential_h}
+    &END KIND
+  &END SUBSYS
+&END FORCE_EVAL

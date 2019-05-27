@@ -1,0 +1,7 @@
+Run with CP2K input file, something like
+
+$ mpirun -n 4 cp2kXT C40.inp |tee out
+
+where cp2kXT is the link to the CP2K+XT executabe file.
+
+"dftb_in.hsd" is the additional input file for DFTB+XT libraries.

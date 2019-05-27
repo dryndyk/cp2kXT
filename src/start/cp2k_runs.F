@@ -1121,11 +1121,11 @@ CONTAINS
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
         write(unit_nr, '(5A)') hbar,hbar,'                              TraNaS OpenSuite                              ',hbar,hbar 
-        write(unit_nr, '(5A)') hbar,hbar,'       (integrated open software suite for quantum nanoscale modeling)      ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar,'          (integrated open software suite for multiscale modeling)          ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
-        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.02                                ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03                                ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(5A)') hbar,hbar,' CP2K eXTended version for atomistic quantum transport at nanoscale,        ',hbar,hbar 
         write(unit_nr, '(5A)') hBar,hBar,' many-body nonequilibrium phenomena, material & device modeling             ',hbar,hbar
@@ -1140,7 +1140,7 @@ CONTAINS
         write(unit_nr, '(5A)') hBar,hBar,' TraNaS OpenSuite [1], partially based on the DFTB+ [2,3] source code       ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,' and the CP2K software package [4] with a Quickstep module [5].             ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
-        write(unit_nr, '(5A)') hBar,hBar,' [1] Dmitry A. Ryndyk, TraNaS OpenSuite, tranas.org/opensuite               ',hBar,hBar 
+        write(unit_nr, '(5A)') hBar,hBar,' [1] TraNaS OpenSuite, tranas.org/opensuite                                 ',hBar,hBar 
         write(unit_nr, '(5A)') hBar,hBar,' [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,'     J. Phys. Chem. A 111, 5678 (2007); dftbplus.org                        ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,' [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ',hBar,hBar
