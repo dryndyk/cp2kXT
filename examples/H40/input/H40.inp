@@ -65,7 +65,7 @@
       &END
 
       FERMI_LEVEL  ${fermi_level}
-      #REFINE_FERMI_LEVEL
+      REFINE_FERMI_LEVEL
       ELECTRIC_POTENTIAL [eV] ${v_bias_volt}/2
 
       # each contact has its own temperature
@@ -84,7 +84,7 @@
       &END
 
       FERMI_LEVEL  ${fermi_level}
-      #REFINE_FERMI_LEVEL
+      REFINE_FERMI_LEVEL
       ELECTRIC_POTENTIAL [eV] -${v_bias_volt}/2
 
       TEMPERATURE [K] ${temperature}

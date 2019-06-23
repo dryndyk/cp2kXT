@@ -441,7 +441,8 @@ MODULE input_constants
                                                do_loc_jacobi = 1, &
                                                do_loc_crazy = 2, &
                                                do_loc_direct = 3, &
-                                               do_loc_l1_norm_sd = 4
+                                               do_loc_l1_norm_sd = 4, &
+                                               do_loc_scdm = 5
 
    INTEGER, PARAMETER, PUBLIC               :: do_loc_min = 0, &
                                                do_loc_max = 1, &
@@ -1115,5 +1116,9 @@ MODULE input_constants
                                                embed_level_shift = 2
    INTEGER, PARAMETER, PUBLIC               :: embed_grid_bohr = 0, &
                                                embed_grid_angstrom = 1
+   INTEGER, PARAMETER, PUBLIC               :: embed_none = 0, &
+                                               embed_diff = 1, &
+                                               embed_fa = 2, &
+                                               embed_resp = 3
 
 END MODULE input_constants

@@ -58,14 +58,14 @@ CONTAINS
       TYPE(section_type), POINTER                        :: print_key, subsection
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, "HF", &
+      CALL section_create(section, __LOCATION__, name="HF", &
                           description="Sets up the Hartree-Fock parameters if requested ", &
                           n_keywords=5, n_subsections=2, repeats=.TRUE., &
                           citations=(/Guidon2008, Guidon2009/))
 
       NULLIFY (keyword, print_key, subsection)
 
-      CALL keyword_create(keyword, name="FRACTION", &
+      CALL keyword_create(keyword, __LOCATION__, name="FRACTION", &
                           description="The fraction of Hartree-Fock to add to the total energy. "// &
                           "1.0 implies standard Hartree-Fock if used with XC_FUNCTIONAL NONE. "// &
                           "NOTE: In a mixed potential calculation this should be set to 1.0, otherwise "// &
@@ -74,7 +74,7 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="TREAT_LSD_IN_CORE", &
+      CALL keyword_create(keyword, __LOCATION__, name="TREAT_LSD_IN_CORE", &
                           description="Determines how spin denisities are taken into account. "// &
                           "If true, the beta spin density is included via a second in core call. "// &
                           "If false, alpha and beta spins are done in one shot ", &
@@ -82,14 +82,14 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="PW_HFX", &
+      CALL keyword_create(keyword, __LOCATION__, name="PW_HFX", &
                           description="Compute the Hartree-Fock energy also in the plane wave basis."// &
                           "The value is ignored, and intended for debugging only.", &
                           usage="PW_HFX FALSE", default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="PW_HFX_BLOCKSIZE", &
+      CALL keyword_create(keyword, __LOCATION__, name="PW_HFX_BLOCKSIZE", &
                           description="Improve the performance of pw_hfx at the cost of some additional memory "// &
                           "by storing the realspace representation of PW_HFX_BLOCKSIZE states.", &
                           usage="PW_HFX_BLOCKSIZE 20", default_i_val=20)
@@ -97,7 +97,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       NULLIFY (print_key)
-      CALL cp_print_key_section_create(print_key, "HF_INFO", &
+      CALL cp_print_key_section_create(print_key, __LOCATION__, "HF_INFO", &
                                        description="Controls the printing basic info about hf method", &
                                        print_level=medium_print_level, add_last=add_last_numeric, filename="__STD_OUT__")
       CALL section_add_subsection(section, print_key)
@@ -142,14 +142,14 @@ CONTAINS
       TYPE(section_type), POINTER                        :: print_key
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, "LOAD_BALANCE", &
+      CALL section_create(section, __LOCATION__, name="LOAD_BALANCE", &
                           description="Parameters influencing the load balancing of the HF", &
                           n_keywords=1, n_subsections=0, repeats=.FALSE., &
                           citations=(/guidon2008/))
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="NBINS", &
          description="Number of bins per process used to group atom quartets.", &
          usage="NBINS 32", &
@@ -158,7 +158,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="BLOCK_SIZE", &
          description="Determines the blocking used for the atomic quartet loops. "// &
          "A proper choice can speedup the calculation. The default (-1) is automatic.", &
@@ -169,7 +169,7 @@ CONTAINS
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="RANDOMIZE", &
          description="This flag controls the randomization of the bin assignment to processes. "// &
          "For highly ordered input structures with a bad load balance, setting "// &
@@ -180,13 +180,13 @@ CONTAINS
       CALL keyword_release(keyword)
 
       NULLIFY (print_key)
-      CALL cp_print_key_section_create(print_key, "PRINT", &
+      CALL cp_print_key_section_create(print_key, __LOCATION__, "PRINT", &
                                        description="Controls the printing of info about load balance", &
                                        print_level=medium_print_level, add_last=add_last_numeric, filename="__STD_OUT__")
       CALL section_add_subsection(section, print_key)
 
       CALL keyword_release(keyword)
-      CALL keyword_create(keyword=keyword, &
+      CALL keyword_create(keyword, __LOCATION__, &
                           name="LOAD_BALANCE_INFO", &
                           description="Activates the printing of load balance information ", &
                           default_l_val=.FALSE., &
@@ -213,14 +213,14 @@ CONTAINS
       TYPE(keyword_type), POINTER                        :: keyword
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, "INTERACTION_POTENTIAL", &
+      CALL section_create(section, __LOCATION__, name="INTERACTION_POTENTIAL", &
                           description="Sets up interaction potential if requested ", &
                           n_keywords=1, n_subsections=0, repeats=.FALSE., &
                           citations=(/guidon2008, guidon2009/))
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="POTENTIAL_TYPE", &
          description="Which interaction potential should be used "// &
          "(Coulomb, longrange or shortrange).", &
@@ -245,7 +245,7 @@ CONTAINS
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="OMEGA", &
          description="Parameter for short/longrange interaction", &
          usage="OMEGA 0.5", &
@@ -253,28 +253,28 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="SCALE_COULOMB", &
+      CALL keyword_create(keyword, __LOCATION__, name="SCALE_COULOMB", &
                           description="Scales Hartree-Fock contribution arising from a coulomb potential. "// &
                           "Only valid when doing a mixed potential calculation", &
                           usage="SCALE_COULOMB 1.0", default_r_val=1.0_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="SCALE_LONGRANGE", &
+      CALL keyword_create(keyword, __LOCATION__, name="SCALE_LONGRANGE", &
                           description="Scales Hartree-Fock contribution arising from a longrange potential. "// &
                           "Only valid when doing a mixed potential calculation", &
                           usage="SCALE_LONGRANGE 1.0", default_r_val=1.0_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="SCALE_GAUSSIAN", &
+      CALL keyword_create(keyword, __LOCATION__, name="SCALE_GAUSSIAN", &
                           description="Scales Hartree-Fock contribution arising from a gaussian potential. "// &
                           "Only valid when doing a mixed potential calculation", &
                           usage="SCALE_GAUSSIAN 1.0", default_r_val=1.0_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="CUTOFF_RADIUS", &
+      CALL keyword_create(keyword, __LOCATION__, name="CUTOFF_RADIUS", &
                           description="Determines cutoff radius for the truncated 1/r potential. "// &
                           "Only valid when doing truncated calculation", &
                           usage="CUTOFF_RADIUS 10.0", type_of_var=real_t, & ! default_r_val=10.0_dp,&
@@ -283,7 +283,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="T_C_G_DATA", &
          description="Location of the file t_c_g.dat that contains the data for the "// &
          "evaluation of the truncated gamma function ", &
@@ -310,14 +310,14 @@ CONTAINS
       TYPE(keyword_type), POINTER                        :: keyword
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, "SCREENING", &
+      CALL section_create(section, __LOCATION__, name="SCREENING", &
                           description="Sets up screening parameters if requested ", &
                           n_keywords=1, n_subsections=0, repeats=.FALSE., &
                           citations=(/guidon2008, guidon2009/))
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="EPS_SCHWARZ", &
          description="Screens the near field part of the electronic repulsion "// &
          "integrals using the Schwarz inequality for the given "// &
@@ -329,7 +329,7 @@ CONTAINS
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="EPS_SCHWARZ_FORCES", &
          description="Screens the near field part of the electronic repulsion "// &
          "integrals using the Schwarz inequality for the given "// &
@@ -342,7 +342,7 @@ CONTAINS
 
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="SCREEN_P_FORCES", &
          description="Screens the electronic repulsion integrals for the forces "// &
          "using the density matrix. "// &
@@ -354,7 +354,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       NULLIFY (keyword)
-      CALL keyword_create(keyword, name="SCREEN_ON_INITIAL_P", &
+      CALL keyword_create(keyword, __LOCATION__, name="SCREEN_ON_INITIAL_P", &
                           description="Screen on an initial density matrix. For the first MD step"// &
                           " this matrix must be provided by a Restart File.", &
                           usage="SCREEN_ON_INITIAL_P  TRUE", default_l_val=.FALSE.)
@@ -362,7 +362,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       NULLIFY (keyword)
-      CALL keyword_create(keyword, name="P_SCREEN_CORRECTION_FACTOR", &
+      CALL keyword_create(keyword, __LOCATION__, name="P_SCREEN_CORRECTION_FACTOR", &
                           description="Recalculates integrals on the fly if the actual density matrix is"// &
                           " larger by a given factor than the initial one. If the factor is set"// &
                           " to 0.0_dp, this feature is disabled.", &
@@ -386,13 +386,13 @@ CONTAINS
       TYPE(keyword_type), POINTER                        :: keyword
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, "PERIODIC", &
+      CALL section_create(section, __LOCATION__, name="PERIODIC", &
                           description="Sets up periodic boundary condition parameters if requested ", &
                           n_keywords=1, n_subsections=0, repeats=.FALSE., &
                           citations=(/guidon2008, guidon2009/))
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="NUMBER_OF_SHELLS", &
          description="Number of shells taken into account for periodicity. "// &
          "By default, cp2k tries to automatically evaluate this number. "// &
@@ -419,13 +419,13 @@ CONTAINS
       TYPE(keyword_type), POINTER                        :: keyword
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, "MEMORY", &
+      CALL section_create(section, __LOCATION__, name="MEMORY", &
                           description="Sets up memory parameters for the storage of the ERI's if requested ", &
                           n_keywords=1, n_subsections=0, repeats=.FALSE., &
                           citations=(/guidon2008/))
       NULLIFY (keyword)
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="EPS_STORAGE_SCALING", &
          variants=(/"EPS_STORAGE"/), &
          description="Scaling factor to scale eps_schwarz. Storage threshold for compression "// &
@@ -436,7 +436,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="MAX_MEMORY", &
          description="Defines the maximum amount of memory [MiB] to be consumed by the full HFX module. "// &
          "All temporary buffers and helper arrays are subtracted from this number. "// &
@@ -450,7 +450,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="STORAGE_LOCATION", &
          description="Loaction where ERI's are stored if MAX_DISK_SPACE /=0 "// &
          "Expects a path to a directory. ", &
@@ -460,7 +460,7 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create( &
-         keyword=keyword, &
+         keyword, __LOCATION__, &
          name="MAX_DISK_SPACE", &
          description="Defines the maximum amount of disk space [MiB] used to store precomputed "// &
          "compressed four-center integrals. If 0, nothing is stored to disk", &
@@ -469,7 +469,7 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, name="TREAT_FORCES_IN_CORE", &
+      CALL keyword_create(keyword, __LOCATION__, name="TREAT_FORCES_IN_CORE", &
                           description="Determines whether the derivative ERI's should be stored to RAM or not. "// &
                           "Only meaningful when performing Ehrenfest MD. "// &
                           "Memory usage is defined via MAX_MEMORY, i.e. the memory is shared wit the energy ERI's.", &

@@ -1121,7 +1121,7 @@ CONTAINS
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
         write(unit_nr, '(5A)') hbar,hbar,'                              TraNaS OpenSuite                              ',hbar,hbar 
-        write(unit_nr, '(5A)') hbar,hbar,'          (integrated open software suite for multiscale modeling)          ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar,'          (integrated open software suite for nanoscale modeling)           ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar

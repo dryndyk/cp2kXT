@@ -2,7 +2,7 @@
 ================================================================================
 ==                                                                            ==
 ==                              TraNaS OpenSuite                              ==
-==          (integrated open software suite for multiscale modeling)          ==
+==          (integrated open software suite for nanoscale modeling)           ==
 ==                                                                            ==
 ================================================================================
 ==                                                                            ==
@@ -48,18 +48,18 @@
  DBCSR| Communication thread load                                             87
 
 
-  **** **** ******  **  PROGRAM STARTED AT               2019-05-27 12:04:58.936
+  **** **** ******  **  PROGRAM STARTED AT               2019-06-23 18:07:35.952
  ***** ** ***  *** **   PROGRAM STARTED ON                                debian
  **    ****   ******    PROGRAM STARTED BY                               dryndyk
- ***** **    ** ** **   PROGRAM PROCESS ID                                 20756
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 10645
   **** **  *******  **  PROGRAM STARTED IN       /home/dryndyk/CP2K_examples/H40
 
  CP2K| version string:                    CP2K version 7.0 (Development Version)
- CP2K| source code revision number:                                git:f647cb0fc
- CP2K| cp2kflags: libint fftw3 libxc elpa=201705 parallel mpi3 scalapack xsmm li
- CP2K|            bderiv_max_am1=5 libint_max_am=6 spglib json
+ CP2K| source code revision number:                                git:216b9c901
+ CP2K| cp2kflags: libint fftw3 libxc elpa=201705 parallel mpi3 scalapack xsmm sp
+ CP2K|            glib json
  CP2K| is freely available from                            https://www.cp2k.org/
- CP2K| Program compiled at                      Mon 27 May 2019 11:14:05 AM CEST
+ CP2K| Program compiled at                      Sun 23 Jun 2019 02:19:28 PM CEST
  CP2K| Program compiled on                                                debian
  CP2K| Program compiled for                                                local
  CP2K| Data directory path                   /home/dryndyk/OpenSuite/cp2kXT/data
@@ -83,7 +83,7 @@
  GLOBAL| Method name                                                        CP2K
  GLOBAL| Project name                                                        H40
  GLOBAL| Preferred FFT library                                             FFTW3
- GLOBAL| Preferred diagonalization lib.                                       SL
+ GLOBAL| Preferred diagonalization lib.                                     ELPA
  GLOBAL| Run type                                                           NEGF
  GLOBAL| All-to-all communication in single precision                          F
  GLOBAL| FFTs using library dependent lengths                                  T
@@ -96,13 +96,13 @@
 
  MEMORY| system memory details [Kb]
  MEMORY|                        rank 0           min           max       average
- MEMORY| MemTotal              8150304       8150304       8150304       8150304
- MEMORY| MemFree               3826964       3826964       3826964       3826964
- MEMORY| Buffers                 94520         94520         94520         94520
- MEMORY| Cached                2657080       2657080       2657080       2657080
- MEMORY| Slab                   208604        208604        208604        208604
- MEMORY| SReclaimable           142324        142324        142324        142324
- MEMORY| MemLikelyFree         6720888       6720888       6720888       6720888
+ MEMORY| MemTotal              8150336       8150336       8150336       8150336
+ MEMORY| MemFree               1909028       1909028       1909028       1909028
+ MEMORY| Buffers                138152        138152        138152        138152
+ MEMORY| Cached                4806700       4806700       4806700       4806700
+ MEMORY| Slab                   324792        324792        324792        324792
+ MEMORY| SReclaimable           234300        234300        234300        234300
+ MEMORY| MemLikelyFree         7088180       7088180       7088180       7088180
 
 
  GENERATE|  Preliminary Number of Bonds generated:                            31
@@ -134,7 +134,7 @@
  **                                                                           **
  *******************************************************************************
 
- *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** WARNING in qs_environment.F:1287 :: More added MOs requested than ***
  *** available. The full set of unoccupied MOs will be used.           ***
 
 
@@ -210,7 +210,7 @@
  **                                                                           **
  *******************************************************************************
 
- *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** WARNING in qs_environment.F:1287 :: More added MOs requested than ***
  *** available. The full set of unoccupied MOs will be used.           ***
 
 
@@ -290,7 +290,7 @@
  **                                                                           **
  *******************************************************************************
 
- *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** WARNING in qs_environment.F:1287 :: More added MOs requested than ***
  *** available. The full set of unoccupied MOs will be used.           ***
 
 
@@ -372,11 +372,9 @@
 
   Step     Update method      Time    Convergence         Total energy    Change
   ------------------------------------------------------------------------------
-     1 NoMix/Diag. 0.30E+00    0.1     0.00000270        -1.8536176984 -1.85E+00
-     2 Broy./Diag. 0.30E+00    0.1     0.00000182        -1.8536176985 -8.28E-11
-     3 Broy./Diag. 0.30E+00    0.1     0.00000064        -1.8536176985 -1.15E-12
+     1 NoMix/Diag. 0.30E+00    0.1     0.00000046        -1.8536176984 -1.85E+00
 
-  *** SCF run converged in     3 steps ***
+  *** SCF run converged in     1 steps ***
 
 
   Electronic density on regular grids:         -4.0000031336       -0.0000031336
@@ -386,13 +384,13 @@
 
   Overlap energy of the core charge distribution:               0.00000000000000
   Self energy of the core charge distribution:                 -5.64189583547756
-  Core Hamiltonian energy:                                      2.72806820903877
-  Hartree energy:                                               2.46651946358578
-  Exchange-correlation energy:                                 -1.40630953558344
+  Core Hamiltonian energy:                                      2.72806820903869
+  Hartree energy:                                               2.46651946358586
+  Exchange-correlation energy:                                 -1.40630953558339
   Electronic entropic energy:                                  -0.00000000008355
-  Fermi energy:                                                -0.01737614446891
+  Fermi energy:                                                -0.01737614446893
 
-  Total energy:                                                -1.85361769852000
+  Total energy:                                                -1.85361769843640
 
  NEGF| Extract relevant matrix blocks for the contact                          1
 
@@ -412,11 +410,9 @@
 
   Step     Update method      Time    Convergence         Total energy    Change
   ------------------------------------------------------------------------------
-     1 NoMix/Diag. 0.30E+00    0.1     0.00000270        -1.8536176984 -1.85E+00
-     2 Broy./Diag. 0.30E+00    0.1     0.00000182        -1.8536176985 -8.28E-11
-     3 Broy./Diag. 0.30E+00    0.1     0.00000064        -1.8536176985 -1.15E-12
+     1 NoMix/Diag. 0.30E+00    0.1     0.00000046        -1.8536176984 -1.85E+00
 
-  *** SCF run converged in     3 steps ***
+  *** SCF run converged in     1 steps ***
 
 
   Electronic density on regular grids:         -4.0000031336       -0.0000031336
@@ -426,13 +422,13 @@
 
   Overlap energy of the core charge distribution:               0.00000000000000
   Self energy of the core charge distribution:                 -5.64189583547756
-  Core Hamiltonian energy:                                      2.72806820903877
-  Hartree energy:                                               2.46651946358578
-  Exchange-correlation energy:                                 -1.40630953558344
+  Core Hamiltonian energy:                                      2.72806820903870
+  Hartree energy:                                               2.46651946358586
+  Exchange-correlation energy:                                 -1.40630953558339
   Electronic entropic energy:                                  -0.00000000008355
-  Fermi energy:                                                -0.01737614446891
+  Fermi energy:                                                -0.01737614446892
 
-  Total energy:                                                -1.85361769852000
+  Total energy:                                                -1.85361769843640
 
  NEGF| Extract relevant matrix blocks for the contact                          2
 
@@ -454,14 +450,16 @@
 
   Step     Update method      Time    Convergence         Total energy    Change
   ------------------------------------------------------------------------------
-     1 NoMix/Diag. 0.30E+00    0.3     0.00001184       -18.5202247196 -1.85E+01
-     2 Broy./Diag. 0.30E+00    0.7     0.00006143       -18.5227973401 -2.57E-03
-     3 Broy./Diag. 0.30E+00    0.7     0.00004923       -18.5227973294  1.06E-08
-     4 Broy./Diag. 0.30E+00    0.7     0.00000341       -18.5227973408 -1.14E-08
-     5 Broy./Diag. 0.30E+00    0.7     0.00000182       -18.5227973408  2.74E-11
-     6 Broy./Diag. 0.30E+00    0.7     0.00000050       -18.5227973407  4.94E-11
+     1 NoMix/Diag. 0.30E+00    0.3     0.00004762       -18.5202247195 -1.85E+01
+     2 Broy./Diag. 0.30E+00    0.7     0.00025915       -18.5227973303 -2.57E-03
+     3 Broy./Diag. 0.30E+00    0.7     0.00021202       -18.5227971264  2.04E-07
+     4 Broy./Diag. 0.30E+00    0.7     0.00000592       -18.5227973446 -2.18E-07
+     5 Broy./Diag. 0.30E+00    0.7     0.00000261       -18.5227973440  6.13E-10
+     6 Broy./Diag. 0.30E+00    0.7     0.00000148       -18.5227973430  9.64E-10
+     7 Broy./Diag. 0.30E+00    0.7     0.00000114       -18.5227973409  2.08E-09
+     8 Broy./Diag. 0.30E+00    0.7     0.00000048       -18.5227973401  8.59E-10
 
-  *** SCF run converged in     6 steps ***
+  *** SCF run converged in     8 steps ***
 
 
   Electronic density on regular grids:        -40.0000278307       -0.0000278307
@@ -471,24 +469,46 @@
 
   Overlap energy of the core charge distribution:               0.00000000000000
   Self energy of the core charge distribution:                -56.41895835477563
-  Core Hamiltonian energy:                                     27.30863860295799
-  Hartree energy:                                              24.65689371199907
-  Exchange-correlation energy:                                -14.06679867990208
+  Core Hamiltonian energy:                                     27.30863860295808
+  Hartree energy:                                              24.65689371245208
+  Exchange-correlation energy:                                -14.06679867968876
   Electronic entropic energy:                                  -0.00257262101633
-  Fermi energy:                                                -0.01756396861621
+  Fermi energy:                                                -0.01756396862036
 
-  Total energy:                                               -18.52279734073695
+  Total energy:                                               -18.52279734007055
 
 --------------------------------------------------------------------------------
 -- negf_env_create is finished                                                --
 --------------------------------------------------------------------------------
 
+ COMPUTE FERMI LEVEL OF CONTACT 1 AT 293.000 KELVIN
+
+ Electronic density of the isolated contact unit cell:            -4.0000009559
+
+  Step     Integration method      Time      Fermi level   Convergence (density)
+  ------------------------------------------------------------------------------
+     1     CC 44     2.40E-06       0.0      -0.01756397           -1.70043E-03
+     2     CC 72     1.96E-06       0.0       0.18243603            2.80772E+00
+     3     CC 44     2.40E-06       0.0      -0.01744292            1.05815E-05
+     4     CC 44     2.40E-06       0.0      -0.01744367           -6.90325E-08
+
  NEGF| Contact No. 1
- NEGF|    Fermi level at 293.000 Kelvin (a.u.):                     -0.01756397
+ NEGF|    Fermi level at 293.000 Kelvin (a.u.):                     -0.01744367
  NEGF|    Electric potential (V):                                    0.00000000
 
+ COMPUTE FERMI LEVEL OF CONTACT 2 AT 293.000 KELVIN
+
+ Electronic density of the isolated contact unit cell:            -4.0000009559
+
+  Step     Integration method      Time      Fermi level   Convergence (density)
+  ------------------------------------------------------------------------------
+     1     CC 44     1.84E-06       0.0      -0.01756397            1.35210E-03
+     2     CC 72     2.91E-06       0.0       0.18243603            3.26865E+00
+     3     CC 44     1.85E-06       0.0      -0.01764673            1.83317E-04
+     4     CC 44     1.85E-06       0.0      -0.01765972           -1.13257E-08
+
  NEGF| Contact No. 2
- NEGF|    Fermi level at 293.000 Kelvin (a.u.):                     -0.01756397
+ NEGF|    Fermi level at 293.000 Kelvin (a.u.):                     -0.01765972
  NEGF|    Electric potential (V):                                   -0.00000000
 
 Number of central states = 16
@@ -498,24 +518,22 @@ Full number of states = 32
 
  NEGF SELF-CONSISTENT PROCEDURE
 
- Initial electronic density of the scattering region:        -15.85242657326851
+ Initial electronic density of the scattering region:        -15.85243007294445
 
   Step     Integration method      Time     Electronic density      Convergence
   ------------------------------------------------------------------------------
-     1     CC 58     1.68E-06       0.1           -15.85163060      7.95971E-04
-     2     CC 58     1.68E-06       0.7           -15.85358054     -1.94994E-03
-     3     CC 58     1.68E-06       0.7           -15.85137167      2.20887E-03
-     4     CC 58     1.68E-06       0.7           -15.85175974     -3.88076E-04
-     5     CC 58     1.68E-06       0.7           -15.85244629     -6.86550E-04
-     6     CC 58     1.68E-06       0.7           -15.85256395     -1.17655E-04
-     7     CC 58     1.68E-06       0.7           -15.85232496      2.38994E-04
-     8     CC 58     1.68E-06       0.7           -15.85236475     -3.97909E-05
-     9     CC 58     1.68E-06       0.7           -15.85241734     -5.25961E-05
-    10     CC 58     1.68E-06       0.7           -15.85241324      4.10090E-06
+     1     CC 58     1.67E-06       0.0           -15.85838196     -5.95189E-03
+     2     CC 58     1.68E-06       0.7           -15.84711785      1.12641E-02
+     3     CC 58     1.68E-06       0.7           -15.85170913     -4.59128E-03
+     4     CC 58     1.68E-06       0.7           -15.85181803     -1.08904E-04
+     5     CC 58     1.68E-06       0.7           -15.85225764     -4.39607E-04
+     6     CC 58     1.68E-06       0.7           -15.85244448     -1.86841E-04
+     7     CC 58     1.68E-06       0.7           -15.85248827     -4.37859E-05
+     8     CC 58     1.68E-06       0.7           -15.85249512     -6.85337E-06
 
-           *** NEGF run converged in 10 iteration(s) ***
+           *** NEGF run converged in 8 iteration(s) ***
 
- NEGF|  Electric current (A)                                      0.0000000E+00
+ NEGF|  Electric current (A)                                                NaN
 The Hamiltonian is written to file H.mtr
 The Overlap is written to file S.mtr
 
@@ -536,7 +554,9 @@ Only transport with the external Hamiltonian [and overlap].
 Reading transport options.
 Number of states (with electrodes)      =    32
 Number of states in the central region  =     0
-Energy units =                                                                            
+Hamiltonian File Name  = H.mtr                                                                      
+Energy units           =                                                                            
+Overlap File Name      = S.mtr                                                                                                                                                                                                   
 > readTransportGeometry_NoGeom is started
 AtomRange              =      1    16
 Number of PLs          =      1
@@ -619,6 +639,7 @@ Structure info:
 Transport is started.
 Number of states (with electrodes)      =    32
 Number of states in the central region  =    16
+ Overlap is red from the file S.mtr
 
 --------------------------------------------------------------------------------
                           TraNaS: Current calculation
@@ -647,31 +668,31 @@ Current is calculated
  -------------------------------------------------------------------------------
  COUNTER                                    TOTAL       BLAS       SMM       ACC
  flops     1 x     8 x     1                 7040       0.0%    100.0%      0.0%
- flops     1 x     1 x     8                26880       0.0%    100.0%      0.0%
  flops     1 x    32 x     1                28160       0.0%    100.0%      0.0%
- flops     1 x     1 x    32               107520       0.0%    100.0%      0.0%
+ flops     1 x     1 x     8                34560       0.0%    100.0%      0.0%
+ flops     1 x     1 x    32               138240       0.0%    100.0%      0.0%
  flops inhomo. stacks                           0       0.0%      0.0%      0.0%
- flops total                       169.600000E+03       0.0%    100.0%      0.0%
- flops max/rank                     53.280000E+03       0.0%    100.0%      0.0%
+ flops total                       208.000000E+03       0.0%    100.0%      0.0%
+ flops max/rank                     64.480000E+03       0.0%    100.0%      0.0%
  matmuls inhomo. stacks                         0       0.0%      0.0%      0.0%
- matmuls total                               4240       0.0%    100.0%      0.0%
- number of processed stacks                    64       0.0%    100.0%      0.0%
- average stack size                                     0.0      66.2       0.0
- marketing flops                   598.400000E+03
+ matmuls total                               5200       0.0%    100.0%      0.0%
+ number of processed stacks                    80       0.0%    100.0%      0.0%
+ average stack size                                     0.0      65.0       0.0
+ marketing flops                   732.800000E+03
  -------------------------------------------------------------------------------
- # multiplications                              8
- max memory usage/rank             156.303360E+06
+ # multiplications                             10
+ max memory usage/rank             163.282944E+06
  # max total images/rank                        1
  # max 3D layers                                1
- # MPI messages exchanged                      64
+ # MPI messages exchanged                      80
  MPI messages size (bytes):
-  total size                       195.520000E+03
+  total size                       246.720000E+03
   min size                         800.000000E+00
   max size                           5.120000E+03
-  average size                       3.055000E+03
+  average size                       3.084000E+03
  MPI breakdown and total messages size (bytes):
              size <=      128                   0                        0
-       128 < size <=     8192                  64                   195520
+       128 < size <=     8192                  80                   246720
       8192 < size <=    32768                   0                        0
      32768 < size <=   131072                   0                        0
     131072 < size <=  4194304                   0                        0
@@ -684,18 +705,18 @@ Current is calculated
  -------------------------------------------------------------------------------
 
  ROUTINE             CALLS      AVE VOLUME [Bytes]
- MP_Group              331
+ MP_Group              269
  MP_Bcast                5                     12.
- MP_Allreduce         1421                      8.
- MP_Alltoall          6441                    147.
- MP_Wait               256
- MP_ISend               64                   1586.
- MP_IRecv               64                    740.
- MP_Memory             510
+ MP_Allreduce          745                      9.
+ MP_Alltoall          5185                    179.
+ MP_Wait               320
+ MP_ISend               80                   1583.
+ MP_IRecv               80                    714.
+ MP_Memory             646
  -------------------------------------------------------------------------------
 
 
- MEMORY| Estimated peak process memory [MiB]                                 178
+ MEMORY| Estimated peak process memory [MiB]                                 182
 
  -------------------------------------------------------------------------------
  -                                                                             -
@@ -705,15 +726,15 @@ Current is calculated
 
  ROUTINE             CALLS      AVE VOLUME [Bytes]
  MP_Group               14
- MP_Bcast             5633                  76936.
- MP_Allreduce         1404                    278.
+ MP_Bcast             6972                  62162.
+ MP_Allreduce          963                    392.
  MP_Sync                12
- MP_Alltoall           460                2474749.
- MP_ISendRecv          366                  26447.
- MP_Wait              4161
- MP_comm_split           1
- MP_ISend             4140                   9201.
- MP_IRecv             5751                   6605.
+ MP_Alltoall           388                2858115.
+ MP_ISendRecv          270                  26513.
+ MP_Wait              5015
+ MP_comm_split          19
+ MP_ISend             5240                   7250.
+ MP_IRecv             7305                   5187.
  MP_Recv               225                     92.
  -------------------------------------------------------------------------------
 
@@ -755,6 +776,14 @@ Current is calculated
  WILEY INTERDISCIPLINARY REVIEWS-COMPUTATIONAL MOLECULAR SCIENCE, 4 (1), 15-25 (2014). 
  CP2K: atomistic simulations of condensed matter systems.
  https://dx.doi.org/10.1002/wcms.1159
+
+
+ Marek, A; Blum, V; Johanni, R; Havu, V; Lang, B; Auckenthaler, T;
+ Heinecke, A; Bungartz, H; Lederer, H. 
+ Journal of Physics: Condensed Matter, 26 (21), (2014). 
+ The ELPA library: scalable parallel eigenvalue solutions for electronic structure
+ theory and computational science.
+ https://dx.doi.org/10.1088/0953-8984/26/21/213201
 
 
  VandeVondele, J; Hutter, J. 
@@ -821,51 +850,57 @@ Current is calculated
  -------------------------------------------------------------------------------
  SUBROUTINE                       CALLS  ASD         SELF TIME        TOTAL TIME
                                 MAXIMUM       AVERAGE  MAXIMUM  AVERAGE  MAXIMUM
- CP2K                                 1  1.0    0.026    0.050   12.846   12.857
- do_negf                              1  2.0    0.082    0.083   12.600   12.602
- converge_density                     1  3.0    0.003    0.013    6.303    6.303
- negf_env_create                      1  3.0    0.000    0.001    5.987    5.987
- qs_energies                          3  4.0    0.001    0.001    5.624    5.625
- qs_rho_update_rho                   24  5.9    0.000    0.000    5.566    5.567
- calculate_rho_elec                  24  6.9    4.661    4.920    5.566    5.566
- qs_ks_build_kohn_sham_matrix        21  6.9    0.003    0.003    5.278    5.295
- scf_env_do_scf                       3  5.0    0.000    0.001    4.856    4.856
- scf_env_do_scf_inner_loop           12  6.0    0.001    0.003    4.856    4.856
- integrate_v_rspace                  22  8.7    2.305    2.347    2.685    2.702
- sum_up_and_integrate                21  7.9    0.006    0.006    2.536    2.553
- qs_vxc_create                       21  7.9    0.000    0.001    2.439    2.448
- xc_vxc_pw_create                    21  8.9    0.024    0.028    2.439    2.448
- pw_transfer                        440  9.6    0.027    0.030    2.307    2.379
- fft_wrap_pw1pw2                    398 10.6    0.004    0.004    2.253    2.328
- qs_ks_update_qs_env                 12  7.0    0.000    0.000    2.282    2.298
- rebuild_ks_matrix                   12  8.0    0.000    0.000    2.260    2.277
- fft_wrap_pw1pw2_100                260 11.6    0.190    0.202    2.180    2.254
- fft3d_ps                           398 12.6    0.913    0.987    1.664    1.763
- xc_rho_set_and_dset_create          21  9.9    0.014    0.016    1.508    1.601
- density_rs2pw                       24  7.9    0.001    0.001    0.889    1.078
- xc_functional_eval                  21 10.9    0.000    0.000    0.889    0.987
- pbe_lda_eval                        21 11.9    0.889    0.987    0.889    0.987
- rs_pw_transfer                     188  9.7    0.002    0.002    0.628    0.816
- rs_pw_transfer_RS2PW_100            28  9.7    0.013    0.014    0.547    0.734
- mp_alltoall_z22v                   398 14.6    0.438    0.564    0.438    0.564
- init_scf_run                         3  5.0    0.000    0.001    0.551    0.552
- scf_env_initial_rho_setup            3  6.0    0.003    0.012    0.550    0.551
- yz_to_x                            185 13.4    0.090    0.098    0.391    0.490
- mp_waitany                         396 11.0    0.364    0.465    0.364    0.465
- gspace_mixing                       18  5.5    0.006    0.006    0.424    0.424
- qs_energies_init_hamiltonians        4  4.8    0.000    0.000    0.399    0.399
- x_to_yz                            213 13.8    0.214    0.244    0.351    0.372
- potential_pw2rs                     22  9.7    0.001    0.001    0.312    0.312
- qs_env_update_s_mstruct              4  5.8    0.000    0.000    0.269    0.304
- mp_waitall_1                      4021  8.9    0.199    0.296    0.199    0.296
- broyden_mixing                      18  6.5    0.263    0.268    0.266    0.269
+ CP2K                                 1  1.0    0.036    0.061   13.351   13.373
+ do_negf                              1  2.0    0.085    0.085   12.828   12.829
+ negf_env_create                      1  3.0    0.001    0.002    7.509    7.509
+ qs_energies                          3  4.0    0.001    0.001    7.190    7.190
+ scf_env_do_scf                       3  5.0    0.000    0.001    5.809    5.809
+ scf_env_do_scf_inner_loop           10  6.0    0.001    0.004    5.809    5.809
+ qs_rho_update_rho                   20  6.0    0.000    0.000    5.305    5.306
+ calculate_rho_elec                  20  7.0    4.509    4.858    5.305    5.306
+ qs_ks_build_kohn_sham_matrix        17  6.9    0.002    0.003    5.182    5.198
+ converge_density                     1  3.0    0.004    0.014    4.859    4.860
+ qs_ks_update_qs_env                 10  7.0    0.000    0.000    2.808    2.823
+ rebuild_ks_matrix                   10  8.0    0.000    0.000    2.805    2.821
+ integrate_v_rspace                  18  8.7    2.266    2.323    2.611    2.627
+ sum_up_and_integrate                17  7.9    0.006    0.006    2.462    2.478
+ qs_vxc_create                       17  7.9    0.000    0.001    2.429    2.435
+ xc_vxc_pw_create                    17  8.9    0.023    0.025    2.428    2.435
+ pw_transfer                        360  9.6    0.027    0.040    2.286    2.337
+ fft_wrap_pw1pw2                    326 10.7    0.003    0.003    2.232    2.288
+ fft_wrap_pw1pw2_100                212 11.6    0.183    0.185    2.163    2.218
+ fft3d_ps                           326 12.7    0.915    0.968    1.665    1.722
+ xc_rho_set_and_dset_create          17  9.9    0.014    0.016    1.474    1.554
+ init_scf_run                         3  5.0    0.001    0.005    1.179    1.180
+ scf_env_initial_rho_setup            3  6.0    0.000    0.001    1.177    1.179
+ xc_functional_eval                  17 10.9    0.000    0.000    0.864    0.949
+ pbe_lda_eval                        17 11.9    0.864    0.948    0.864    0.948
+ density_rs2pw                       20  8.0    0.001    0.001    0.780    0.924
+ calculate_first_density_matrix       3  7.0    0.000    0.000    0.714    0.715
+ read_kpoints_restart                 2  8.0    0.001    0.001    0.700    0.704
+ rs_pw_transfer                     156  9.7    0.001    0.002    0.521    0.701
+ rs_pw_transfer_RS2PW_100            24  9.8    0.013    0.014    0.453    0.634
+ mp_bcast_im                       2462  7.7    0.476    0.634    0.476    0.634
+ cp_fm_read_unformatted             224  9.0    0.158    0.632    0.632    0.633
+ mp_alltoall_z22v                   326 14.7    0.441    0.548    0.441    0.548
+ yz_to_x                            153 13.5    0.092    0.100    0.393    0.484
+ mp_waitany                         396 11.5    0.339    0.472    0.339    0.472
+ gspace_mixing                       14  5.5    0.005    0.006    0.392    0.392
+ x_to_yz                            173 13.9    0.209    0.231    0.350    0.361
+ qs_energies_init_hamiltonians        4  4.8    0.000    0.000    0.328    0.329
+ qs_init_subsys                       3  2.0    0.003    0.007    0.302    0.303
+ qs_env_setup                         3  3.0    0.000    0.000    0.286    0.292
+ qs_env_rebuild_pw_env                6  4.5    0.000    0.000    0.286    0.291
+ pw_env_rebuild                       3  5.0    0.000    0.000    0.286    0.291
+ potential_pw2rs                     18  9.7    0.001    0.001    0.287    0.287
+ negf_surface_green_function_ba     198  4.5    0.004    0.008    0.237    0.268
  -------------------------------------------------------------------------------
 
  The number of warnings for this run is : 5
  
  -------------------------------------------------------------------------------
-  **** **** ******  **  PROGRAM ENDED AT                 2019-05-27 12:05:11.907
+  **** **** ******  **  PROGRAM ENDED AT                 2019-06-23 18:07:51.323
  ***** ** ***  *** **   PROGRAM RAN ON                                    debian
  **    ****   ******    PROGRAM RAN BY                                   dryndyk
- ***** **    ** ** **   PROGRAM PROCESS ID                                 20756
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 10645
   **** **  *******  **  PROGRAM STOPPED IN       /home/dryndyk/CP2K_examples/H40

@@ -2,7 +2,7 @@
 ================================================================================
 ==                                                                            ==
 ==                              TraNaS OpenSuite                              ==
-==          (integrated open software suite for multiscale modeling)          ==
+==          (integrated open software suite for nanoscale modeling)           ==
 ==                                                                            ==
 ================================================================================
 ==                                                                            ==
@@ -48,18 +48,18 @@
  DBCSR| Communication thread load                                             87
 
 
-  **** **** ******  **  PROGRAM STARTED AT               2019-05-27 13:23:34.470
+  **** **** ******  **  PROGRAM STARTED AT               2019-06-23 18:11:01.404
  ***** ** ***  *** **   PROGRAM STARTED ON                                debian
  **    ****   ******    PROGRAM STARTED BY                               dryndyk
- ***** **    ** ** **   PROGRAM PROCESS ID                                 21423
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 10706
   **** **  *******  **  PROGRAM STARTED IN       /home/dryndyk/CP2K_examples/C40
 
  CP2K| version string:                    CP2K version 7.0 (Development Version)
- CP2K| source code revision number:                                git:f647cb0fc
- CP2K| cp2kflags: libint fftw3 libxc elpa=201705 parallel mpi3 scalapack xsmm li
- CP2K|            bderiv_max_am1=5 libint_max_am=6 spglib json
+ CP2K| source code revision number:                                git:216b9c901
+ CP2K| cp2kflags: libint fftw3 libxc elpa=201705 parallel mpi3 scalapack xsmm sp
+ CP2K|            glib json
  CP2K| is freely available from                            https://www.cp2k.org/
- CP2K| Program compiled at                      Mon 27 May 2019 11:14:05 AM CEST
+ CP2K| Program compiled at                      Sun 23 Jun 2019 02:19:28 PM CEST
  CP2K| Program compiled on                                                debian
  CP2K| Program compiled for                                                local
  CP2K| Data directory path                   /home/dryndyk/OpenSuite/cp2kXT/data
@@ -83,7 +83,7 @@
  GLOBAL| Method name                                                        CP2K
  GLOBAL| Project name                                                        C40
  GLOBAL| Preferred FFT library                                             FFTW3
- GLOBAL| Preferred diagonalization lib.                                       SL
+ GLOBAL| Preferred diagonalization lib.                                     ELPA
  GLOBAL| Run type                                                           NEGF
  GLOBAL| All-to-all communication in single precision                          F
  GLOBAL| FFTs using library dependent lengths                                  T
@@ -96,13 +96,13 @@
 
  MEMORY| system memory details [Kb]
  MEMORY|                        rank 0           min           max       average
- MEMORY| MemTotal              8150304       8150304       8150304       8150304
- MEMORY| MemFree               2953620       2953620       2953620       2953620
- MEMORY| Buffers                101304        101304        101304        101304
- MEMORY| Cached                3489592       3489592       3489592       3489592
- MEMORY| Slab                   230388        230388        230388        230388
- MEMORY| SReclaimable           164188        164188        164188        164188
- MEMORY| MemLikelyFree         6708704       6708704       6708704       6708704
+ MEMORY| MemTotal              8150336       8150336       8150336       8150336
+ MEMORY| MemFree               1906272       1906272       1906272       1906272
+ MEMORY| Buffers                138388        138388        138388        138388
+ MEMORY| Cached                4809444       4809444       4809444       4809444
+ MEMORY| Slab                   324612        324612        324612        324612
+ MEMORY| SReclaimable           234300        234300        234300        234300
+ MEMORY| MemLikelyFree         7088404       7088404       7088404       7088404
 
 
  GENERATE|  Preliminary Number of Bonds generated:                            31
@@ -134,7 +134,7 @@
  **                                                                           **
  *******************************************************************************
 
- *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** WARNING in qs_environment.F:1287 :: More added MOs requested than ***
  *** available. The full set of unoccupied MOs will be used.           ***
 
 
@@ -210,7 +210,7 @@
  **                                                                           **
  *******************************************************************************
 
- *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** WARNING in qs_environment.F:1287 :: More added MOs requested than ***
  *** available. The full set of unoccupied MOs will be used.           ***
 
 
@@ -290,7 +290,7 @@
  **                                                                           **
  *******************************************************************************
 
- *** WARNING in qs_environment.F:1268 :: More added MOs requested than ***
+ *** WARNING in qs_environment.F:1287 :: More added MOs requested than ***
  *** available. The full set of unoccupied MOs will be used.           ***
 
 
@@ -368,30 +368,14 @@
 
  Extrapolation method: initial_guess
 
- *** WARNING in qs_initial_guess.F:267 :: User requested to restart the    ***
- *** wavefunction from the file named: C40-RESTART_1.kp. This file does    ***
- *** not exist. Please check the existence of the file or change properly  ***
- *** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
- *** using ATOMIC GUESS.                                                   ***
-
-
 
  SCF WAVEFUNCTION OPTIMIZATION
 
   Step     Update method      Time    Convergence         Total energy    Change
   ------------------------------------------------------------------------------
-     1 NoMix/Diag. 0.30E+00    0.2     1.20561847       -21.5104996427 -2.15E+01
-     2 Broy./Diag. 0.30E+00    0.3     0.00111173       -22.2690896293 -7.59E-01
-     3 Broy./Diag. 0.30E+00    0.3     0.00196530       -21.8910189846  3.78E-01
-     4 Broy./Diag. 0.30E+00    0.3     0.00005629       -21.8804719346  1.05E-02
-     5 Broy./Diag. 0.30E+00    0.3     0.00012711       -21.8593130349  2.12E-02
-     6 Broy./Diag. 0.30E+00    0.3     0.00000362       -21.8593820565 -6.90E-05
-     7 Broy./Diag. 0.30E+00    0.3     0.00001008       -21.8596702335 -2.88E-04
-     8 Broy./Diag. 0.30E+00    0.3     0.00000963       -21.8596731673 -2.93E-06
-     9 Broy./Diag. 0.30E+00    0.3     0.00000158       -21.8596734110 -2.44E-07
-    10 Broy./Diag. 0.30E+00    0.3     0.00000011       -21.8596737175 -3.07E-07
+     1 NoMix/Diag. 0.30E+00    0.2     0.00000004       -21.8596736149 -2.19E+01
 
-  *** SCF run converged in    10 steps ***
+  *** SCF run converged in     1 steps ***
 
 
   Electronic density on regular grids:        -15.9999999164        0.0000000836
@@ -401,13 +385,13 @@
 
   Overlap energy of the core charge distribution:               0.00000000082819
   Self energy of the core charge distribution:                -53.34003170706085
-  Core Hamiltonian energy:                                     16.53599273571820
-  Hartree energy:                                              21.43946700908409
-  Exchange-correlation energy:                                 -6.49510163102287
-  Electronic entropic energy:                                  -0.00000012509046
-  Fermi energy:                                                 0.13605621943911
+  Core Hamiltonian energy:                                     16.53599273575169
+  Hartree energy:                                              21.43946701732619
+  Exchange-correlation energy:                                 -6.49510166175407
+  Electronic entropic energy:                                  -0.00000012509045
+  Fermi energy:                                                 0.13605622097958
 
-  Total energy:                                               -21.85967371754395
+  Total energy:                                               -21.85967361490885
 
  NEGF| Extract relevant matrix blocks for the contact                          1
 
@@ -422,30 +406,14 @@
 
  Extrapolation method: initial_guess
 
- *** WARNING in qs_initial_guess.F:267 :: User requested to restart the    ***
- *** wavefunction from the file named: C40-RESTART_2.kp. This file does    ***
- *** not exist. Please check the existence of the file or change properly  ***
- *** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
- *** using ATOMIC GUESS.                                                   ***
-
-
 
  SCF WAVEFUNCTION OPTIMIZATION
 
   Step     Update method      Time    Convergence         Total energy    Change
   ------------------------------------------------------------------------------
-     1 NoMix/Diag. 0.30E+00    0.2     1.20561847       -21.5104996427 -2.15E+01
-     2 Broy./Diag. 0.30E+00    0.3     0.00111173       -22.2690896293 -7.59E-01
-     3 Broy./Diag. 0.30E+00    0.3     0.00196530       -21.8910189846  3.78E-01
-     4 Broy./Diag. 0.30E+00    0.3     0.00005629       -21.8804719346  1.05E-02
-     5 Broy./Diag. 0.30E+00    0.3     0.00012711       -21.8593130349  2.12E-02
-     6 Broy./Diag. 0.30E+00    0.3     0.00000362       -21.8593820565 -6.90E-05
-     7 Broy./Diag. 0.30E+00    0.3     0.00001007       -21.8596702359 -2.88E-04
-     8 Broy./Diag. 0.30E+00    0.3     0.00000962       -21.8596731673 -2.93E-06
-     9 Broy./Diag. 0.30E+00    0.3     0.00000158       -21.8596734110 -2.44E-07
-    10 Broy./Diag. 0.30E+00    0.3     0.00000011       -21.8596737175 -3.07E-07
+     1 NoMix/Diag. 0.30E+00    0.2     0.00000004       -21.8596736149 -2.19E+01
 
-  *** SCF run converged in    10 steps ***
+  *** SCF run converged in     1 steps ***
 
 
   Electronic density on regular grids:        -15.9999999164        0.0000000836
@@ -455,13 +423,13 @@
 
   Overlap energy of the core charge distribution:               0.00000000082819
   Self energy of the core charge distribution:                -53.34003170706085
-  Core Hamiltonian energy:                                     16.53599273571819
-  Hartree energy:                                              21.43946700907851
-  Exchange-correlation energy:                                 -6.49510163101523
-  Electronic entropic energy:                                  -0.00000012509046
-  Fermi energy:                                                 0.13605621943899
+  Core Hamiltonian energy:                                     16.53599273575171
+  Hartree energy:                                              21.43946701732622
+  Exchange-correlation energy:                                 -6.49510166175409
+  Electronic entropic energy:                                  -0.00000012509045
+  Fermi energy:                                                 0.13605622097957
 
-  Total energy:                                               -21.85967371754190
+  Total energy:                                               -21.85967361490883
 
  NEGF| Extract relevant matrix blocks for the contact                          2
 
@@ -478,44 +446,22 @@
 
  Extrapolation method: initial_guess
 
- *** WARNING in qs_initial_guess.F:267 :: User requested to restart the    ***
- *** wavefunction from the file named: C40-RESTART_0.wfn. This file does   ***
- *** not exist. Please check the existence of the file or change properly  ***
- *** the value of the keyword WFN_RESTART_FILE_NAME. Calculation continues ***
- *** using ATOMIC GUESS.                                                   ***
-
-
 
  SCF WAVEFUNCTION OPTIMIZATION
 
   Step     Update method      Time    Convergence         Total energy    Change
   ------------------------------------------------------------------------------
-     1 NoMix/Diag. 0.30E+00    1.0     0.78677277      -218.1825628631 -2.18E+02
-     2 Broy./Diag. 0.30E+00    2.0     0.00147018      -223.0765566981 -4.89E+00
-     3 Broy./Diag. 0.30E+00    2.0     0.00297059      -219.0227370032  4.05E+00
-     4 Broy./Diag. 0.30E+00    2.0     0.00147380      -218.8784969788  1.44E-01
-     5 Broy./Diag. 0.30E+00    2.0     0.00562937      -218.6909822152  1.88E-01
-     6 Broy./Diag. 0.30E+00    2.0     0.01742898      -218.6362250828  5.48E-02
-     7 Broy./Diag. 0.30E+00    2.0     0.01631128      -218.5777091403  5.85E-02
-     8 Broy./Diag. 0.30E+00    2.0     0.00083563      -218.5805861959 -2.88E-03
-     9 Broy./Diag. 0.30E+00    2.0     0.00034492      -218.5805614930  2.47E-05
-    10 Broy./Diag. 0.30E+00    2.0     0.00028864      -218.5804431876  1.18E-04
-    11 Broy./Diag. 0.30E+00    2.0     0.00047850      -218.5804555634 -1.24E-05
-    12 Broy./Diag. 0.30E+00    2.0     0.00046950      -218.5804631547 -7.59E-06
-    13 Broy./Diag. 0.30E+00    2.0     0.00013957      -218.5803803023  8.29E-05
-    14 Broy./Diag. 0.30E+00    2.0     0.00005653      -218.5804421321 -6.18E-05
-    15 Broy./Diag. 0.30E+00    2.0     0.00003007      -218.5804375743  4.56E-06
-    16 Broy./Diag. 0.30E+00    2.0     0.00000678      -218.5804484692 -1.09E-05
-    17 Broy./Diag. 0.30E+00    2.0     0.00000373      -218.5804621456 -1.37E-05
-    18 Broy./Diag. 0.30E+00    2.0     0.00000536      -218.5804654036 -3.26E-06
-    19 Broy./Diag. 0.30E+00    2.0     0.00000542      -218.5804801960 -1.48E-05
-    20 Broy./Diag. 0.30E+00    2.0     0.00000322      -218.5804847412 -4.55E-06
-    21 Broy./Diag. 0.30E+00    2.0     0.00000190      -218.5804854049 -6.64E-07
-    22 Broy./Diag. 0.30E+00    2.0     0.00000225      -218.5804860233 -6.18E-07
-    23 Broy./Diag. 0.30E+00    2.0     0.00000168      -218.5804862173 -1.94E-07
-    24 Broy./Diag. 0.30E+00    2.0     0.00000072      -218.5804865388 -3.21E-07
+     1 NoMix/Diag. 0.30E+00    1.0     0.00001799      -218.5763135890 -2.19E+02
+     2 Broy./Diag. 0.30E+00    2.0     0.00011364      -218.5804878177 -4.17E-03
+     3 Broy./Diag. 0.30E+00    2.0     0.00014993      -218.5804877651  5.26E-08
+     4 Broy./Diag. 0.30E+00    2.0     0.00010487      -218.5804877751 -9.95E-09
+     5 Broy./Diag. 0.30E+00    2.0     0.00002780      -218.5804878206 -4.55E-08
+     6 Broy./Diag. 0.30E+00    2.0     0.00001406      -218.5804878209 -2.59E-10
+     7 Broy./Diag. 0.30E+00    2.0     0.00000400      -218.5804878209 -1.39E-11
+     8 Broy./Diag. 0.30E+00    2.0     0.00000341      -218.5804878208  1.55E-10
+     9 Broy./Diag. 0.30E+00    2.0     0.00000072      -218.5804878203  4.91E-10
 
-  *** SCF run converged in    24 steps ***
+  *** SCF run converged in     9 steps ***
 
 
   Electronic density on regular grids:       -159.9999991739        0.0000008261
@@ -525,21 +471,37 @@
 
   Overlap energy of the core charge distribution:               0.00000000828189
   Self energy of the core charge distribution:               -533.40031707060848
-  Core Hamiltonian energy:                                    165.40812612316137
-  Hartree energy:                                             214.37067564697924
-  Exchange-correlation energy:                                -64.95479701688217
-  Electronic entropic energy:                                  -0.00417422970807
-  Fermi energy:                                                 0.13939446360879
+  Core Hamiltonian energy:                                    165.40812612205463
+  Hartree energy:                                             214.37067519923937
+  Exchange-correlation energy:                                -64.95479784952724
+  Electronic entropic energy:                                  -0.00417422970803
+  Fermi energy:                                                 0.13939447568265
 
-  Total energy:                                              -218.58048653877626
+  Total energy:                                              -218.58048782026793
 
 --------------------------------------------------------------------------------
 -- negf_env_create is finished                                                --
 --------------------------------------------------------------------------------
 
+ COMPUTE FERMI LEVEL OF CONTACT 1 AT 293.000 KELVIN
+
+ Electronic density of the isolated contact unit cell:           -16.0000191659
+
+  Step     Integration method      Time      Fermi level   Convergence (density)
+  ------------------------------------------------------------------------------
+     1     CC 86     3.20E-07       0.1       0.13604359            2.48574E-07
+
  NEGF| Contact No. 1
  NEGF|    Fermi level at 293.000 Kelvin (a.u.):                      0.13604359
  NEGF|    Electric potential (V):                                    0.00000000
+
+ COMPUTE FERMI LEVEL OF CONTACT 2 AT 293.000 KELVIN
+
+ Electronic density of the isolated contact unit cell:           -16.0000191659
+
+  Step     Integration method      Time      Fermi level   Convergence (density)
+  ------------------------------------------------------------------------------
+     1     CC 86     3.20E-07       0.0       0.13604359            2.48581E-07
 
  NEGF| Contact No. 2
  NEGF|    Fermi level at 293.000 Kelvin (a.u.):                      0.13604359
@@ -552,30 +514,33 @@ Full number of states = 128
 
  NEGF SELF-CONSISTENT PROCEDURE
 
- Initial electronic density of the scattering region:        -63.27000347799691
+ Initial electronic density of the scattering region:        -63.27000525096840
 
   Step     Integration method      Time     Electronic density      Convergence
   ------------------------------------------------------------------------------
-     1     CC 86     2.43E-06       0.1           -63.25505194      1.49515E-02
-     2     CC 86     2.42E-06       2.0           -63.35478099     -9.97290E-02
-     3     CC 86     2.43E-06       2.0           -63.26350222      9.12788E-02
-     4     CC 86     2.43E-06       2.0           -63.27307425     -9.57203E-03
-     5     CC 86     2.43E-06       2.0           -63.26912038      3.95387E-03
-     6     CC 86     2.43E-06       2.0           -63.26900469      1.15691E-04
-     7     CC 86     2.43E-06       2.0           -63.26932934     -3.24649E-04
-     8     CC 86     2.43E-06       2.0           -63.26936177     -3.24242E-05
-     9     CC 86     2.43E-06       2.0           -63.26938783     -2.60603E-05
-    10     CC 86     2.43E-06       2.0           -63.26955985     -1.72021E-04
-    11     CC 86     2.43E-06       2.0           -63.26975171     -1.91862E-04
-    12     CC 86     2.43E-06       2.0           -63.26981838     -6.66759E-05
-    13     CC 86     2.43E-06       2.0           -63.26978796      3.04294E-05
-    14     CC 86     2.43E-06       2.0           -63.26990000     -1.12041E-04
-    15     CC 86     2.43E-06       2.0           -63.26986004      3.99564E-05
-    16     CC 86     2.43E-06       2.0           -63.26992724     -6.71957E-05
-    17     CC 86     2.43E-06       2.0           -63.26988181      4.54238E-05
-    18     CC 86     2.43E-06       2.0           -63.26988893     -7.11986E-06
+     1     CC 86     2.43E-06       0.1           -63.25505064      1.49546E-02
+     2     CC 86     2.42E-06       2.0           -63.35404742     -9.89968E-02
+     3     CC 86     2.43E-06       2.0           -63.26287341      9.11740E-02
+     4     CC 86     2.43E-06       2.0           -63.27295547     -1.00821E-02
+     5     CC 86     2.43E-06       2.0           -63.26942599      3.52948E-03
+     6     CC 86     2.43E-06       2.0           -63.26918413      2.41861E-04
+     7     CC 86     2.43E-06       2.0           -63.26911552      6.86035E-05
+     8     CC 86     2.43E-06       2.0           -63.26936623     -2.50703E-04
+     9     CC 86     2.43E-06       2.0           -63.26938932     -2.30913E-05
+    10     CC 86     2.43E-06       2.0           -63.26958312     -1.93802E-04
+    11     CC 86     2.43E-06       2.0           -63.26975366     -1.70542E-04
+    12     CC 86     2.43E-06       2.0           -63.26981567     -6.20089E-05
+    13     CC 86     2.43E-06       2.0           -63.26979206      2.36118E-05
+    14     CC 86     2.43E-06       2.0           -63.26990639     -1.14327E-04
+    15     CC 86     2.43E-06       2.0           -63.26986805      3.83371E-05
+    16     CC 86     2.43E-06       2.0           -63.26993093     -6.28822E-05
+    17     CC 86     2.43E-06       2.0           -63.26991580      1.51321E-05
+    18     CC 86     2.43E-06       2.0           -63.26988352      3.22776E-05
+    19     CC 86     2.43E-06       2.0           -63.26990685     -2.33298E-05
+    20     CC 86     2.43E-06       2.0           -63.26987523      3.16244E-05
+    21     CC 86     2.43E-06       2.0           -63.26987685     -1.62183E-06
 
-           *** NEGF run converged in 18 iteration(s) ***
+           *** NEGF run converged in 21 iteration(s) ***
 
  NEGF|  Electric current (A)                                      0.0000000E+00
 The Hamiltonian is written to file H.mtr
@@ -693,25 +658,25 @@ Number of states in the central region  =    64
   INTEGRAL: point # 1/368  CPU= 0  E=-1.83746623E-01
   Compute Contact SE .................................
   Computing SGF 001       ............................   1.00000005E-03 sec
-  Computing SGF 001       ............................   1.00000005E-03 sec
-  ....................................................   2.40000002E-02 sec
+  Computing SGF 001       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 2/368  CPU= 1  E=-1.82644143E-01
   INTEGRAL: point # 3/368  CPU= 2  E=-1.81541663E-01
   INTEGRAL: point # 4/368  CPU= 3  E=-1.80439183E-01
   INTEGRAL: point # 5/368  CPU= 0  E=-1.79336704E-01
   Compute Contact SE .................................
-  Computing SGF 005       ............................   0.00000000     sec
   Computing SGF 005       ............................   1.00000005E-03 sec
-  ....................................................   3.00000003E-03 sec
-  Compute Transmission and DOS........................   2.00000009E-03 sec
+  Computing SGF 005       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.40000002E-02 sec
   INTEGRAL: point # 6/368  CPU= 1  E=-1.78234224E-01
   INTEGRAL: point # 7/368  CPU= 2  E=-1.77131744E-01
   INTEGRAL: point # 8/368  CPU= 3  E=-1.76029265E-01
   INTEGRAL: point # 9/368  CPU= 0  E=-1.74926785E-01
   Compute Contact SE .................................
   Computing SGF 009       ............................   1.00000005E-03 sec
-  Computing SGF 009       ............................   0.00000000     sec
+  Computing SGF 009       ............................   1.00000005E-03 sec
   ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 10/368  CPU= 1  E=-1.73824305E-01
@@ -729,8 +694,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 17/368  CPU= 0  E=-1.66106947E-01
   Compute Contact SE .................................
   Computing SGF 017       ............................   1.00000005E-03 sec
-  Computing SGF 017       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  Computing SGF 017       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 18/368  CPU= 1  E=-1.65004467E-01
   INTEGRAL: point # 19/368  CPU= 2  E=-1.63901987E-01
@@ -740,15 +705,15 @@ Number of states in the central region  =    64
   Computing SGF 021       ............................   1.00000005E-03 sec
   Computing SGF 021       ............................   1.00000005E-03 sec
   ....................................................   2.00000009E-03 sec
-  Compute Transmission and DOS........................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 22/368  CPU= 1  E=-1.60594548E-01
   INTEGRAL: point # 23/368  CPU= 2  E=-1.59492068E-01
   INTEGRAL: point # 24/368  CPU= 3  E=-1.58389589E-01
   INTEGRAL: point # 25/368  CPU= 0  E=-1.57287109E-01
   Compute Contact SE .................................
-  Computing SGF 025       ............................   0.00000000     sec
   Computing SGF 025       ............................   1.00000005E-03 sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 025       ............................   1.00000005E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 26/368  CPU= 1  E=-1.56184629E-01
   INTEGRAL: point # 27/368  CPU= 2  E=-1.55082150E-01
@@ -764,9 +729,9 @@ Number of states in the central region  =    64
   INTEGRAL: point # 32/368  CPU= 3  E=-1.49569751E-01
   INTEGRAL: point # 33/368  CPU= 0  E=-1.48467271E-01
   Compute Contact SE .................................
-  Computing SGF 033       ............................   1.30000003E-02 sec
   Computing SGF 033       ............................   1.00000005E-03 sec
-  ....................................................   1.40000004E-02 sec
+  Computing SGF 033       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 34/368  CPU= 1  E=-1.47364791E-01
   INTEGRAL: point # 35/368  CPU= 2  E=-1.46262312E-01
@@ -793,7 +758,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 045       ............................   0.00000000     sec
   Computing SGF 045       ............................   1.00000005E-03 sec
-  ....................................................   1.20000001E-02 sec
+  ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 46/368  CPU= 1  E=-1.34135035E-01
   INTEGRAL: point # 47/368  CPU= 2  E=-1.33032555E-01
@@ -802,7 +767,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 049       ............................   0.00000000     sec
   Computing SGF 049       ............................   1.00000005E-03 sec
-  ....................................................   1.00000005E-03 sec
+  ....................................................   4.99999989E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 50/368  CPU= 1  E=-1.29725116E-01
   INTEGRAL: point # 51/368  CPU= 2  E=-1.28622636E-01
@@ -811,14 +776,14 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 053       ............................   0.00000000     sec
   Computing SGF 053       ............................   0.00000000     sec
-  ....................................................   1.00000005E-03 sec
-  Compute Transmission and DOS........................   2.00000009E-03 sec
+  ....................................................   1.20000001E-02 sec
+  Compute Transmission and DOS........................   3.00000003E-03 sec
   INTEGRAL: point # 54/368  CPU= 1  E=-1.25315197E-01
   INTEGRAL: point # 55/368  CPU= 2  E=-1.24212717E-01
   INTEGRAL: point # 56/368  CPU= 3  E=-1.23110237E-01
   INTEGRAL: point # 57/368  CPU= 0  E=-1.22007757E-01
   Compute Contact SE .................................
-  Computing SGF 057       ............................   0.00000000     sec
+  Computing SGF 057       ............................   1.00000005E-03 sec
   Computing SGF 057       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -827,9 +792,9 @@ Number of states in the central region  =    64
   INTEGRAL: point # 60/368  CPU= 3  E=-1.18700318E-01
   INTEGRAL: point # 61/368  CPU= 0  E=-1.17597839E-01
   Compute Contact SE .................................
-  Computing SGF 061       ............................   1.00000005E-03 sec
   Computing SGF 061       ............................   0.00000000     sec
-  ....................................................   2.00000009E-03 sec
+  Computing SGF 061       ............................   0.00000000     sec
+  ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 62/368  CPU= 1  E=-1.16495359E-01
   INTEGRAL: point # 63/368  CPU= 2  E=-1.15392879E-01
@@ -837,16 +802,16 @@ Number of states in the central region  =    64
   INTEGRAL: point # 65/368  CPU= 0  E=-1.13187920E-01
   Compute Contact SE .................................
   Computing SGF 065       ............................   0.00000000     sec
-  Computing SGF 065       ............................   0.00000000     sec
-  ....................................................   2.00000009E-03 sec
-  Compute Transmission and DOS........................   1.09999999E-02 sec
+  Computing SGF 065       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 66/368  CPU= 1  E=-1.12085440E-01
   INTEGRAL: point # 67/368  CPU= 2  E=-1.10982960E-01
   INTEGRAL: point # 68/368  CPU= 3  E=-1.09880480E-01
   INTEGRAL: point # 69/368  CPU= 0  E=-1.08778001E-01
   Compute Contact SE .................................
-  Computing SGF 069       ............................   0.00000000     sec
   Computing SGF 069       ............................   1.00000005E-03 sec
+  Computing SGF 069       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 70/368  CPU= 1  E=-1.07675521E-01
@@ -856,7 +821,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 073       ............................   0.00000000     sec
   Computing SGF 073       ............................   0.00000000     sec
-  ....................................................   4.99999989E-03 sec
+  ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 74/368  CPU= 1  E=-1.03265602E-01
   INTEGRAL: point # 75/368  CPU= 2  E=-1.02163122E-01
@@ -864,17 +829,17 @@ Number of states in the central region  =    64
   INTEGRAL: point # 77/368  CPU= 0  E=-9.99581627E-02
   Compute Contact SE .................................
   Computing SGF 077       ............................   0.00000000     sec
-  Computing SGF 077       ............................   0.00000000     sec
-  ....................................................   1.09999999E-02 sec
-  Compute Transmission and DOS........................   1.00000005E-03 sec
+  Computing SGF 077       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 78/368  CPU= 1  E=-9.88556830E-02
   INTEGRAL: point # 79/368  CPU= 2  E=-9.77532033E-02
   INTEGRAL: point # 80/368  CPU= 3  E=-9.66507235E-02
   INTEGRAL: point # 81/368  CPU= 0  E=-9.55482438E-02
   Compute Contact SE .................................
-  Computing SGF 081       ............................   0.00000000     sec
   Computing SGF 081       ............................   1.00000005E-03 sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 081       ............................   0.00000000     sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 82/368  CPU= 1  E=-9.44457641E-02
   INTEGRAL: point # 83/368  CPU= 2  E=-9.33432843E-02
@@ -883,16 +848,16 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 085       ............................   0.00000000     sec
   Computing SGF 085       ............................   0.00000000     sec
-  ....................................................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 86/368  CPU= 1  E=-9.00358451E-02
   INTEGRAL: point # 87/368  CPU= 2  E=-8.89333654E-02
   INTEGRAL: point # 88/368  CPU= 3  E=-8.78308856E-02
   INTEGRAL: point # 89/368  CPU= 0  E=-8.67284059E-02
   Compute Contact SE .................................
-  Computing SGF 089       ............................   1.00000005E-03 sec
   Computing SGF 089       ............................   0.00000000     sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 089       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 90/368  CPU= 1  E=-8.56259262E-02
   INTEGRAL: point # 91/368  CPU= 2  E=-8.45234464E-02
@@ -900,7 +865,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 93/368  CPU= 0  E=-8.23184870E-02
   Compute Contact SE .................................
   Computing SGF 093       ............................   0.00000000     sec
-  Computing SGF 093       ............................   0.00000000     sec
+  Computing SGF 093       ............................   1.00000005E-03 sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 94/368  CPU= 1  E=-8.12160072E-02
@@ -909,7 +874,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 97/368  CPU= 0  E=-7.79085680E-02
   Compute Contact SE .................................
   Computing SGF 097       ............................   0.00000000     sec
-  Computing SGF 097       ............................   1.00000005E-03 sec
+  Computing SGF 097       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 98/368  CPU= 1  E=-7.68060883E-02
@@ -917,16 +882,16 @@ Number of states in the central region  =    64
   INTEGRAL: point # 100/368  CPU= 3  E=-7.46011288E-02
   INTEGRAL: point # 101/368  CPU= 0  E=-7.34986491E-02
   Compute Contact SE .................................
-  Computing SGF 101       ............................   1.00000005E-03 sec
   Computing SGF 101       ............................   0.00000000     sec
-  ....................................................   1.09999999E-02 sec
+  Computing SGF 101       ............................   0.00000000     sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 102/368  CPU= 1  E=-7.23961693E-02
   INTEGRAL: point # 103/368  CPU= 2  E=-7.12936896E-02
   INTEGRAL: point # 104/368  CPU= 3  E=-7.01912099E-02
   INTEGRAL: point # 105/368  CPU= 0  E=-6.90887301E-02
   Compute Contact SE .................................
-  Computing SGF 105       ............................   1.00000005E-03 sec
+  Computing SGF 105       ............................   0.00000000     sec
   Computing SGF 105       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -935,8 +900,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 108/368  CPU= 3  E=-6.57812909E-02
   INTEGRAL: point # 109/368  CPU= 0  E=-6.46788112E-02
   Compute Contact SE .................................
-  Computing SGF 109       ............................   0.00000000     sec
   Computing SGF 109       ............................   1.00000005E-03 sec
+  Computing SGF 109       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 110/368  CPU= 1  E=-6.35763314E-02
@@ -944,18 +909,18 @@ Number of states in the central region  =    64
   INTEGRAL: point # 112/368  CPU= 3  E=-6.13713720E-02
   INTEGRAL: point # 113/368  CPU= 0  E=-6.02688922E-02
   Compute Contact SE .................................
-  Computing SGF 113       ............................   0.00000000     sec
   Computing SGF 113       ............................   1.00000005E-03 sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 113       ............................   0.00000000     sec
+  ....................................................   1.99999996E-02 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 114/368  CPU= 1  E=-5.91664125E-02
   INTEGRAL: point # 115/368  CPU= 2  E=-5.80639328E-02
   INTEGRAL: point # 116/368  CPU= 3  E=-5.69614530E-02
   INTEGRAL: point # 117/368  CPU= 0  E=-5.58589733E-02
   Compute Contact SE .................................
-  Computing SGF 117       ............................   1.00000005E-03 sec
   Computing SGF 117       ............................   0.00000000     sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 117       ............................   0.00000000     sec
+  ....................................................   0.00000000     sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 118/368  CPU= 1  E=-5.47564936E-02
   INTEGRAL: point # 119/368  CPU= 2  E=-5.36540138E-02
@@ -964,14 +929,14 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 121       ............................   0.00000000     sec
   Computing SGF 121       ............................   0.00000000     sec
-  ....................................................   1.00000005E-03 sec
+  ....................................................   0.00000000     sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 122/368  CPU= 1  E=-5.03465746E-02
   INTEGRAL: point # 123/368  CPU= 2  E=-4.92440949E-02
   INTEGRAL: point # 124/368  CPU= 3  E=-4.81416151E-02
   INTEGRAL: point # 125/368  CPU= 0  E=-4.70391354E-02
   Compute Contact SE .................................
-  Computing SGF 125       ............................   0.00000000     sec
+  Computing SGF 125       ............................   1.00000005E-03 sec
   Computing SGF 125       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -981,7 +946,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 129/368  CPU= 0  E=-4.26292165E-02
   Compute Contact SE .................................
   Computing SGF 129       ............................   0.00000000     sec
-  Computing SGF 129       ............................   1.00000005E-03 sec
+  Computing SGF 129       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 130/368  CPU= 1  E=-4.15267367E-02
@@ -990,8 +955,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 133/368  CPU= 0  E=-3.82192975E-02
   Compute Contact SE .................................
   Computing SGF 133       ............................   0.00000000     sec
-  Computing SGF 133       ............................   1.00000005E-03 sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 133       ............................   1.30000003E-02 sec
+  ....................................................   1.30000003E-02 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 134/368  CPU= 1  E=-3.71168178E-02
   INTEGRAL: point # 135/368  CPU= 2  E=-3.60143380E-02
@@ -999,7 +964,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 137/368  CPU= 0  E=-3.38093786E-02
   Compute Contact SE .................................
   Computing SGF 137       ............................   0.00000000     sec
-  Computing SGF 137       ............................   0.00000000     sec
+  Computing SGF 137       ............................   1.00000005E-03 sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 138/368  CPU= 1  E=-3.27068988E-02
@@ -1008,15 +973,15 @@ Number of states in the central region  =    64
   INTEGRAL: point # 141/368  CPU= 0  E=-2.93994596E-02
   Compute Contact SE .................................
   Computing SGF 141       ............................   0.00000000     sec
-  Computing SGF 141       ............................   1.00000005E-03 sec
-  ....................................................   1.00000005E-03 sec
+  Computing SGF 141       ............................   0.00000000     sec
+  ....................................................   0.00000000     sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 142/368  CPU= 1  E=-2.82969799E-02
   INTEGRAL: point # 143/368  CPU= 2  E=-2.71945002E-02
   INTEGRAL: point # 144/368  CPU= 3  E=-2.60920204E-02
   INTEGRAL: point # 145/368  CPU= 0  E=-2.49895407E-02
   Compute Contact SE .................................
-  Computing SGF 145       ............................   0.00000000     sec
+  Computing SGF 145       ............................   1.00000005E-03 sec
   Computing SGF 145       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -1025,17 +990,17 @@ Number of states in the central region  =    64
   INTEGRAL: point # 148/368  CPU= 3  E=-2.16821015E-02
   INTEGRAL: point # 149/368  CPU= 0  E=-2.05796217E-02
   Compute Contact SE .................................
-  Computing SGF 149       ............................   0.00000000     sec
   Computing SGF 149       ............................   1.00000005E-03 sec
+  Computing SGF 149       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
-  Compute Transmission and DOS........................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.40000004E-02 sec
   INTEGRAL: point # 150/368  CPU= 1  E=-1.94771420E-02
   INTEGRAL: point # 151/368  CPU= 2  E=-1.83746623E-02
   INTEGRAL: point # 152/368  CPU= 3  E=-1.72721825E-02
   INTEGRAL: point # 153/368  CPU= 0  E=-1.61697028E-02
   Compute Contact SE .................................
   Computing SGF 153       ............................   0.00000000     sec
-  Computing SGF 153       ............................   0.00000000     sec
+  Computing SGF 153       ............................   1.00000005E-03 sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 154/368  CPU= 1  E=-1.50672231E-02
@@ -1043,8 +1008,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 156/368  CPU= 3  E=-1.28622636E-02
   INTEGRAL: point # 157/368  CPU= 0  E=-1.17597839E-02
   Compute Contact SE .................................
-  Computing SGF 157       ............................   0.00000000     sec
   Computing SGF 157       ............................   1.00000005E-03 sec
+  Computing SGF 157       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 158/368  CPU= 1  E=-1.06573041E-02
@@ -1055,7 +1020,7 @@ Number of states in the central region  =    64
   Computing SGF 161       ............................   0.00000000     sec
   Computing SGF 161       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
-  Compute Transmission and DOS........................   3.00000003E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 162/368  CPU= 1  E=-6.24738517E-03
   INTEGRAL: point # 163/368  CPU= 2  E=-5.14490543E-03
   INTEGRAL: point # 164/368  CPU= 3  E=-4.04242570E-03
@@ -1070,7 +1035,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 168/368  CPU= 3  E= 3.67493245E-04
   INTEGRAL: point # 169/368  CPU= 0  E= 1.46997298E-03
   Compute Contact SE .................................
-  Computing SGF 169       ............................   0.00000000     sec
+  Computing SGF 169       ............................   1.00000005E-03 sec
   Computing SGF 169       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -1080,7 +1045,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 173/368  CPU= 0  E= 5.87989193E-03
   Compute Contact SE .................................
   Computing SGF 173       ............................   0.00000000     sec
-  Computing SGF 173       ............................   1.00000005E-03 sec
+  Computing SGF 173       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 174/368  CPU= 1  E= 6.98237166E-03
@@ -1089,7 +1054,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 177/368  CPU= 0  E= 1.02898109E-02
   Compute Contact SE .................................
   Computing SGF 177       ............................   0.00000000     sec
-  Computing SGF 177       ............................   0.00000000     sec
+  Computing SGF 177       ............................   1.00000005E-03 sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 178/368  CPU= 1  E= 1.13922906E-02
@@ -1097,7 +1062,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 180/368  CPU= 3  E= 1.35972501E-02
   INTEGRAL: point # 181/368  CPU= 0  E= 1.46997298E-02
   Compute Contact SE .................................
-  Computing SGF 181       ............................   0.00000000     sec
+  Computing SGF 181       ............................   1.00000005E-03 sec
   Computing SGF 181       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -1107,7 +1072,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 185/368  CPU= 0  E= 1.91096488E-02
   Compute Contact SE .................................
   Computing SGF 185       ............................   0.00000000     sec
-  Computing SGF 185       ............................   1.00000005E-03 sec
+  Computing SGF 185       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 186/368  CPU= 1  E= 2.02121285E-02
@@ -1116,7 +1081,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 189/368  CPU= 0  E= 2.35195677E-02
   Compute Contact SE .................................
   Computing SGF 189       ............................   0.00000000     sec
-  Computing SGF 189       ............................   0.00000000     sec
+  Computing SGF 189       ............................   1.00000005E-03 sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 190/368  CPU= 1  E= 2.46220474E-02
@@ -1134,7 +1099,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 197/368  CPU= 0  E= 3.23394056E-02
   Compute Contact SE .................................
   Computing SGF 197       ............................   0.00000000     sec
-  Computing SGF 197       ............................   1.00000005E-03 sec
+  Computing SGF 197       ............................   0.00000000     sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 198/368  CPU= 1  E= 3.34418853E-02
@@ -1143,18 +1108,18 @@ Number of states in the central region  =    64
   INTEGRAL: point # 201/368  CPU= 0  E= 3.67493245E-02
   Compute Contact SE .................................
   Computing SGF 201       ............................   0.00000000     sec
-  Computing SGF 201       ............................   0.00000000     sec
-  ....................................................   2.00000009E-03 sec
+  Computing SGF 201       ............................   1.00000005E-03 sec
+  ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 202/368  CPU= 1  E= 3.78518043E-02
   INTEGRAL: point # 203/368  CPU= 2  E= 3.89542840E-02
   INTEGRAL: point # 204/368  CPU= 3  E= 4.00567637E-02
   INTEGRAL: point # 205/368  CPU= 0  E= 4.11592435E-02
   Compute Contact SE .................................
+  Computing SGF 205       ............................   1.00000005E-03 sec
   Computing SGF 205       ............................   0.00000000     sec
-  Computing SGF 205       ............................   0.00000000     sec
-  ....................................................   1.20000001E-02 sec
-  Compute Transmission and DOS........................   2.00000009E-03 sec
+  ....................................................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   1.00000005E-03 sec
   INTEGRAL: point # 206/368  CPU= 1  E= 4.22617232E-02
   INTEGRAL: point # 207/368  CPU= 2  E= 4.33642029E-02
   INTEGRAL: point # 208/368  CPU= 3  E= 4.44666827E-02
@@ -1169,8 +1134,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 212/368  CPU= 3  E= 4.88766016E-02
   INTEGRAL: point # 213/368  CPU= 0  E= 4.99790814E-02
   Compute Contact SE .................................
-  Computing SGF 213       ............................   1.00000005E-03 sec
   Computing SGF 213       ............................   0.00000000     sec
+  Computing SGF 213       ............................   1.00000005E-03 sec
   ....................................................   1.00000005E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 214/368  CPU= 1  E= 5.10815611E-02
@@ -1190,13 +1155,13 @@ Number of states in the central region  =    64
   Computing SGF 221       ............................   1.00000005E-03 sec
   Computing SGF 221       ............................   1.00000005E-03 sec
   ....................................................   2.00000009E-03 sec
-  Compute Transmission and DOS........................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 222/368  CPU= 1  E= 5.99013990E-02
   INTEGRAL: point # 223/368  CPU= 2  E= 6.10038787E-02
   INTEGRAL: point # 224/368  CPU= 3  E= 6.21063585E-02
   INTEGRAL: point # 225/368  CPU= 0  E= 6.32088382E-02
   Compute Contact SE .................................
-  Computing SGF 225       ............................   1.00000005E-03 sec
+  Computing SGF 225       ............................   0.00000000     sec
   Computing SGF 225       ............................   1.00000005E-03 sec
   ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -1205,8 +1170,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 228/368  CPU= 3  E= 6.65162774E-02
   INTEGRAL: point # 229/368  CPU= 0  E= 6.76187571E-02
   Compute Contact SE .................................
-  Computing SGF 229       ............................   0.00000000     sec
-  Computing SGF 229       ............................   0.00000000     sec
+  Computing SGF 229       ............................   1.00000005E-03 sec
+  Computing SGF 229       ............................   1.00000005E-03 sec
   ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 230/368  CPU= 1  E= 6.87212369E-02
@@ -1233,8 +1198,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 241/368  CPU= 0  E= 8.08485140E-02
   Compute Contact SE .................................
   Computing SGF 241       ............................   1.00000005E-03 sec
-  Computing SGF 241       ............................   0.00000000     sec
-  ....................................................   3.00000003E-03 sec
+  Computing SGF 241       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 242/368  CPU= 1  E= 8.19509937E-02
   INTEGRAL: point # 243/368  CPU= 2  E= 8.30534734E-02
@@ -1250,17 +1215,17 @@ Number of states in the central region  =    64
   INTEGRAL: point # 248/368  CPU= 3  E= 8.85658721E-02
   INTEGRAL: point # 249/368  CPU= 0  E= 8.96683519E-02
   Compute Contact SE .................................
-  Computing SGF 249       ............................   1.00000005E-03 sec
-  Computing SGF 249       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  Computing SGF 249       ............................   0.00000000     sec
+  Computing SGF 249       ............................   0.00000000     sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 250/368  CPU= 1  E= 9.07708316E-02
   INTEGRAL: point # 251/368  CPU= 2  E= 9.18733113E-02
   INTEGRAL: point # 252/368  CPU= 3  E= 9.29757911E-02
   INTEGRAL: point # 253/368  CPU= 0  E= 9.40782708E-02
   Compute Contact SE .................................
-  Computing SGF 253       ............................   0.00000000     sec
-  Computing SGF 253       ............................   0.00000000     sec
+  Computing SGF 253       ............................   1.00000005E-03 sec
+  Computing SGF 253       ............................   1.00000005E-03 sec
   ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 254/368  CPU= 1  E= 9.51807505E-02
@@ -1280,7 +1245,7 @@ Number of states in the central region  =    64
   Computing SGF 261       ............................   1.00000005E-03 sec
   Computing SGF 261       ............................   1.00000005E-03 sec
   ....................................................   2.00000009E-03 sec
-  Compute Transmission and DOS........................   1.20000001E-02 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 262/368  CPU= 1  E= 1.04000588E-01
   INTEGRAL: point # 263/368  CPU= 2  E= 1.05103068E-01
   INTEGRAL: point # 264/368  CPU= 3  E= 1.06205548E-01
@@ -1297,16 +1262,16 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 269       ............................   1.00000005E-03 sec
   Computing SGF 269       ............................   1.00000005E-03 sec
-  ....................................................   3.00000003E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 270/368  CPU= 1  E= 1.12820426E-01
   INTEGRAL: point # 271/368  CPU= 2  E= 1.13922906E-01
   INTEGRAL: point # 272/368  CPU= 3  E= 1.15025386E-01
   INTEGRAL: point # 273/368  CPU= 0  E= 1.16127866E-01
   Compute Contact SE .................................
-  Computing SGF 273       ............................   0.00000000     sec
   Computing SGF 273       ............................   1.00000005E-03 sec
-  ....................................................   3.00000003E-03 sec
+  Computing SGF 273       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 274/368  CPU= 1  E= 1.17230345E-01
   INTEGRAL: point # 275/368  CPU= 2  E= 1.18332825E-01
@@ -1322,9 +1287,9 @@ Number of states in the central region  =    64
   INTEGRAL: point # 280/368  CPU= 3  E= 1.23845224E-01
   INTEGRAL: point # 281/368  CPU= 0  E= 1.24947703E-01
   Compute Contact SE .................................
+  Computing SGF 281       ............................   0.00000000     sec
   Computing SGF 281       ............................   1.00000005E-03 sec
-  Computing SGF 281       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 282/368  CPU= 1  E= 1.26050183E-01
   INTEGRAL: point # 283/368  CPU= 2  E= 1.27152663E-01
@@ -1332,7 +1297,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 285/368  CPU= 0  E= 1.29357622E-01
   Compute Contact SE .................................
   Computing SGF 285       ............................   1.00000005E-03 sec
-  Computing SGF 285       ............................   0.00000000     sec
+  Computing SGF 285       ............................   1.00000005E-03 sec
   ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 286/368  CPU= 1  E= 1.30460102E-01
@@ -1341,7 +1306,7 @@ Number of states in the central region  =    64
   INTEGRAL: point # 289/368  CPU= 0  E= 1.33767541E-01
   Compute Contact SE .................................
   Computing SGF 289       ............................   1.00000005E-03 sec
-  Computing SGF 289       ............................   1.00000005E-03 sec
+  Computing SGF 289       ............................   0.00000000     sec
   ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 290/368  CPU= 1  E= 1.34870021E-01
@@ -1351,7 +1316,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 293       ............................   1.00000005E-03 sec
   Computing SGF 293       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 294/368  CPU= 1  E= 1.39279940E-01
   INTEGRAL: point # 295/368  CPU= 2  E= 1.40382420E-01
@@ -1360,7 +1325,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 297       ............................   1.00000005E-03 sec
   Computing SGF 297       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 298/368  CPU= 1  E= 1.43689859E-01
   INTEGRAL: point # 299/368  CPU= 2  E= 1.44792339E-01
@@ -1379,24 +1344,24 @@ Number of states in the central region  =    64
   Computing SGF 305       ............................   1.00000005E-03 sec
   Computing SGF 305       ............................   1.00000005E-03 sec
   ....................................................   2.00000009E-03 sec
-  Compute Transmission and DOS........................   2.00000009E-03 sec
+  Compute Transmission and DOS........................   1.00000005E-03 sec
   INTEGRAL: point # 306/368  CPU= 1  E= 1.52509697E-01
   INTEGRAL: point # 307/368  CPU= 2  E= 1.53612177E-01
   INTEGRAL: point # 308/368  CPU= 3  E= 1.54714656E-01
   INTEGRAL: point # 309/368  CPU= 0  E= 1.55817136E-01
   Compute Contact SE .................................
-  Computing SGF 309       ............................   0.00000000     sec
   Computing SGF 309       ............................   1.00000005E-03 sec
-  ....................................................   3.00000003E-03 sec
+  Computing SGF 309       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 310/368  CPU= 1  E= 1.56919616E-01
   INTEGRAL: point # 311/368  CPU= 2  E= 1.58022095E-01
   INTEGRAL: point # 312/368  CPU= 3  E= 1.59124575E-01
   INTEGRAL: point # 313/368  CPU= 0  E= 1.60227055E-01
   Compute Contact SE .................................
-  Computing SGF 313       ............................   1.20000001E-02 sec
   Computing SGF 313       ............................   1.00000005E-03 sec
-  ....................................................   1.30000003E-02 sec
+  Computing SGF 313       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 314/368  CPU= 1  E= 1.61329535E-01
   INTEGRAL: point # 315/368  CPU= 2  E= 1.62432014E-01
@@ -1413,8 +1378,8 @@ Number of states in the central region  =    64
   INTEGRAL: point # 321/368  CPU= 0  E= 1.69046893E-01
   Compute Contact SE .................................
   Computing SGF 321       ............................   1.00000005E-03 sec
-  Computing SGF 321       ............................   0.00000000     sec
-  ....................................................   3.00000003E-03 sec
+  Computing SGF 321       ............................   1.00000005E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 322/368  CPU= 1  E= 1.70149373E-01
   INTEGRAL: point # 323/368  CPU= 2  E= 1.71251852E-01
@@ -1423,7 +1388,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 325       ............................   1.00000005E-03 sec
   Computing SGF 325       ............................   1.00000005E-03 sec
-  ....................................................   3.00000003E-03 sec
+  ....................................................   2.00000009E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 326/368  CPU= 1  E= 1.74559292E-01
   INTEGRAL: point # 327/368  CPU= 2  E= 1.75661771E-01
@@ -1433,7 +1398,7 @@ Number of states in the central region  =    64
   Computing SGF 329       ............................   1.00000005E-03 sec
   Computing SGF 329       ............................   1.00000005E-03 sec
   ....................................................   2.00000009E-03 sec
-  Compute Transmission and DOS........................   1.00000005E-03 sec
+  Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 330/368  CPU= 1  E= 1.78969210E-01
   INTEGRAL: point # 331/368  CPU= 2  E= 1.80071690E-01
   INTEGRAL: point # 332/368  CPU= 3  E= 1.81174170E-01
@@ -1448,9 +1413,9 @@ Number of states in the central region  =    64
   INTEGRAL: point # 336/368  CPU= 3  E= 1.85584089E-01
   INTEGRAL: point # 337/368  CPU= 0  E= 1.86686569E-01
   Compute Contact SE .................................
+  Computing SGF 337       ............................   0.00000000     sec
   Computing SGF 337       ............................   1.00000005E-03 sec
-  Computing SGF 337       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 338/368  CPU= 1  E= 1.87789048E-01
   INTEGRAL: point # 339/368  CPU= 2  E= 1.88891528E-01
@@ -1468,7 +1433,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 345       ............................   1.00000005E-03 sec
   Computing SGF 345       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 346/368  CPU= 1  E= 1.96608886E-01
   INTEGRAL: point # 347/368  CPU= 2  E= 1.97711366E-01
@@ -1486,7 +1451,7 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 353       ............................   1.00000005E-03 sec
   Computing SGF 353       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 354/368  CPU= 1  E= 2.05428724E-01
   INTEGRAL: point # 355/368  CPU= 2  E= 2.06531204E-01
@@ -1495,14 +1460,14 @@ Number of states in the central region  =    64
   Compute Contact SE .................................
   Computing SGF 357       ............................   1.00000005E-03 sec
   Computing SGF 357       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 358/368  CPU= 1  E= 2.09838643E-01
   INTEGRAL: point # 359/368  CPU= 2  E= 2.10941123E-01
   INTEGRAL: point # 360/368  CPU= 3  E= 2.12043603E-01
   INTEGRAL: point # 361/368  CPU= 0  E= 2.13146082E-01
   Compute Contact SE .................................
-  Computing SGF 361       ............................   1.00000005E-03 sec
+  Computing SGF 361       ............................   0.00000000     sec
   Computing SGF 361       ............................   1.00000005E-03 sec
   ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
@@ -1511,9 +1476,9 @@ Number of states in the central region  =    64
   INTEGRAL: point # 364/368  CPU= 3  E= 2.16453522E-01
   INTEGRAL: point # 365/368  CPU= 0  E= 2.17556001E-01
   Compute Contact SE .................................
+  Computing SGF 365       ............................   0.00000000     sec
   Computing SGF 365       ............................   1.00000005E-03 sec
-  Computing SGF 365       ............................   1.00000005E-03 sec
-  ....................................................   2.00000009E-03 sec
+  ....................................................   3.00000003E-03 sec
   Compute Transmission and DOS........................   2.00000009E-03 sec
   INTEGRAL: point # 366/368  CPU= 1  E= 2.18658481E-01
   INTEGRAL: point # 367/368  CPU= 2  E= 2.19760961E-01
@@ -1539,32 +1504,33 @@ Current is calculated
  -                                                                             -
  -------------------------------------------------------------------------------
  COUNTER                                    TOTAL       BLAS       SMM       ACC
- flops     4 x     4 x    64             15728640       0.0%    100.0%      0.0%
- flops     4 x     4 x    96             23592960       0.0%    100.0%      0.0%
+ flops     4 x    32 x     4              3072000       0.0%    100.0%      0.0%
+ flops     4 x     4 x    64              6553600       0.0%    100.0%      0.0%
+ flops     4 x     4 x    96              9830400       0.0%    100.0%      0.0%
  flops inhomo. stacks                           0       0.0%      0.0%      0.0%
- flops total                        39.321600E+06       0.0%    100.0%      0.0%
- flops max/rank                      9.830400E+06       0.0%    100.0%      0.0%
+ flops total                        19.456000E+06       0.0%    100.0%      0.0%
+ flops max/rank                      5.017600E+06       0.0%    100.0%      0.0%
  matmuls inhomo. stacks                         0       0.0%      0.0%      0.0%
- matmuls total                              15360       0.0%    100.0%      0.0%
- number of processed stacks                   192       0.0%    100.0%      0.0%
- average stack size                                     0.0      80.0       0.0
- marketing flops                   109.363200E+06
+ matmuls total                               9400       0.0%    100.0%      0.0%
+ number of processed stacks                    88       0.0%    100.0%      0.0%
+ average stack size                                     0.0     106.8       0.0
+ marketing flops                    53.760000E+06
  -------------------------------------------------------------------------------
- # multiplications                             24
- max memory usage/rank             168.865792E+06
+ # multiplications                             11
+ max memory usage/rank             172.044288E+06
  # max total images/rank                        1
  # max 3D layers                                1
- # MPI messages exchanged                     192
+ # MPI messages exchanged                      88
  MPI messages size (bytes):
-  total size                         9.830400E+06
-  min size                          40.960000E+03
+  total size                         4.377600E+06
+  min size                          17.920000E+03
   max size                          61.440000E+03
-  average size                      51.200000E+03
+  average size                      49.745453E+03
  MPI breakdown and total messages size (bytes):
              size <=      128                   0                        0
        128 < size <=     8192                   0                        0
-      8192 < size <=    32768                   0                        0
-     32768 < size <=   131072                 192                  9830400
+      8192 < size <=    32768                   4                    76800
+     32768 < size <=   131072                  84                  4300800
     131072 < size <=  4194304                   0                        0
    4194304 < size <= 16777216                   0                        0
   16777216 < size                               0                        0
@@ -1575,18 +1541,18 @@ Current is calculated
  -------------------------------------------------------------------------------
 
  ROUTINE             CALLS      AVE VOLUME [Bytes]
- MP_Group              838
- MP_Bcast                3                     12.
- MP_Allreduce         9994                      8.
- MP_Alltoall         13124                   1418.
- MP_Wait               768
- MP_ISend              192                  16050.
- MP_IRecv              192                  10930.
- MP_Memory            1776
+ MP_Group              536
+ MP_Bcast                4                     12.
+ MP_Allreduce         1442                      8.
+ MP_Alltoall         10267                    931.
+ MP_Wait               352
+ MP_ISend               88                  15614.
+ MP_IRecv               88                  10991.
+ MP_Memory             778
  -------------------------------------------------------------------------------
 
 
- MEMORY| Estimated peak process memory [MiB]                                 193
+ MEMORY| Estimated peak process memory [MiB]                                 196
 
  -------------------------------------------------------------------------------
  -                                                                             -
@@ -1596,16 +1562,16 @@ Current is calculated
 
  ROUTINE             CALLS      AVE VOLUME [Bytes]
  MP_Group               14
- MP_Bcast            12747                  40679.
- MP_Allreduce         6071                    283.
+ MP_Bcast            14983                  34690.
+ MP_Allreduce         1402                   1327.
  MP_Sync                12
- MP_Alltoall          1232                2507139.
- MP_ISendRecv         1014                  25882.
- MP_Wait             11331
- MP_comm_split           1
- MP_ISend            11194                  11036.
- MP_IRecv            15727                   7739.
- MP_Recv               496                   1507.
+ MP_Alltoall           668                3153673.
+ MP_ISendRecv          438                  25861.
+ MP_Wait             10465
+ MP_comm_split          21
+ MP_ISend            11064                   9187.
+ MP_IRecv            15579                   6387.
+ MP_Recv               493                   1267.
  -------------------------------------------------------------------------------
 
 
@@ -1646,6 +1612,14 @@ Current is calculated
  WILEY INTERDISCIPLINARY REVIEWS-COMPUTATIONAL MOLECULAR SCIENCE, 4 (1), 15-25 (2014). 
  CP2K: atomistic simulations of condensed matter systems.
  https://dx.doi.org/10.1002/wcms.1159
+
+
+ Marek, A; Blum, V; Johanni, R; Havu, V; Lang, B; Auckenthaler, T;
+ Heinecke, A; Bungartz, H; Lederer, H. 
+ Journal of Physics: Condensed Matter, 26 (21), (2014). 
+ The ELPA library: scalable parallel eigenvalue solutions for electronic structure
+ theory and computational science.
+ https://dx.doi.org/10.1088/0953-8984/26/21/213201
 
 
  VandeVondele, J; Hutter, J. 
@@ -1712,39 +1686,41 @@ Current is calculated
  -------------------------------------------------------------------------------
  SUBROUTINE                       CALLS  ASD         SELF TIME        TOTAL TIME
                                 MAXIMUM       AVERAGE  MAXIMUM  AVERAGE  MAXIMUM
- CP2K                                 1  1.0    0.012    0.022   93.746   93.755
- do_negf                              1  2.0    0.754    0.759   93.391   93.401
- negf_env_create                      1  3.0    0.000    0.002   57.627   57.630
- qs_energies                          3  4.0    0.001    0.001   56.290   56.293
- scf_env_do_scf                       3  5.0    0.000    0.001   54.140   54.143
- scf_env_do_scf_inner_loop           44  6.0    0.008    0.017   54.140   54.143
- qs_rho_update_rho                   64  6.2    0.000    0.000   46.147   46.151
- calculate_rho_elec                  64  7.2   42.983   44.616   46.147   46.150
- qs_ks_build_kohn_sham_matrix        61  7.6    0.012    0.013   39.999   40.388
- converge_density                     1  3.0    0.007    0.028   34.379   34.381
- integrate_v_rspace                  62  9.5   32.468   32.914   33.468   33.857
- sum_up_and_integrate                61  8.6    0.016    0.016   32.717   33.105
- qs_ks_update_qs_env                 44  7.0    0.000    0.000   24.362   24.750
- rebuild_ks_matrix                   44  8.0    0.000    0.000   24.328   24.716
- qs_vxc_create                       61  8.6    0.001    0.002    6.473    6.495
- xc_vxc_pw_create                    61  9.6    0.066    0.068    6.472    6.494
- pw_transfer                       1240 10.2    0.076    0.089    5.910    5.988
- fft_wrap_pw1pw2                   1118 11.3    0.010    0.012    5.758    5.838
- fft_wrap_pw1pw2_100                740 12.2    0.504    0.521    5.585    5.675
- xc_rho_set_and_dset_create          61 10.6    0.040    0.044    4.133    4.416
- fft3d_ps                          1118 13.3    2.453    2.642    4.203    4.320
- density_rs2pw                       64  8.2    0.003    0.003    3.106    4.112
- rs_pw_transfer                     508 10.3    0.004    0.005    2.357    3.510
- rs_pw_transfer_RS2PW_100            68 10.1    0.034    0.038    2.207    3.356
- xc_functional_eval                  61 11.6    0.001    0.001    2.435    2.737
- pbe_lda_eval                        61 12.6    2.434    2.737    2.434    2.737
+ CP2K                                 1  1.0    0.036    0.050   64.203   64.206
+ do_negf                              1  2.0    0.682    0.682   63.906   63.911
+ converge_density                     1  3.0    0.003    0.012   40.344   40.347
+ qs_rho_update_rho                   34  5.2    0.000    0.000   31.038   31.042
+ calculate_rho_elec                  34  6.2   29.290   29.959   31.038   31.042
+ qs_ks_build_kohn_sham_matrix        31  5.8    0.004    0.005   27.003   27.043
+ integrate_v_rspace                  32  7.7   22.108   22.289   22.775   22.815
+ negf_env_create                      1  3.0    0.002    0.009   22.158   22.160
+ sum_up_and_integrate                31  6.8    0.011    0.011   22.004   22.044
+ qs_energies                          3  4.0    0.001    0.001   20.867   20.870
+ scf_env_do_scf                       3  5.0    0.001    0.002   18.661   18.662
+ scf_env_do_scf_inner_loop           11  6.0    0.003    0.010   18.660   18.662
+ qs_ks_update_qs_env                 11  7.0    0.000    0.000    8.569    8.610
+ rebuild_ks_matrix                   11  8.0    0.000    0.000    8.564    8.606
+ qs_vxc_create                       31  6.8    0.001    0.001    4.449    4.463
+ xc_vxc_pw_create                    31  7.8    0.044    0.047    4.449    4.462
+ pw_transfer                        640  8.6    0.044    0.056    4.098    4.161
+ fft_wrap_pw1pw2                    578  9.7    0.006    0.007    4.000    4.065
+ fft_wrap_pw1pw2_100                380 10.6    0.348    0.351    3.893    3.960
+ fft3d_ps                           578 11.7    1.711    1.836    2.914    2.995
+ xc_rho_set_and_dset_create          31  8.8    0.027    0.030    2.829    2.991
+ density_rs2pw                       34  7.2    0.002    0.002    1.715    2.079
+ xc_functional_eval                  31  9.8    0.000    0.000    1.658    1.834
+ pbe_lda_eval                        31 10.8    1.658    1.834    1.658    1.834
+ rs_pw_transfer                     268  8.9    0.003    0.003    1.203    1.675
+ rs_pw_transfer_RS2PW_100            38  9.2    0.023    0.024    1.103    1.577
+ init_scf_run                         3  5.0    0.000    0.002    1.441    1.443
+ scf_env_initial_rho_setup            3  6.0    0.000    0.001    1.439    1.441
  -------------------------------------------------------------------------------
 
- The number of warnings for this run is : 8
+ The number of warnings for this run is : 5
  
  -------------------------------------------------------------------------------
-  **** **** ******  **  PROGRAM ENDED AT                 2019-05-27 13:25:08.314
+  **** **** ******  **  PROGRAM ENDED AT                 2019-06-23 18:12:05.782
  ***** ** ***  *** **   PROGRAM RAN ON                                    debian
  **    ****   ******    PROGRAM RAN BY                                   dryndyk
- ***** **    ** ** **   PROGRAM PROCESS ID                                 21423
+ ***** **    ** ** **   PROGRAM PROCESS ID                                 10706
   **** **  *******  **  PROGRAM STOPPED IN       /home/dryndyk/CP2K_examples/C40

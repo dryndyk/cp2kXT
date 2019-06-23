@@ -1,11 +1,13 @@
-# CP2K+XT 
+## CP2K+XT 
 
-CP2K+XT is the extension of the CP2K for atomistic quantum transport at nanoscale, many-body nonequilibrium phenomena, material & device modeling. It should be used together with the DFTB+XT package.
-CP2K+XT is a part of TraNaS OpenSuite - integrated open software suite for multiscale modeling.
+CP2K+XT is the extension of CP2K for atomistic quantum transport at nanoscale, many-body nonequilibrium phenomena, material & device modeling. It should be used together with the DFTB+XT package.
+CP2K+XT is a part of 
 
-http://tranas.org/opensuite/
+[TraNaS OpenSuite - integrated open software suite for nanoscale modeling](http://tranas.org/opensuite/).
 
-# CP2K
+CP2K+XT is a git fork of CP2K, it follows all new changes of the ``github.com/cp2k/cp2k.git master``.
+
+## CP2K
 
 CP2K is a quantum chemistry and solid state physics software package that can perform atomistic simulations of solid state, liquid, molecular, periodic, material, crystal, and biological systems. CP2K provides a general framework for different modeling methods such as DFT using the mixed Gaussian and plane waves approaches GPW and GAPW. Supported theory levels include DFTB, LDA, GGA, MP2, RPA, semi-empirical methods (AM1, PM3, PM6, RM1, MNDO, ...), and classical force fields (AMBER, CHARMM, ...). CP2K can do simulations of molecular dynamics, metadynamics, Monte Carlo, Ehrenfest dynamics, vibrational analysis, core level spectroscopy, energy minimization, and transition state optimization using NEB or dimer method.
 

@@ -2,50 +2,50 @@
 
 ##  0. CP2K+XT| Before compiling
 
-The directories cp2kXT/ and dftbXT/ must be in the same (any) directory <MAIN>/
+The directories `cp2kXT/` and `dftbXT/` must be in the same (any) directory `<MAIN>/`.
 Possible name for this directory is OpenSuite or TraNaS, or what you want.
 
 DFTB+XT must be installed before CP2K+XT (note however, that if you want to use the versions of
-MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: cp2kXT/tools/toolchain, you can install it first.
+MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: `cp2kXT/tools/toolchain`, you can install it first.
 See 2. Install prerequisites).
 
 Do not change default directories during DFTB+XT compilation or be sure what you do! 
 
-The object, mod and lib files must be copied from <MAIN>/dftbXT to <MAIN>/dftbXT_libs
+The object, mod and lib files must be copied from `<MAIN>/dftbXT` to `<MAIN>/dftbXT_libs`
 
-$ cd <MAIN>
-$ mkdir dftbXT_libs
-$ cp  dftbXT/_build/prog/dftb+/*.mod dftbXT_libs/
-$ cp  dftbXT/_build/prog/dftb+/*.o dftbXT_libs/
-$ rm  dftbXT_libs/dftbplus.o
-$ cp  dftbXT/_build/external/fsockets/libfsockets.a dftbXT_libs/    # if DFTB+XT is compiled with sockets
-$ cp  dftbXT/_build/external/mpifx/libmpifx.a dftbXT_libs/
-$ cp  dftbXT/_build/external/mpifx/libmpifx_module.mod dftbXT_libs/
-$ cp  dftbXT/_build/external/poisson/libpoisson.a dftbXT_libs/
-$ cp  dftbXT/_build/external/poisson/libmudpack.a dftbXT_libs/
-$ cp  dftbXT/_build/external/scalapackfx/libscalapackfx.a dftbXT_libs/
-$ cp  dftbXT/_build/external/sparskit/libzsparskit.a dftbXT_libs/
-$ cp  dftbXT/_build/external/tranas/libtranas.a dftbXT_libs/
-$ cp  dftbXT/_build/external/xmlf90/libxmlf90.a dftbXT_libs/
+``$ cd <MAIN>``  
+``$ mkdir dftbXT_libs``  
+``$ cp  dftbXT/_build/prog/dftb+/*.mod dftbXT_libs/``  
+``$ cp  dftbXT/_build/prog/dftb+/*.o dftbXT_libs/``  
+``$ rm  dftbXT_libs/dftbplus.o``  
+``$ cp  dftbXT/_build/external/fsockets/libfsockets.a dftbXT_libs/    # if DFTB+XT is compiled with sockets``  
+``$ cp  dftbXT/_build/external/mpifx/libmpifx.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/mpifx/libmpifx_module.mod dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/poisson/libpoisson.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/poisson/libmudpack.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/scalapackfx/libscalapackfx.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/sparskit/libzsparskit.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/tranas/libtranas.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/xmlf90/libxmlf90.a dftbXT_libs/``  
+``$ cp  dftbXT/_build/external/dftd3/libdftd3.a dftbXT_libs/``
 
-You can use the script <MAIN>/cp2kXT/copy_files.sh:
-
-$ cd <MAIN>
-$ mkdir dftbXT_libs
-$ sh cp2kXT/copy_files.sh
+You can use the script ``<MAIN>/cp2kXT/copy_files.sh:``  
+``$ cd <MAIN>``  
+``$ mkdir dftbXT_libs``  
+``$ sh cp2kXT/copy_files.sh``
 
 Before CP2K compilation change arch files, see 3d below!
 
 ##  1. Acquire the code:
 
-CP2K+XT| https://github.com/tranas-open/cp2kXT.git
+CP2K+XT| https://github.com/tranas-open/cp2kXT.git  
 DFTB+XT| https://github.com/tranas-open/dftbXT.git
 
 For more details on downloading CP2K, see https://www.cp2k.org/download.
 
-To udate with submodules use
-$ git pull
-$ git submodule update --recursive
+To udate with submodules use  
+``$ git pull``  
+``$ git submodule update --recursive``
 
 ## 2. Install prerequisites
 
@@ -72,9 +72,8 @@ CP2K+XT| Note, that "cp2k" directory should be understood as "cp2kXT".
 
 Sub-points here discuss prerequisites needed to build CP2K. Copies of the recommended versions of 3rd party software can be downloaded from https://www.cp2k.org/static/downloads/.
 
-CP2K+XT| IMPORTANT!
-CP2K+XT| The arch files obtained by a script in cp2kXT/tools/toolchain must be modified
-CP2K+XT| as it is explained in 3d.
+CP2K+XT| IMPORTANT!  
+CP2K+XT| The arch files obtained by the script in `cp2kXT/tools/toolchain` must be modified as it is explained in 3d.
 
 ### 2a. GNU make (required, build system)
 
@@ -127,13 +126,13 @@ FFTW can be used to improve FFT speed on a wide range of architectures. It is st
 :warning: Note that on machines and compilers which support SSE you can configure FFTW3 with `--enable-sse2`. Compilers/systems that do not align memory (NAG f95, Intel IA32/gfortran) should either not use `--enable-sse2` or otherwise set the define `-D__FFTW3_UNALIGNED` in the arch file. When building an OpenMP parallel version of CP2K (ssmp or psmp), the FFTW3 threading library libfftw3_threads (or libfftw3_omp) is required.
 
 ### 2g. LIBINT (optional, enables methods including HF exchange)
-Hartree-Fock exchange (optional, use `-D__LIBINT`) requires the libint package to be installed.
-  * Download from http://sourceforge.net/projects/libint/files/v1-releases/libint-1.1.4.tar.gz/download.
-  * Additional information can be found in [README_LIBINT](./tools/hfx_tools/libint_tools/README_LIBINT).
-  * Tested against libinit-1.1.4 and currently hardcoded to the default angular momentum LIBINT_MAX_AM 5.
-  * Use `-D__LIBINT_MAX_AM` and `-D__LIBDERIV_MAX_AM1` to match the values in `include/libint/libint.h`.
+  * Hartree-Fock exchange (optional, use `-D__LIBINT`) requires the libint package to be installed.
+  * Recommended way to build libint: Download a CP2K-configured libint library from [libint-cp2k](https://github.com/cp2k/libint-cp2k). Build and install libint by following the instructions provided there. Note that using a library configured for higher maximum angular momentum will increase build time and binary size of CP2K executable (assuming static linking).
+  * CP2K is not hardwired to these provided libraries and any other libint library (version >= 2.5.0) should be compatible as long as it was compiled with `--enable-eri=1` and default ordering.
+  * Avoid debugging information (`-g` flag) for compiling libint since this will increase library size by a large factor.
+  * In the arch file of CP2K: add `-D__LIBINT` to the `DFLAGS`. Add `-L$(LIBINT_DIR)/lib -lint2 -lstdc++` to `LIBS` and `-I$(LIBINT_DIR)/include` to `FCFLAGS`. `lstdc++` is needed if you use the GNU C++ compiler.
+  * Libint 1 is no longer supported and the previously needed flags `-D__LIBINT_MAX_AM` and `-D__LIBDERIV_MAX_AM1` are ignored.
   * `-D__MAX_CONTR=4` (default=2) can be used to compile efficient contraction kernels up to l=4, but the build time will increase accordingly.
-  * :warning: Do **NOT** use libinit-1.1.3, which was buggy.
 
 ### 2h. libsmm (optional, improved performance for matrix multiplication)
   * A library for small matrix multiplies can be built from the included source (see tools/build_libsmm/README).  Usually only the double precision real and perhaps complex is needed.  Link to the generated libraries. For a couple of architectures prebuilt libsmm are available at https://www.cp2k.org/static/downloads/libsmm/.
@@ -323,19 +322,22 @@ In order for your compiler to find these, you will need to indicate their locati
 
 1. Include the path to mod files for compilation
 
-   FCFLAGS => FCFLAGS -I'<MAIN>/dftbXT_libs' 
+   ``FCFLAGS => FCFLAGS -I'<MAIN>/dftbXT_libs'``
  
 2. Add "-fopenmp" to LDFLAGS
 
-   LDFLAGS => -fopenmp LDFLAGS
+   ``LDFLAGS => -fopenmp LDFLAGS``
 
 3. Add object files and libraries
 
-   LIBS => LIBS <MAIN>/dftbXT_libs/*.o -L<MAIN>/dftbXT_libs -lxmlf90  -ltranas -lpoisson -lmudpack -lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS
+   ``LIBS => LIBS <MAIN>/dftbXT_libs/*.o -L<MAIN>/dftbXT_libs -lxmlf90  -ltranas -lpoisson -lmudpack`` 
+   ``-lzsparskit -lmpifx -lscalapackfx LIB_[SCA]LAPACK/BLAS``
  
-   LIB_[SCA]LAPACK/BLAS should be taken from the DFTB+XT arch file (something like '-L/usr/lib -lscalapack -lopenblas')
-   IMPORTANT! LIB_[SCA]LAPACK/BLAS must be consistent with the libraries for CP2K compilation.
-  
+   `LIB_[SCA]LAPACK/BLAS` should be taken from the DFTB+XT arch file, something like  
+   ``'-L/usr/lib -lscalapack -lopenblas'``
+
+   IMPORTANT! `LIB_[SCA]LAPACK/BLAS` must be consistent with the libraries for CP2K compilation.
+
 ## 4. If it doesn't work?
 If things fail, take a break... go back to 2a (or skip to step 6).
 
@@ -350,9 +352,9 @@ should work if you can locally execute CP2K without the need for e.g. batch subm
 
 In the other case, you might need to configure the underlying testing script as described more systematically at https://www.cp2k.org/dev:regtesting
 
-CP2K+XT| We recommend to go to <MAIN>/cp2kXT/regtesting directory and run something like
+CP2K+XT| We recommend to go to `<MAIN>/cp2kXT/regtesting` directory and run something like
     
-$ ../tools/regtesting/do_regtest -maxtasks 4 -quick -arch local -version popt -cp2kdir ../
+``$ ../tools/regtesting/do_regtest -maxtasks 4 -quick -arch local -version popt -cp2kdir ../``
 
 ## 6. Talk to us
 In any case please tell us your comments, praise, criticism, thanks,... see https://www.cp2k.org/

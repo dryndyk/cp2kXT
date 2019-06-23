@@ -59,11 +59,14 @@ CONTAINS
 !     ------------------------------------------------------------------------
 
       CPASSERT(.NOT. ASSOCIATED(section))
-      CALL section_create(section, name="PW_DFT", &
-                          description="This section contains all information to run an "// &
-                          "SIRIUS PW calculation.", &
-                          n_subsections=4, &
-                          repeats=.FALSE.)
+      CALL section_create(section, __LOCATION__, name="PW_DFT", &
+                          description="DFT calculation using plane waves basis can be set in this section. "// &
+                          "The backend called SIRIUS, computes the basic properties of the system, "// &
+                          "such as ground state, forces and stresses tensors which can be used by "// &
+                          "cp2k afterwards. The engine has all these features build-in, support of "// &
+                          "pseudo-potentials and full-potentials, spin-orbit coupling, collinear and "// &
+                          "non collinear magnetism, Hubbard correction, all exchange functionals "// &
+                          "supported by libxc and Van der Waals corrections (libvdwxc).")
 
       NULLIFY (subsection)
       section_name = ''
@@ -109,7 +112,7 @@ CONTAINS
 
       CPASSERT(.NOT. ASSOCIATED(section))
       CALL sirius_option_get_length(TRIM(ADJUSTL(section_name))//CHAR(0), length)
-      CALL section_create(section, &
+      CALL section_create(section, __LOCATION__, &
                           name=TRIM(ADJUSTL(section_name)), &
                           description=TRIM(section_name)//" section", &
                           n_subsections=0, &
@@ -164,7 +167,7 @@ CONTAINS
          SELECT CASE (ctype)
          CASE (1)
             CALL sirius_option_get_int(section_name, name, dummy_i, vec_length)
-            CALL keyword_create(keyword, &
+            CALL keyword_create(keyword, __LOCATION__, &
                                 name=TRIM(name1), &
                                 description=TRIM(ADJUSTL(description)), &
                                 usage=TRIM(ADJUSTL(usage)), &
@@ -172,7 +175,7 @@ CONTAINS
                                 default_i_val=dummy_i)
          CASE (11)
             CALL sirius_option_get_int(section_name, name, ivec(1), vec_length)
-            CALL keyword_create(keyword, &
+            CALL keyword_create(keyword, __LOCATION__, &
                                 name=name1, &
                                 description=TRIM(ADJUSTL(description)), &
                                 usage=TRIM(ADJUSTL(usage)), &
@@ -181,7 +184,7 @@ CONTAINS
                                 default_i_vals=ivec(1:vec_length))
          CASE (2)
             CALL sirius_option_get_double(section_name, name, dummy_r, vec_length)
-            CALL keyword_create(keyword, &
+            CALL keyword_create(keyword, __LOCATION__, &
                                 name=name1, &
                                 description=TRIM(ADJUSTL(description)), &
                                 usage=TRIM(ADJUSTL(usage)), &
@@ -189,7 +192,7 @@ CONTAINS
                                 default_r_val=dummy_r)
          CASE (12)
             CALL sirius_option_get_double(section_name, name, rvec(1), vec_length)
-            CALL keyword_create(keyword, &
+            CALL keyword_create(keyword, __LOCATION__, &
                                 name=name1, &
                                 description=TRIM(ADJUSTL(description)), &
                                 usage=TRIM(ADJUSTL(usage)), &
@@ -199,7 +202,7 @@ CONTAINS
          CASE (3)
             CALL sirius_option_get_logical(section_name, name, dummy_l, vec_length)
             IF (dummy_l) THEN
-               CALL keyword_create(keyword, &
+               CALL keyword_create(keyword, __LOCATION__, &
                                    name=name1, &
                                    description=TRIM(ADJUSTL(description)), &
                                    usage=TRIM(ADJUSTL(usage)), &
@@ -207,7 +210,7 @@ CONTAINS
                                    default_l_val=.TRUE., &
                                    lone_keyword_l_val=.TRUE.)
             ELSE
-               CALL keyword_create(keyword, &
+               CALL keyword_create(keyword, __LOCATION__, &
                                    name=name1, &
                                    description=TRIM(ADJUSTL(description)), &
                                    usage=TRIM(ADJUSTL(usage)), &
@@ -220,7 +223,7 @@ CONTAINS
             DO j = 1, vec_length
                lvecl(j) = lvec(j)
             ENDDO
-            CALL keyword_create(keyword, &
+            CALL keyword_create(keyword, __LOCATION__, &
                                 name=name1, &
                                 description=TRIM(ADJUSTL(description)), &
                                 usage=TRIM(ADJUSTL(usage)), &
@@ -239,7 +242,7 @@ CONTAINS
                   CALL sirius_option_string_get_value(section_name, name, j, possible_values(j+1))
                   enum_i_val(j+1) = j
                END DO
-               CALL keyword_create(keyword, &
+               CALL keyword_create(keyword, __LOCATION__, &
                                    name=name1, &
                                    description=TRIM(ADJUSTL(description)), &
                                    usage=TRIM(ADJUSTL(usage)), &
@@ -248,7 +251,7 @@ CONTAINS
                                    enum_c_vals=possible_values(1:num_possible_values), &
                                    default_i_val=0)
             ELSE
-               CALL keyword_create(keyword, &
+               CALL keyword_create(keyword, __LOCATION__, &
                                    name=name1, &
                                    description=TRIM(ADJUSTL(description)), &
                                    usage=TRIM(ADJUSTL(usage)), &
@@ -273,7 +276,7 @@ CONTAINS
 
       CPASSERT(.NOT. ASSOCIATED(section))
 
-      CALL section_create(section, name="PW_DFT", &
+      CALL section_create(section, __LOCATION__, name="PW_DFT", &
                           description="This section contains all information to run an "// &
                           "SIRIUS PW calculation.", &
                           n_subsections=0, &

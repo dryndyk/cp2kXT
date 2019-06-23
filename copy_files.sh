@@ -11,3 +11,4 @@ cp  dftbXT/_build/external/scalapackfx/libscalapackfx.a dftbXT_libs/
 cp  dftbXT/_build/external/sparskit/libzsparskit.a dftbXT_libs/
 cp  dftbXT/_build/external/tranas/libtranas.a dftbXT_libs/
 cp  dftbXT/_build/external/xmlf90/libxmlf90.a dftbXT_libs/
+cp  dftbXT/_build/external/dftd3/libdftd3.a dftbXT_libs/
