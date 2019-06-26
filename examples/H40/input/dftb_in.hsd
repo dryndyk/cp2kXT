@@ -28,7 +28,7 @@ Hamiltonian = Model {
   HamiltonianFile = H.mtr
   ReadOverlap = Yes
   OverlapFile = S.mtr
-  Eigensolver = TransportOnly{}
+  Solver = TransportOnly{}
 }
 
 Analysis = {
