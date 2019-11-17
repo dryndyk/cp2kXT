@@ -43,11 +43,11 @@ MODULE rpa_gw_kpoints
    USE cp_gemm_interface,               ONLY: cp_gemm
    USE cp_para_types,                   ONLY: cp_para_env_type
    USE dbcsr_api,                       ONLY: &
-        dbcsr_add, dbcsr_create, dbcsr_deallocate_matrix, dbcsr_filter, dbcsr_get_block_p, &
-        dbcsr_get_num_blocks, dbcsr_init_p, dbcsr_iterator_blocks_left, dbcsr_iterator_next_block, &
-        dbcsr_iterator_start, dbcsr_iterator_stop, dbcsr_iterator_type, dbcsr_multiply, &
-        dbcsr_p_type, dbcsr_release, dbcsr_release_p, dbcsr_reserve_all_blocks, dbcsr_set, &
-        dbcsr_trace, dbcsr_type, dbcsr_type_no_symmetry
+        dbcsr_add, dbcsr_create, dbcsr_deallocate_matrix, dbcsr_dot, dbcsr_filter, &
+        dbcsr_get_block_p, dbcsr_get_num_blocks, dbcsr_init_p, dbcsr_iterator_blocks_left, &
+        dbcsr_iterator_next_block, dbcsr_iterator_start, dbcsr_iterator_stop, dbcsr_iterator_type, &
+        dbcsr_multiply, dbcsr_p_type, dbcsr_release, dbcsr_release_p, dbcsr_reserve_all_blocks, &
+        dbcsr_set, dbcsr_type, dbcsr_type_no_symmetry
    USE input_constants,                 ONLY: gw_read_exx
    USE kinds,                           ONLY: dp,&
                                               int_8
@@ -65,9 +65,9 @@ MODULE rpa_gw_kpoints
                                               qs_environment_type
    USE qs_integral_utils,               ONLY: basis_set_list_setup
    USE qs_kind_types,                   ONLY: qs_kind_type
-   USE rpa_im_time,                     ONLY: compute_transl_dm,&
-                                              fill_mat_3c_overl_int_gw,&
+   USE rpa_gw_im_time_util,             ONLY: fill_mat_3c_overl_int_gw,&
                                               replicate_mat_to_subgroup_simple
+   USE rpa_im_time,                     ONLY: compute_transl_dm
 #include "./base/base_uses.f90"
 
    IMPLICIT NONE
@@ -111,9 +111,10 @@ CONTAINS
       TYPE(cp_cfm_type), POINTER                         :: cfm_mat_Q
       TYPE(cp_fm_type), POINTER                          :: fm_mat_L_re, fm_mat_L_im
       INTEGER                                            :: dimen_RI, num_integ_points, jquad, ikp
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tj, tau_tj
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: weights_cos_tf_w_to_t
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: ikp_local
+      REAL(KIND=dp), DIMENSION(:)                        :: tj
+      REAL(KIND=dp), DIMENSION(0:num_integ_points)       :: tau_tj
+      REAL(KIND=dp), DIMENSION(:, :)                     :: weights_cos_tf_w_to_t
+      INTEGER, DIMENSION(:)                              :: ikp_local
       TYPE(cp_para_env_type), POINTER                    :: para_env
       TYPE(kpoint_type), POINTER                         :: kpoints
       TYPE(qs_environment_type), POINTER                 :: qs_env
@@ -462,8 +463,9 @@ CONTAINS
       TYPE(cp_cfm_type), POINTER                         :: cfm_mat_Q
       TYPE(cp_fm_type), POINTER                          :: fm_mat_L_re, fm_mat_L_im
       INTEGER                                            :: dimen_RI, num_integ_points, jquad, ikp
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tj, tau_tj
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: weights_cos_tf_w_to_t
+      REAL(KIND=dp), DIMENSION(:)                        :: tj
+      REAL(KIND=dp), DIMENSION(0:num_integ_points)       :: tau_tj
+      REAL(KIND=dp), DIMENSION(:, :)                     :: weights_cos_tf_w_to_t
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'compute_Wc_kp_tau_GW', &
          routineP = moduleN//':'//routineN
@@ -836,12 +838,11 @@ CONTAINS
                                                 weights_sin_tf_t_to_w, weights_cos_tf_t_to_w, &
                                                 num_integ_points, stabilize_exp, fm_mat_L, wkp_W)
 
-      COMPLEX(KIND=dp), ALLOCATABLE, DIMENSION(:, :, :)  :: vec_Sigma_c_gw
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: vec_Sigma_x_gw
-      REAL(KIND=dp), DIMENSION(:, :)                     :: vec_Sigma_x_minus_vxc_gw
+      COMPLEX(KIND=dp), DIMENSION(:, :, :)               :: vec_Sigma_c_gw
+      REAL(KIND=dp), DIMENSION(:, :)                     :: vec_Sigma_x_gw, vec_Sigma_x_minus_vxc_gw
       TYPE(dbcsr_p_type), DIMENSION(:, :, :), POINTER    :: mat_3c_overl_int
       INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: index_to_cell_3c
+      INTEGER, DIMENSION(:, :)                           :: index_to_cell_3c
       INTEGER                                            :: num_cells_dm
       TYPE(kpoint_type), POINTER                         :: kpoints
       INTEGER                                            :: unit_nr, gw_corr_lev_tot, num_3c_repl, &
@@ -852,16 +853,17 @@ CONTAINS
       INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_virt, &
                                                             dimen_RI, homo, nmo, cut_RI
       TYPE(dbcsr_p_type)                                 :: mat_dm_virt_local
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: row_from_LLL, my_group_L_starts_im_time, &
+      INTEGER, DIMENSION(:)                              :: row_from_LLL, my_group_L_starts_im_time, &
                                                             my_group_L_sizes_im_time
       TYPE(cp_cfm_type), POINTER                         :: cfm_mat_Q
       TYPE(cp_cfm_p_type), DIMENSION(:, :), POINTER      :: cfm_mat_W_kp_tau
       TYPE(qs_environment_type), POINTER                 :: qs_env
       REAL(KIND=dp)                                      :: e_fermi, eps_filter
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tj, tau_tj
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: weights_sin_tf_t_to_w, &
-                                                            weights_cos_tf_t_to_w
+      REAL(KIND=dp), DIMENSION(:)                        :: tj
       INTEGER                                            :: num_integ_points
+      REAL(KIND=dp), DIMENSION(:, :)                     :: weights_cos_tf_t_to_w, &
+                                                            weights_sin_tf_t_to_w
+      REAL(KIND=dp), DIMENSION(0:num_integ_points)       :: tau_tj
       REAL(KIND=dp)                                      :: stabilize_exp
       TYPE(cp_fm_p_type), DIMENSION(:, :), POINTER       :: fm_mat_L
       REAL(KIND=dp), DIMENSION(:), POINTER               :: wkp_W
@@ -1043,15 +1045,16 @@ CONTAINS
       INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c, cell_to_index_R2
       INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_tot, homo, &
                                                             num_integ_points, num_fit_points
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tj, tau_tj
+      REAL(KIND=dp), DIMENSION(:)                        :: tj
+      REAL(KIND=dp), DIMENSION(0:num_integ_points)       :: tau_tj
       INTEGER                                            :: ikp
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: has_3c_blocks_re, has_3c_blocks_im
+      LOGICAL, DIMENSION(:, :, :)                        :: has_3c_blocks_re, has_3c_blocks_im
       LOGICAL, ALLOCATABLE, DIMENSION(:, :, :, :)        :: cycle_R1_S2_n_level
       LOGICAL, ALLOCATABLE, DIMENSION(:, :)              :: has_blocks_mat_dm_occ_S, &
                                                             has_blocks_mat_dm_virt_S
       LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: cycle_R1_plus_S2_n_level
       TYPE(kpoint_type), POINTER                         :: kpoints
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: weights_cos_tf_t_to_w, &
+      REAL(KIND=dp), DIMENSION(:, :)                     :: weights_cos_tf_t_to_w, &
                                                             weights_sin_tf_t_to_w
       REAL(KIND=dp)                                      :: eps_filter
       TYPE(cp_para_env_type), POINTER                    :: para_env
@@ -1248,7 +1251,7 @@ CONTAINS
                                                             mat_contr_gf_occ_im, &
                                                             mat_contr_gf_virt_re, &
                                                             mat_contr_gf_virt_im
-      COMPLEX(KIND=dp), ALLOCATABLE, DIMENSION(:, :)     :: vec_Sigma_c_gw_pos_tau, &
+      COMPLEX(KIND=dp), DIMENSION(:, :)                  :: vec_Sigma_c_gw_pos_tau, &
                                                             vec_Sigma_c_gw_neg_tau
       REAL(KIND=dp), DIMENSION(:)                        :: vec_Sigma_x_gw
       INTEGER                                            :: ikp
@@ -1267,21 +1270,21 @@ CONTAINS
 
       CALL timeset(routineN, handle)
 
-      CALL dbcsr_trace(mat_contr_gf_occ_re, &
-                       mat_contr_W_re, &
-                       trace_neg_tau_re_1)
+      CALL dbcsr_dot(mat_contr_gf_occ_re, &
+                     mat_contr_W_re, &
+                     trace_neg_tau_re_1)
 
-      CALL dbcsr_trace(mat_contr_gf_occ_im, &
-                       mat_contr_W_im, &
-                       trace_neg_tau_re_2)
+      CALL dbcsr_dot(mat_contr_gf_occ_im, &
+                     mat_contr_W_im, &
+                     trace_neg_tau_re_2)
 
-      CALL dbcsr_trace(mat_contr_gf_occ_re, &
-                       mat_contr_W_im, &
-                       trace_neg_tau_im_1)
+      CALL dbcsr_dot(mat_contr_gf_occ_re, &
+                     mat_contr_W_im, &
+                     trace_neg_tau_im_1)
 
-      CALL dbcsr_trace(mat_contr_gf_occ_im, &
-                       mat_contr_W_re, &
-                       trace_neg_tau_im_2)
+      CALL dbcsr_dot(mat_contr_gf_occ_im, &
+                     mat_contr_W_re, &
+                     trace_neg_tau_im_2)
 
       IF (ABS(trace_neg_tau_re_1)+ABS(trace_neg_tau_re_2)+ABS(trace_neg_tau_im_1)+ &
           ABS(trace_neg_tau_im_2) < eps_filter) THEN
@@ -1311,21 +1314,21 @@ CONTAINS
 
       END IF
 
-      CALL dbcsr_trace(mat_contr_gf_virt_re, &
-                       mat_contr_W_re, &
-                       trace_pos_tau_re_1)
+      CALL dbcsr_dot(mat_contr_gf_virt_re, &
+                     mat_contr_W_re, &
+                     trace_pos_tau_re_1)
 
-      CALL dbcsr_trace(mat_contr_gf_virt_im, &
-                       mat_contr_W_im, &
-                       trace_pos_tau_re_2)
+      CALL dbcsr_dot(mat_contr_gf_virt_im, &
+                     mat_contr_W_im, &
+                     trace_pos_tau_re_2)
 
-      CALL dbcsr_trace(mat_contr_gf_virt_re, &
-                       mat_contr_W_im, &
-                       trace_pos_tau_im_1)
+      CALL dbcsr_dot(mat_contr_gf_virt_re, &
+                     mat_contr_W_im, &
+                     trace_pos_tau_im_1)
 
-      CALL dbcsr_trace(mat_contr_gf_virt_im, &
-                       mat_contr_W_re, &
-                       trace_pos_tau_im_2)
+      CALL dbcsr_dot(mat_contr_gf_virt_im, &
+                     mat_contr_W_re, &
+                     trace_pos_tau_im_2)
 
       IF (jquad > 0) THEN
 
@@ -1376,7 +1379,7 @@ CONTAINS
          x_cell_R1_plus_S2, y_cell_R1_plus_S2, z_cell_R1_plus_S2
       INTEGER, DIMENSION(:, :)                           :: index_to_cell_3c
       INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c, cell_to_index_R2
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: has_3c_blocks_re, has_3c_blocks_im
+      LOGICAL, DIMENSION(:, :, :)                        :: has_3c_blocks_re, has_3c_blocks_im
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'mult_3c_with_W', routineP = moduleN//':'//routineN
 
@@ -1622,7 +1625,7 @@ CONTAINS
       INTEGER                                            :: jquad, n_level_gw
       INTEGER, ALLOCATABLE, DIMENSION(:, :, :)           :: cell_to_index_3c
       INTEGER, DIMENSION(:, :)                           :: index_to_cell_dm
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: has_3c_blocks_re, has_3c_blocks_im
+      LOGICAL, DIMENSION(:, :, :)                        :: has_3c_blocks_re, has_3c_blocks_im
       LOGICAL, ALLOCATABLE, DIMENSION(:, :)              :: has_blocks_mat_dm_occ_S, &
                                                             has_blocks_mat_dm_virt_S
       INTEGER                                            :: num_cells_dm
@@ -1808,7 +1811,7 @@ CONTAINS
       TYPE(qs_environment_type), POINTER                 :: qs_env
       INTEGER                                            :: num_integ_points
       REAL(KIND=dp)                                      :: stabilize_exp, e_fermi, eps_filter
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: tau_tj
+      REAL(KIND=dp), DIMENSION(0:num_integ_points)       :: tau_tj
       INTEGER                                            :: num_cells_dm
       INTEGER, DIMENSION(:, :), POINTER                  :: index_to_cell_dm
       LOGICAL, ALLOCATABLE, DIMENSION(:, :)              :: has_blocks_mat_dm_occ_S, &
@@ -2384,9 +2387,9 @@ CONTAINS
       TYPE(dbcsr_p_type)                                 :: mat_dm_virt_local
       INTEGER                                            :: gw_corr_lev_occ, gw_corr_lev_virt, homo, &
                                                             nmo, cut_RI, num_3c_repl
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: row_from_LLL, my_group_L_starts_im_time, &
+      INTEGER, DIMENSION(:)                              :: row_from_LLL, my_group_L_starts_im_time, &
                                                             my_group_L_sizes_im_time
-      LOGICAL, ALLOCATABLE, DIMENSION(:, :, :)           :: has_3c_blocks_re, has_3c_blocks_im
+      LOGICAL, DIMENSION(:, :, :)                        :: has_3c_blocks_re, has_3c_blocks_im
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'get_mat_3c_gw_kp', &
          routineP = moduleN//':'//routineN
@@ -2553,7 +2556,7 @@ CONTAINS
                                   cfm_mat_W_kp_tau, kpoints, &
                                   RI_blk_sizes, fm_mat_L, dimen_RI, qs_env, start_jquad, wkp_W)
 
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: index_to_cell_R2
+      INTEGER, DIMENSION(:, :)                           :: index_to_cell_R2
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: mat_W_R
       TYPE(dbcsr_p_type), DIMENSION(:, :, :), POINTER    :: mat_3c_overl_int_gw_kp_re
       TYPE(cp_cfm_p_type), DIMENSION(:, :), POINTER      :: cfm_mat_W_kp_tau

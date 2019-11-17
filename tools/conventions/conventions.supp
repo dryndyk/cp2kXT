@@ -36,8 +36,6 @@ Flag LIBINT_CONTRACTED_INTS not mentioned in INSTALL.md
 Flag LIBINT_CONTRACTED_INTS not mentioned in cp2k_flags()
 al_system_dynamics.F: Found WRITE statement with hardcoded unit in "dump_vel"
 almo_scf.F: Found WRITE statement with hardcoded unit in "almo_scf_init"
-almo_scf_optimizer.F: Found CLOSE statement in procedure "print_mathematica_matrix"
-almo_scf_optimizer.F: Found OPEN statement in procedure "print_mathematica_matrix"
 base_hooks.F: Found CALL m_abort in procedure "cp_abort"
 base_hooks.F: Found STOP statement in procedure "cp__a"
 base_hooks.F: Found STOP statement in procedure "cp__b"
@@ -70,9 +68,6 @@ call_collocate_omp.f90: Routine COLLOCATE_CORE_8 called with an implicit interfa
 call_collocate_omp.f90: Routine COLLOCATE_CORE_9 called with an implicit interface.
 call_collocate_omp.f90: Routine COLLOCATE_CORE_DEFAULT called with an implicit interface.
 cg_test.F: Found WRITE statement with hardcoded unit in "clebsch_gordon_test"
-cp2k_shell.F: Found GOTO statement in procedure "cp2k_shell"
-cp2k_shell.F: Found OPEN statement in procedure "get_eof_stat"
-cp2k_shell.F: Found READ with unchecked STAT in "cp2k_shell"
 cp_dbcsr_cholesky.F: Routine PDCOPY called with an implicit interface.
 cp_dbcsr_cholesky.F: Routine PDPOTRF called with an implicit interface.
 cp_dbcsr_cholesky.F: Routine PDPOTRI called with an implicit interface.
@@ -95,6 +90,7 @@ cp_files.F: Found CLOSE statement in procedure "close_file"
 cp_files.F: Found OPEN statement in procedure "open_file"
 cp_fm_basic_linalg.F: Found CALL cp_fm_gemm in procedure "cp_complex_fm_gemm"
 cp_fm_diag.F: Found CALL cp_fm_gemm in procedure "cp_fm_geeig_canon"
+cp_fm_diag.F: Routine PDSYEVR called with an implicit interface.
 cp_gemm_interface.F: Found CALL cp_fm_gemm in procedure "cp_gemm"
 cp_lbfgs.F: Found WRITE statement with hardcoded unit in "active"
 cp_lbfgs.F: Found WRITE statement with hardcoded unit in "cauchy"
@@ -157,14 +153,12 @@ library_tests.F: Routine PILAENV called with an implicit interface.
 machine_cpuid.c: Copyright banner malformed
 machine_cpuid.h: Copyright banner malformed
 machine.F: Found OPEN statement in procedure "m_cpuinfo"
-machine_internal.F: Found CALL m_abort in procedure "m_getarg"
 machine_internal.F: Found CALL m_abort in procedure "m_getcwd"
 machine_internal.F: Found CALL m_abort in procedure "m_hostnm"
 machine_internal.F: Found CALL m_abort in procedure "m_mov"
 machine_internal.F: Found CLOSE statement in procedure "m_memory_details"
 machine_internal.F: Found OPEN statement in procedure "m_memory"
 machine_internal.F: Found OPEN statement in procedure "m_memory_details"
-machine_internal.F: Found WRITE statement with hardcoded unit in "m_getarg"
 machine_internal.F: Found WRITE statement with hardcoded unit in "m_getcwd"
 machine_internal.F: Found WRITE statement with hardcoded unit in "m_hostnm"
 machine_internal.F: Found WRITE statement with hardcoded unit in "m_mov"

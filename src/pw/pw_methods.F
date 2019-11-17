@@ -16,6 +16,7 @@
 !>      JGH (26-Feb-2003) : OpenMP enabled
 !>      JGH (17-Nov-2007) : Removed mass arrays
 !>      JGH (01-Dec-2007) : Removed and renamed routines
+!>      JGH (04-Jul-2019) : added pw_multiply routine
 !>      03.2008 [tlaino] : Splitting pw_types into pw_types and pw_methods
 !> \author apsi
 ! **************************************************************************************************
@@ -36,6 +37,11 @@ MODULE pw_methods
                                               pw_cuda_c1dr3d_3d_ps,&
                                               pw_cuda_r3dc1d_3d,&
                                               pw_cuda_r3dc1d_3d_ps
+   USE pw_fpga,                         ONLY: pw_fpga_c1dr3d_3d_dp,&
+                                              pw_fpga_c1dr3d_3d_sp,&
+                                              pw_fpga_init_bitstream,&
+                                              pw_fpga_r3dc1d_3d_dp,&
+                                              pw_fpga_r3dc1d_3d_sp
    USE pw_grid_types,                   ONLY: HALFSPACE,&
                                               PW_MODE_DISTRIBUTED,&
                                               PW_MODE_LOCAL,&
@@ -56,7 +62,7 @@ MODULE pw_methods
 
    PUBLIC :: pw_zero, pw_structure_factor, pw_smoothing
    PUBLIC :: pw_copy, pw_axpy, pw_transfer, pw_scale
-   PUBLIC :: pw_derive, pw_dr2, pw_write
+   PUBLIC :: pw_gauss_damp, pw_derive, pw_dr2, pw_write, pw_multiply
    PUBLIC :: pw_integral_ab, pw_integral_a2b
    PUBLIC :: pw_dr2_gg, pw_integrate_function
    PUBLIC :: pw_set
@@ -330,6 +336,63 @@ CONTAINS
       CALL timestop(handle)
 
    END SUBROUTINE pw_scale
+
+! **************************************************************************************************
+!> \brief Multiply all data points with a Gaussian damping factor
+!>        Needed for longrange Coulomb potential
+!>        V(\vec r)=erf(omega*r)/r
+!>        V(\vec g)=\frac{4*\pi}{g**2}*exp(-g**2/omega**2)
+!> \param pw ...
+!> \param omega ...
+!> \par History
+!>      Frederick Stein (12-04-2019) created
+!> \author Frederick Stein (12-Apr-2019)
+!> \note
+!>      Performs a Gaussian damping
+!>      PW has to be in RECIPROCALSPACE and data in use is COMPLEXDATA1D
+! **************************************************************************************************
+   SUBROUTINE pw_gauss_damp(pw, omega)
+
+      TYPE(pw_type), INTENT(INOUT)                       :: pw
+      REAL(KIND=dp), INTENT(IN)                          :: omega
+
+      CHARACTER(len=*), PARAMETER :: routineN = 'pw_gauss_damp', routineP = moduleN//':'//routineN
+
+      INTEGER                                            :: cnt, handle, i, n_exp
+      REAL(KIND=dp)                                      :: flop, omega_2
+
+      CALL timeset(routineN, handle)
+      CPASSERT(pw%ref_count > 0)
+      CPASSERT(omega >= 0)
+
+      flop = 0.0_dp
+      n_exp = 0
+
+      omega_2 = omega*omega
+      omega_2 = 1.0_dp/omega_2
+
+      IF (pw%in_space == RECIPROCALSPACE .AND. &
+          pw%in_use == COMPLEXDATA1D) THEN
+
+         cnt = SIZE(pw%cc)
+
+!$OMP PARALLEL DO PRIVATE(i) DEFAULT(NONE) SHARED(cnt, pw, omega_2)
+         DO i = 1, cnt
+            pw%cc(i) = pw%cc(i)*EXP(-pw%pw_grid%gsq(i)*omega_2)
+         END DO
+         flop = flop+2*cnt
+         n_exp = n_exp+cnt
+
+      ELSE
+
+         CPABORT("No suitable data field")
+
+      END IF
+
+      flop = flop*1.e-6_dp
+      CALL timestop(handle)
+
+   END SUBROUTINE pw_gauss_damp
 
 ! **************************************************************************************************
 !> \brief Calculate the derivative of a plane wave vector
@@ -759,7 +822,7 @@ CONTAINS
          IF (pw1%in_use == COMPLEXDATA1D .AND. &
              pw2%in_use == COMPLEXDATA1D .AND. &
              pw1%in_space == RECIPROCALSPACE .AND. &
-             pw1%in_space == RECIPROCALSPACE) THEN
+             pw2%in_space == RECIPROCALSPACE) THEN
 
             ng1 = SIZE(pw1%cc)
             ng2 = SIZE(pw2%cc)
@@ -880,6 +943,89 @@ CONTAINS
       CALL timestop(handle)
 
    END SUBROUTINE pw_axpy
+
+! **************************************************************************************************
+!> \brief pw_out = pw_out + alpha * pw1 * pw2
+!>      alpha defaults to 1
+!> \param pw_out ...
+!> \param pw1 ...
+!> \param pw2 ...
+!> \param alpha ...
+!> \author JGH
+! **************************************************************************************************
+   SUBROUTINE pw_multiply(pw_out, pw1, pw2, alpha)
+
+      TYPE(pw_type), INTENT(INOUT)                       :: pw_out
+      TYPE(pw_type), INTENT(IN)                          :: pw1, pw2
+      REAL(KIND=dp), INTENT(in), OPTIONAL                :: alpha
+
+      CHARACTER(len=*), PARAMETER :: routineN = 'pw_multiply', routineP = moduleN//':'//routineN
+
+      INTEGER                                            :: handle
+      REAL(KIND=dp)                                      :: flop, my_alpha
+
+      CALL timeset(routineN, handle)
+
+      CPASSERT(pw_out%ref_count > 0)
+      CPASSERT(pw1%ref_count > 0)
+      CPASSERT(pw2%ref_count > 0)
+
+      my_alpha = 1.0_dp
+      IF (PRESENT(alpha)) my_alpha = alpha
+
+      IF (pw_out%pw_grid%id_nr == pw2%pw_grid%id_nr .AND. &
+          pw_out%pw_grid%id_nr == pw2%pw_grid%id_nr) THEN
+
+         IF (pw1%in_use == REALDATA1D .AND. pw2%in_use == REALDATA1D .AND. &
+             pw_out%in_use == REALDATA1D) THEN
+            IF (my_alpha == 1.0_dp) THEN
+               pw_out%cr = pw_out%cr+pw1%cr+pw2%cr
+               flop = REAL(2*SIZE(pw2%cr), KIND=dp)
+            ELSE
+               pw_out%cr = pw_out%cr+my_alpha*pw1%cr*pw2%cr
+               flop = REAL(3*SIZE(pw2%cr), KIND=dp)
+            END IF
+         ELSE IF (pw1%in_use == COMPLEXDATA1D .AND. &
+                  pw2%in_use == COMPLEXDATA1D .AND. &
+                  pw_out%in_use == COMPLEXDATA1D) THEN
+            IF (my_alpha == 1.0_dp) THEN
+               pw_out%cc = pw_out%cc+pw1%cc*pw2%cc
+               flop = REAL(3*SIZE(pw2%cc), KIND=dp)
+            ELSE
+               pw_out%cc = pw_out%cc+my_alpha*pw1%cc*pw2%cc
+               flop = REAL(6*SIZE(pw2%cc), KIND=dp)
+            END IF
+         ELSE IF (pw1%in_use == REALDATA3D .AND. pw2%in_use == REALDATA3D .AND. &
+                  pw_out%in_use == REALDATA3D) THEN
+            IF (my_alpha == 1.0_dp) THEN
+               pw_out%cr3d = pw_out%cr3d+pw1%cr3d*pw2%cr3d
+               flop = REAL(2*SIZE(pw2%cr3d), KIND=dp)
+            ELSE
+               pw_out%cr3d = pw_out%cr3d+my_alpha*pw1%cr3d*pw2%cr3d
+               flop = REAL(3*SIZE(pw2%cr3d), KIND=dp)
+            END IF
+         ELSE IF (pw1%in_use == COMPLEXDATA3D .AND. &
+                  pw2%in_use == COMPLEXDATA3D .AND. &
+                  pw_out%in_use == COMPLEXDATA3D) THEN
+            IF (my_alpha == 1.0_dp) THEN
+               pw_out%cc3d = pw_out%cc3d+pw1%cc3d*pw2%cc3d
+               flop = REAL(3*SIZE(pw2%cc3d), KIND=dp)
+            ELSE
+               pw_out%cc3d = pw_out%cc3d+my_alpha*pw1%cc3d*pw2%cc3d
+               flop = REAL(6*SIZE(pw2%cc3d), KIND=dp)
+            END IF
+         ELSE
+            CPABORT("No suitable data field")
+         END IF
+
+      ELSE
+         CPABORT("Grids not compatible")
+      END IF
+
+      flop = flop*1.e-6_dp
+      CALL timestop(handle)
+
+   END SUBROUTINE pw_multiply
 
 ! **************************************************************************************************
 !> \brief Gathers the pw vector from a 3d data field
@@ -1376,6 +1522,25 @@ CONTAINS
          CASE ("FW_R3DC1D")
 #if defined (__PW_CUDA)
             CALL pw_cuda_r3dc1d_3d(pw1, pw2, scale=norm)
+#elif defined (__PW_FPGA)
+            ALLOCATE (c_out(n(1), n(2), n(3)))
+            ! check if bitstream for the fft size is present
+            ! if not, perform fft3d in CPU
+            IF (pw_fpga_init_bitstream(n) == 1) THEN
+               CALL copy_rc(pw1%cr3d, c_out)
+#if (__PW_FPGA_SP && __PW_FPGA)
+               CALL pw_fpga_r3dc1d_3d_sp(n, c_out)
+#else
+               CALL pw_fpga_r3dc1d_3d_dp(n, c_out)
+#endif
+               CALL zdscal(n(1)*n(2)*n(3), norm, c_out, 1)
+               CALL pw_gather(pw2, c_out)
+            ELSE
+               CALL copy_rc(pw1%cr3d, c_out)
+               CALL fft3d(dir, n, c_out, scale=norm, debug=test)
+               CALL pw_gather(pw2, c_out)
+            ENDIF
+            DEALLOCATE (c_out)
 #else
             ALLOCATE (c_out(n(1), n(2), n(3)))
             CALL copy_rc(pw1%cr3d, c_out)
@@ -1403,6 +1568,31 @@ CONTAINS
          CASE ("BW_C1DR3D")
 #if defined (__PW_CUDA)
             CALL pw_cuda_c1dr3d_3d(pw1, pw2, scale=norm)
+#elif defined (__PW_FPGA)
+            ALLOCATE (c_out(n(1), n(2), n(3)))
+            ! check if bitstream for the fft size is present
+            ! if not, perform fft3d in CPU
+            IF (pw_fpga_init_bitstream(n) == 1) THEN
+               CALL pw_scatter(pw1, c_out)
+               ! transform using FPGA
+#if (__PW_FPGA_SP && __PW_FPGA)
+               CALL pw_fpga_c1dr3d_3d_sp(n, c_out)
+#else
+               CALL pw_fpga_c1dr3d_3d_dp(n, c_out)
+#endif
+               CALL zdscal(n(1)*n(2)*n(3), norm, c_out, 1)
+               ! use real part only
+               CALL copy_cr(c_out, pw2%cr3d)
+            ELSE
+               IF (test .AND. out_unit > 0) WRITE (out_unit, '(A)') "  PW_SCATTER : 3d -> 1d "
+               CALL pw_scatter(pw1, c_out)
+               ! transform
+               CALL fft3d(dir, n, c_out, scale=norm, debug=test)
+               ! use real part only
+               IF (test .AND. out_unit > 0) WRITE (out_unit, '(A)') "  REAL part "
+               CALL copy_cr(c_out, pw2%cr3d)
+            END IF
+            DEALLOCATE (c_out)
 #else
             ALLOCATE (c_out(n(1), n(2), n(3)))
             IF (test .AND. out_unit > 0) WRITE (out_unit, '(A)') "  PW_SCATTER : 3d -> 1d "

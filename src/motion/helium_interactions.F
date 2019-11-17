@@ -20,7 +20,8 @@ MODULE helium_interactions
                                               e_id_virial,&
                                               helium_solvent_p_type,&
                                               helium_solvent_type
-   USE input_constants,                 ONLY: helium_solute_intpot_mwater,&
+   USE input_constants,                 ONLY: helium_sampling_worm,&
+                                              helium_solute_intpot_mwater,&
                                               helium_solute_intpot_none
    USE kinds,                           ONLY: dp
    USE physcon,                         ONLY: angstrom,&
@@ -37,7 +38,9 @@ MODULE helium_interactions
    CHARACTER(len=*), PARAMETER, PRIVATE :: moduleN = 'helium_interactions'
 
    PUBLIC :: helium_calc_energy
-   PUBLIC :: helium_total_link_action, helium_total_pair_action, helium_total_inter_action
+   PUBLIC :: helium_total_link_action
+   PUBLIC :: helium_total_pair_action
+   PUBLIC :: helium_total_inter_action
    PUBLIC :: helium_solute_e_f
    PUBLIC :: helium_bead_solute_e_f
    PUBLIC :: helium_intpot_scan
@@ -158,8 +161,10 @@ CONTAINS
       helium%energy_inst(e_id_kinetic) = (en-pot+kin)/n
       helium%energy_inst(e_id_interact) = interac
       helium%energy_inst(e_id_thermo) = (en+kin)/n+helium%e_corr
-      helium%energy_inst(e_id_virial) = 0.0_dp !(en+vkin)/n+helium%e_corr
-      helium%energy_inst(e_id_total) = (en+vkin)/n+helium%e_corr
+      helium%energy_inst(e_id_virial) = vkin ! 0.0_dp at the moment
+      helium%energy_inst(e_id_total) = helium%energy_inst(e_id_thermo)
+      ! Once vkin is properly implemented, switch to:
+      ! helium%energy_inst(e_id_total) = (en+vkin)/n+helium%e_corr
 
       RETURN
    END SUBROUTINE helium_calc_energy
@@ -220,7 +225,7 @@ CONTAINS
       CHARACTER(len=*), PARAMETER :: routineN = 'helium_total_pair_action', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: iatom, ibead, jatom
+      INTEGER                                            :: iatom, ibead, jatom, opatom, patom
       INTEGER, DIMENSION(:), POINTER                     :: perm
       REAL(KIND=dp), DIMENSION(3)                        :: r, rp
 
@@ -233,8 +238,6 @@ CONTAINS
             DO jatom = iatom+1, helium%atoms
                r(:) = helium%pos(:, iatom, ibead)-helium%pos(:, jatom, ibead)
                rp(:) = helium%pos(:, iatom, ibead+1)-helium%pos(:, jatom, ibead+1)
-               CALL helium_pbc(helium, r)
-               CALL helium_pbc(helium, rp)
                pairaction = pairaction+helium_eval_expansion(helium, r, rp, helium%uij, 1)
             END DO
          END DO
@@ -247,6 +250,44 @@ CONTAINS
             pairaction = pairaction+helium_eval_expansion(helium, r, rp, helium%uij, 1)
          END DO
       END DO
+
+      ! correct for open worm configurations
+      IF (.NOT. helium%worm_is_closed) THEN
+         ! special treatment if double bead is first bead
+         iatom = helium%worm_atom_idx
+         IF (helium%worm_bead_idx == 1) THEN
+            ! patom is the atom in front of the lone head bead
+            patom = helium%iperm(iatom)
+            ! go through all atoms
+            DO jatom = 1, helium%atoms
+               IF (jatom == helium%worm_atom_idx) CYCLE
+               opatom = helium%iperm(jatom)
+               ! substract pair action for closed link
+               r(:) = helium%pos(:, iatom, 1)-helium%pos(:, jatom, 1)
+               rp(:) = helium%pos(:, patom, helium%beads)-helium%pos(:, opatom, helium%beads)
+               pairaction = pairaction-helium_eval_expansion(helium, r, rp, helium%uij, 1)
+               ! and add corrected extra link
+               ! rp stays the same
+               r(:) = helium%worm_xtra_bead(:)-helium%pos(:, jatom, 1)
+               pairaction = pairaction+helium_eval_expansion(helium, r, rp, helium%uij, 1)
+            END DO
+         ELSE
+            ! bead stays constant
+            ibead = helium%worm_bead_idx
+            ! go through all atoms
+            DO jatom = 1, helium%atoms
+               IF (jatom == helium%worm_atom_idx) CYCLE
+               ! substract pair action for closed link
+               r(:) = helium%pos(:, iatom, ibead)-helium%pos(:, jatom, ibead)
+               rp(:) = helium%pos(:, iatom, ibead-1)-helium%pos(:, jatom, ibead-1)
+               pairaction = pairaction-helium_eval_expansion(helium, r, rp, helium%uij, 1)
+               ! and add corrected extra link
+               ! rp stays the same
+               r(:) = helium%worm_xtra_bead(:)-helium%pos(:, jatom, ibead)
+               pairaction = pairaction+helium_eval_expansion(helium, r, rp, helium%uij, 1)
+            END DO
+         END IF
+      END IF
 
       RETURN
    END FUNCTION helium_total_pair_action
@@ -276,12 +317,29 @@ CONTAINS
       IF (helium%solute_present) THEN
          DO ibead = 1, helium%beads
             DO iatom = 1, helium%atoms
+
                CALL helium_bead_solute_e_f(pint_env, helium, &
                                            iatom, ibead, helium%pos(:, iatom, ibead), e)
-               interaction = interaction+e*helium%tau
+               interaction = interaction+e
             END DO
          END DO
+         IF (helium%sampling_method == helium_sampling_worm) THEN
+            IF (.NOT. helium%worm_is_closed) THEN
+               ! subtract half of tail bead interaction again
+               CALL helium_bead_solute_e_f(pint_env, helium, &
+                                           helium%worm_atom_idx, helium%worm_bead_idx, &
+                                           helium%pos(:, helium%worm_atom_idx, helium%worm_bead_idx), e)
+               interaction = interaction-0.5_dp*e
+               ! add half of head bead interaction
+               CALL helium_bead_solute_e_f(pint_env, helium, &
+                                           helium%worm_atom_idx, helium%worm_bead_idx, &
+                                           helium%worm_xtra_bead, e)
+               interaction = interaction+0.5_dp*e
+            END IF
+         END IF
       END IF
+
+      interaction = interaction*helium%tau
 
       RETURN
    END FUNCTION helium_total_inter_action
@@ -296,6 +354,8 @@ CONTAINS
 !> \param helium_r_opt       explicit helium bead coordinates (optional)
 !> \param energy             calculated energy
 !> \param force              calculated force (if requested)
+!> \par History
+!>         2019-09 Added multiple-time striding in imag. time [cschran]
 !> \author Lukasz Walewski
 ! **************************************************************************************************
    SUBROUTINE helium_bead_solute_e_f(pint_env, helium, helium_part_index, &
@@ -312,7 +372,7 @@ CONTAINS
       CHARACTER(len=*), PARAMETER :: routineN = 'helium_bead_solute_e_f', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: hbeads, hi, qi
+      INTEGER                                            :: hbeads, hi, qi, stride
       REAL(KIND=dp), DIMENSION(3)                        :: helium_r
       REAL(KIND=dp), DIMENSION(:), POINTER               :: my_force
 
@@ -360,6 +420,14 @@ CONTAINS
       CASE DEFAULT
 
       END SELECT
+
+      ! Account for Imaginary time striding in forces:
+      IF (PRESENT(force)) THEN
+         IF (hbeads < pint_env%p) THEN
+            stride = pint_env%p/hbeads
+            force = force*REAL(stride, dp)
+         END IF
+      END IF
 
       RETURN
    END SUBROUTINE helium_bead_solute_e_f
@@ -437,34 +505,6 @@ CONTAINS
    END SUBROUTINE helium_solute_e
 
 ! ***************************************************************************
-!> \brief Calculate l-th Legendre polynomial P_{l}(x) at point x
-!> \param x ...
-!> \param n ...
-!> \return ...
-! **************************************************************************************************
-   FUNCTION Pl(x, n)
-      REAL(KIND=dp), INTENT(IN)                          :: x
-      INTEGER, INTENT(IN)                                :: n
-      REAL(KIND=dp)                                      :: Pl
-
-      INTEGER                                            :: k
-      REAL(KIND=dp)                                      :: pln(0:n)
-
-      pln(0) = 1.0_dp
-      pln(1) = x
-
-      IF (n <= 1) THEN
-         Pl = pln(n)
-      ELSE
-         DO k = 1, n-1
-            pln(k+1) = ((2.0*k+1.0)*x*pln(k)-REAL(k, dp)*pln(k-1))/(REAL(k+1, dp))
-         END DO
-         Pl = pln(n)
-      END IF
-      RETURN
-   END FUNCTION Pl
-
-! ***************************************************************************
 !> \brief  Scan the helium-solute interaction energy within the periodic cell
 !> \param pint_env ...
 !> \param helium_env ...
@@ -534,7 +574,6 @@ CONTAINS
       END IF
 
       CALL timestop(handle)
-
       RETURN
    END SUBROUTINE helium_intpot_scan
 

@@ -33,7 +33,7 @@ case "$with_fftw" in
                 echo "fftw-${fftw_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} ${fftw_sha256} \
-                             http://www.fftw.org/fftw-${fftw_ver}.tar.gz
+                             "https://www.cp2k.org/static/downloads/fftw-${fftw_ver}.tar.gz"
             fi
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d fftw-${fftw_ver} ] && rm -rf fftw-${fftw_ver}
@@ -42,9 +42,9 @@ case "$with_fftw" in
             if [ "$MPI_MODE" != "no" ] ; then
                 # fftw has mpi support but not compiled by default. so compile it if we build with mpi.
                 # it will create a second library to link with if needed
-                ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp --enable-mpi > configure.log 2>&1
+                ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp --enable-mpi --enable-shared > configure.log 2>&1
             else
-                ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp > configure.log 2>&1
+                ./configure  --prefix=${pkg_install_dir} --libdir="${pkg_install_dir}/lib" --enable-openmp --enable-shared > configure.log 2>&1
             fi
             make -j $NPROCS > make.log 2>&1
             make install > install.log 2>&1
@@ -83,7 +83,6 @@ prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
 prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path CPATH "$pkg_install_dir/include"
 EOF
-        cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
     fi
     # we may also want to cover FFT_SG
     cat <<EOF >> "${BUILDDIR}/setup_fftw"
@@ -95,9 +94,11 @@ export CP_DFLAGS="\${CP_DFLAGS} -D__FFTW3 IF_COVERAGE(IF_MPI(|-U__FFTW3)|)"
 export CP_CFLAGS="\${CP_CFLAGS} ${FFTW_CFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${FFTW_LDFLAGS}"
 export CP_LIBS="IF_MPI(-lfftw3_mpi|) ${FFTW_LIBS} IF_OMP(${FFTW_LIBS_OMP}|) \${CP_LIBS}"
-prepend_path PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$pkg_install_dir/lib/pkgconfig"
-export FFTWROOT="$pkg_install_dir"
+prepend_path PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig"
+export FFTW_ROOT="$pkg_install_dir"
 EOF
+
+    cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
 fi
 cd "${ROOTDIR}"
 

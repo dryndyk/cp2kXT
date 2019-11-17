@@ -83,7 +83,8 @@ MODULE bibliography
                             Becke1988b, Migliore2009, Mavros2015, Holmberg2017, Marek2014, &
                             Stoychev2016, Futera2017, Bailey2006, Papior2017, Lehtola2018, &
                             Brieuc2016, Barca2018, Scheiber2018, Huang2011, Heaton_Burgess2007, &
-                            Schuett2018, Holmberg2018, Togo2018, Staub2019, Grimme2017
+                            Schuett2018, Holmberg2018, Togo2018, Staub2019, Grimme2017, Kondov2007, &
+                            Ren2011, Ren2013, Cohen2000, Rogers2002, Filippetti2000
 
 CONTAINS
 
@@ -3784,7 +3785,7 @@ CONTAINS
                          "   Auer, Alexander A.", &
                          "   Neese, Frank", &
                          "TI Automatic Generation of Auxiliary Basis Sets", &
-                         "SO J. Chem. Theory Comput.", &
+                         "SO Journal of Chemical Theory and Computation", &
                          "PY 2017", &
                          "VL 13", &
                          "IS 2", &
@@ -3793,13 +3794,30 @@ CONTAINS
                          "ER"), &
                          DOI="10.1021/acs.jctc.6b01041")
 
+      CALL add_reference(key=Kondov2007, ISI_record=s2a( &
+                         "AU Kondov, Ivan", &
+                         "   Cizek, Martin", &
+                         "   Benesch, Claudia", &
+                         "   Wang, Haobin", &
+                         "   Thoss, Michael", &
+                         "TI Quantum dynamics of photoinduced electron-transfer reactions in", &
+                         "   dye-semiconductor systems: First-principles description and application to coumarin 343-TiO2", &
+                         "SO Journal of Physical Chemistry C", &
+                         "PY 2007", &
+                         "VL 111", &
+                         "IS 32", &
+                         "BP 11970", &
+                         "EP 11981", &
+                         "ER"), &
+                         DOI="10.1021/jp072217m")
+
       CALL add_reference(key=Futera2017, ISI_record=s2a( &
                          "AU Futera, Zdenek", &
                          "   Blumberger, Jochen", &
                          "TI Electronic Couplings for Charge Transfer across Molecule/Metal and", &
                          "   Molecule/Semiconductor Interfaces: Performance of the Projector ", &
                          "   Operator-Based Diabatization Approach", &
-                         "SO J. Phys. Chem. C", &
+                         "SO Journal Physical Chemistry C", &
                          "PY 2017", &
                          "VL 121", &
                          "IS 36", &
@@ -3999,6 +4017,141 @@ CONTAINS
                          "DI 10.1063/1.3700154", &
                          "ER"), &
                          DOI="10.1063/1.3700154")
+
+      CALL add_reference(key=Ren2011, ISI_record=s2a( &
+                         "AU Ren,Xinguo", &
+                         "   Tkatchenko,Aleksandre", &
+                         "   Rinke,Patrick", &
+                         "   Scheffler,Matthias", &
+                         "TI Beyond the Random-Phase Approximation for the Electron Correlation Energy: ", &
+                         "   The Importance of Single Excitations", &
+                         "SO PHYSICAL REVIEW LETTERS", &
+                         "PY 2011", &
+                         "VL 106", &
+                         "IS 15", &
+                         "BP 153003", &
+                         "ER"), &
+                         DOI="10.1103/PhysRevLett.106.153003")
+
+      CALL add_reference(key=Ren2013, ISI_record=s2a( &
+                         "AU Ren,Xinguo", &
+                         "   Rinke,Patrick", &
+                         "   Scuseria,Gustavo", &
+                         "   Scheffler,Matthias", &
+                         "TI Renormalized second-order perturbation theory for the electron correlation energy: ", &
+                         "   Concept, implementation, and benchmarks", &
+                         "SO PHYSICAL REVIEW B", &
+                         "PY 2013", &
+                         "VL 88", &
+                         "IS 3", &
+                         "BP 035120", &
+                         "ER"), &
+                         DOI="10.1103/PhysRevB.88.035120")
+
+      CALL add_reference(key=Cohen2000, ISI_record=s2a( &
+                         "AU Cohen, Morrel H.", &
+                         "   Frydel, Derek", &
+                         "   Burke, Kieron", &
+                         "   Engel, Eberhard", &
+                         "AF Cohen, Morrel H.", &
+                         "   Frydel, Derek", &
+                         "   Burke, Kieron", &
+                         "   Engel, Eberhard", &
+                         "TI Total energy density as an interpretative tool", &
+                         "SO The Journal of Chemical Physics", &
+                         "PY 2000", &
+                         "VL 113", &
+                         "BP 2990", &
+                         "DI 10.1063/1.1286805", &
+                         "ER"), &
+                         DOI="10.1063/1.1286805")
+
+      CALL add_reference(key=Rogers2002, ISI_record=s2a( &
+                         "AU Rogers, Christopher L.", &
+                         "   Rappe, Andrew M.", &
+                         "TI Geometric formulation of quantum stress fields", &
+                         "SO PHYSICAL REVIEW B", &
+                         "DT Article", &
+                         "PY 2002", &
+                         "VL 65", &
+                         "AR 224117", &
+                         "DI 10.1103/PhysRevB.65.224117", &
+                         "ER"), &
+                         DOI="10.1103/PhysRevB.65.224117")
+
+      CALL add_reference(key=Cohen2000, ISI_record=s2a( &
+                         "AU Cohen, Morrel H.", &
+                         "   Frydel, Derek", &
+                         "   Burke, Kieron", &
+                         "   Engel, Eberhard", &
+                         "AF Cohen, Morrel H.", &
+                         "   Frydel, Derek", &
+                         "   Burke, Kieron", &
+                         "   Engel, Eberhard", &
+                         "TI Total energy density as an interpretative tool", &
+                         "SO The Journal of Chemical Physics", &
+                         "PY 2000", &
+                         "VL 113", &
+                         "BP 2990", &
+                         "DI 10.1063/1.1286805", &
+                         "ER"), &
+                         DOI="10.1063/1.1286805")
+
+      CALL add_reference(key=Rogers2002, ISI_record=s2a( &
+                         "AU Rogers, Christopher L.", &
+                         "   Rappe, Andrew M.", &
+                         "TI Geometric formulation of quantum stress fields", &
+                         "SO PHYSICAL REVIEW B", &
+                         "DT Article", &
+                         "PY 2002", &
+                         "VL 65", &
+                         "AR 224117", &
+                         "DI 10.1103/PhysRevB.65.224117", &
+                         "ER"), &
+                         DOI="10.1103/PhysRevB.65.224117")
+
+      CALL add_reference(key=Cohen2000, ISI_record=s2a( &
+                         "AU Cohen, Morrel H.", &
+                         "   Frydel, Derek", &
+                         "   Burke, Kieron", &
+                         "   Engel, Eberhard", &
+                         "AF Cohen, Morrel H.", &
+                         "   Frydel, Derek", &
+                         "   Burke, Kieron", &
+                         "   Engel, Eberhard", &
+                         "TI Total energy density as an interpretative tool", &
+                         "SO The Journal of Chemical Physics", &
+                         "PY 2000", &
+                         "VL 113", &
+                         "BP 2990", &
+                         "DI 10.1063/1.1286805", &
+                         "ER"), &
+                         DOI="10.1063/1.1286805")
+
+      CALL add_reference(key=Rogers2002, ISI_record=s2a( &
+                         "AU Rogers, Christopher L.", &
+                         "   Rappe, Andrew M.", &
+                         "TI Geometric formulation of quantum stress fields", &
+                         "SO PHYSICAL REVIEW B", &
+                         "DT Article", &
+                         "PY 2002", &
+                         "VL 65", &
+                         "AR 224117", &
+                         "DI 10.1103/PhysRevB.65.224117", &
+                         "ER"), &
+                         DOI="10.1103/PhysRevB.65.224117")
+
+      CALL add_reference(key=Filippetti2000, ISI_record=s2a( &
+                         "AU Filippetti, Alessio", &
+                         "   Fiorentini, Vincenzo", &
+                         "TI Theory and applications of the stress density", &
+                         "SO PHYSICAL REVIEW B", &
+                         "DT Article", &
+                         "PY 2000", &
+                         "VL 61", &
+                         "BP 8433", &
+                         "ER"), &
+                         DOI="10.1103/PhysRevB.61.8433")
 
    END SUBROUTINE add_all_references
 

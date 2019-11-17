@@ -111,8 +111,7 @@ CONTAINS
       flags = TRIM(flags)//" pexsi"
 #endif
 #if defined(__ELPA)
-      CALL integer_to_string(__ELPA, tmp_str)
-      flags = TRIM(flags)//" elpa="//TRIM(tmp_str)
+      flags = TRIM(flags)//" elpa"
 #endif
 #if defined(__parallel)
       flags = TRIM(flags)//" parallel"
@@ -135,6 +134,12 @@ CONTAINS
 #endif
 #if defined(__PW_CUDA)
       flags = TRIM(flags)//" pw_cuda"
+#endif
+#if defined(__PW_FPGA)
+      flags = TRIM(flags)//" pw_fpga"
+#endif
+#if defined(__PW_FPGA_SP)
+      flags = TRIM(flags)//" pw_fpga_sp"
 #endif
 #if defined(__HAS_PATCHED_CUFFT_70)
       flags = TRIM(flags)//" patched_cufft_70"
@@ -220,9 +225,6 @@ CONTAINS
 #if defined __HAS_NO_CUDA_STREAM_PRIORITIES
       flags = TRIM(flags)//" has_no_cuda_stream_priorities"
 #endif
-#if defined __HAS_NO_MPI_MOD
-      flags = TRIM(flags)//" has_no_mpi_mod"
-#endif
 #if defined __MAX_CONTR
       CALL integer_to_string(__MAX_CONTR, tmp_str)
       flags = TRIM(flags)//" max_contr="//TRIM(tmp_str)
@@ -265,9 +267,6 @@ CONTAINS
 #endif
 #if defined __MKL
       flags = TRIM(flags)//" mkl"
-#endif
-#if defined __JSON
-      flags = TRIM(flags)//" json"
 #endif
 #if defined __SIRIUS
       flags = TRIM(flags)//" sirius"

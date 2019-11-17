@@ -148,9 +148,9 @@ FFTW can be used to improve FFT speed on a wide range of architectures. It is st
   * Use the `-D__DBCSR_ACC` to enable accelerator support for matrix multiplications.
   * Add `-lcudart -lrt -lnvrtc` to LIBS.
   * Specify the GPU type (e.g. `GPUVER   = P100`)
-  * Specify the C++ compiler (e.g. `CXX = g++`). Rember to set the flags to support C++11 standard.
+  * Specify the C++ compiler (e.g. `CXX = g++`). Remember to set the flags to support C++11 standard.
   * Use `-D__PW_CUDA` for CUDA support for PW (gather/scatter/fft) calculations.
-  * CUFFT 7.0 has a known bug and is therefore disabled by default. NVidia's webpage list a patch (an upgraded version cufft i.e. >= 7.0.35) - use this together with `-D__HAS_PATCHED_CUFFT_70`.
+  * CUFFT 7.0 has a known bug and is therefore disabled by default. NVIDIA's webpage list a patch (an upgraded version cufft i.e. >= 7.0.35) - use this together with `-D__HAS_PATCHED_CUFFT_70`.
   * Use `-D__CUDA_PROFILING` to turn on Nvidia Tools Extensions.
   * Link to a blas/scalapack library that accelerates large DGEMMs (e.g. libsci_acc)
 
@@ -162,15 +162,15 @@ FFTW can be used to improve FFT speed on a wide range of architectures. It is st
 
 ### 2l. ELPA (optional, improved performance for diagonalization)
 Library ELPA for the solution of the eigenvalue problem
-  * ELPA replaces the ScaLapack SYEVD to improve the performance of the diagonalization
+  * ELPA replaces the ScaLapack `SYEVD` to improve the performance of the diagonalization
   * A version of ELPA can to be downloaded from http://elpa.rzg.mpg.de/software.
-  * During the installation the libelpa.a (or libelpa_mt.a if omp active) is created.
-  * Add `-D__ELPA=YYYYMM` to DFLAGS, where `YYYYMM` denotes the release date of the library.
-  * Currently supported versions are: `201611`, `201705` and `201711`.
-  * Add `-I$(ELPA_INCLUDE_DIR)/modules` to FCFLAGS
-  * Add `-I$(ELPA_INCLUDE_DIR)/elpa` to FCFLAGS
+  * During the installation the `libelpa.a` (or `libelpa_openmp.a` if OpenMP is enabled) is created.
+  * Minimal supported version of ELPA is 2018.05.001.
+  * Add `-D__ELPA` to `DFLAGS`
+  * Add `-I$(ELPA_INCLUDE_DIR)/modules` to `FCFLAGS`
+  * Add `-I$(ELPA_INCLUDE_DIR)/elpa` to `FCFLAGS`
   * Add `-L$(ELPA_DIR)` to `LDFLAGS`
-  * Add `-lelpa` to LIBS
+  * Add `-lelpa` to `LIBS`
   * For specific architectures it can be better to install specifically
     optimized kernels (see BG) and/or employ a higher optimization level to compile it.
 
@@ -211,18 +211,24 @@ A library for finding and handling crystal symmetries
   * The spglib can be downloaded from https://github.com/atztogo/spglib
   * For building CP2K with the spglib add `-D__SPGLIB` to DFLAGS
 
-### 2q. JSON-Fortran (optional, required for SIRIUS)
-JSON-Fortran is a Fortran 2008 JSON API.
-  * The code is available at https://github.com/jacobwilliams/json-fortran
-  * For building CP2K with JSON-Fortran add `-D__JSON` to DFLAGS.
-
-### 2r. SIRIUS (optional, plane wave calculations)
+### 2q. SIRIUS (optional, plane wave calculations)
 SIRIUS is a domain specific library for electronic structure calculations.
   * The code is available at https://github.com/electronic-structure/SIRIUS
   * For building CP2K with SIRIUS add `-D__SIRIUS` to DFLAGS.
-  * Furthermore, SIRIUS depends on JSON-Fortran.
   * See https://electronic-structure.github.io/SIRIUS/ for more information.
 
+### 2r. FPGA (optional, plane wave FFT calculations)
+  * Use `-D__PW_FPGA` to enable FPGA support for PW (fft) calculations. Currently tested only for Intel Stratix 10 and Arria 10 GX1150 FPGAs.
+  * Supports single precision and double precision fft calculations with the use of dedicated APIs.
+  * Double precision is the default API chosen when set using the `-D__PW_FPGA` flag.
+  * Single precision can be set using an additional `-D__PW_FPGA_SP` flag along with the `-D__PW_FPGA` flag.
+  * Kernel code has to be synthesized separately and copied to a specific location. 
+  * See https://github.com/pc2/fft3d-fpga for the kernel code and instructions for synthesis.
+  * Read `src/pw/fpga/README.md` for information on the specific location to copy the binaries to. 
+  * Currently supported FFT3d sizes - 16^3, 32^3, 64^3.
+  * Include aocl compile flags and `-D__PW_FPGA -D__PW_FPGA_SP` to `CFLAGS`, aocl linker flags to `LDFLAGS` and aocl libs to `LIBS`.
+  * CUDA and FPGA are mutually exclusive. Building with both `__PW_CUDA` and  `__PW_FPGA` will throw a compilation error.
+  
 ## 3. Compile
 
 ### 3a. ARCH files
@@ -293,11 +299,9 @@ The following flags should be present (or not) in the arch file, partially depen
 
 Features useful to deal with legacy systems
   * `-D__NO_MPI_THREAD_SUPPORT_CHECK`  - Workaround for MPI libraries that do not declare they are thread safe (funneled) but you want to use them with OpenMP code anyways.
-  * `-D__HAS_NO_MPI_MOD` - workaround if mpi has been built for a different (version of the) Fortran compiler, rendering the MPI module unreadable (reverts to f77 style mpif.h includes)
   * `-D__NO_IPI_DRIVER` disables the socket interface in case of troubles compiling on systems that do not support POSIX sockets.
   * `-D__HAS_IEEE_EXCEPTIONS` disables trapping temporarily for libraries like scalapack.
   * The Makefile automatically compiles in the path to the data directory via the flag `-D__DATA_DIR`. If you want to compile in a different path, set the variable `DATA_DIR` in your arch-file.
-  * `-D__HAS_NO_OMP_3` CP2K assumes that compilers support OpenMP 3.0. If this is not the case specify this flag to compile. Runtime performance will be poorer on low numbers of processors
   * `-D__HAS_NO_CUDA_STREAM_PRIORITIES` - Needed for CUDA sdk version < 5.5
   * `-D__NO_STATM_ACCESS` - Do not try to read from /proc/self/statm to get memory usage information. This is otherwise attempted on several. Linux-based architectures or using with the NAG, gfortran, compilers.
   * `-D__CHECK_DIAG` Debug option which activates an orthonormality check of the eigenvectors calculated by the selected eigensolver

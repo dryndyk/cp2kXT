@@ -77,6 +77,9 @@ CONTAINS
       CALL section_vals_val_get(mp2_section, "COL_BLOCK", i_val=mp2_env%block_size_col)
       CALL section_vals_val_get(mp2_section, "RI_METRIC", i_val=mp2_env%ri_metric)
       CALL section_vals_val_get(mp2_section, "CALC_COND_NUM", l_val=mp2_env%calc_PQ_cond_num)
+      CALL section_vals_val_get(mp2_section, "DO_SVD", l_val=mp2_env%do_svd)
+      CALL section_vals_val_get(mp2_section, "EPS_SVD", r_val=mp2_env%eps_svd)
+      CALL section_vals_val_get(mp2_section, "OMEGA_METRIC", r_val=mp2_env%omega_metric)
 
       CALL section_vals_val_get(mp2_section, "INTERACTION_POTENTIAL%POTENTIAL_TYPE", &
                                 i_val=mp2_env%potential_parameter%potential_type)
@@ -84,6 +87,8 @@ CONTAINS
                                 r_val=mp2_env%potential_parameter%truncation_radius)
       CALL section_vals_val_get(mp2_section, "INTERACTION_POTENTIAL%TShPSC_DATA", &
                                 c_val=mp2_env%potential_parameter%filename)
+      CALL section_vals_val_get(mp2_section, "INTERACTION_POTENTIAL%OMEGA", &
+                                r_val=mp2_env%potential_parameter%omega)
 
       CALL section_vals_val_get(mp2_section, "ERI_METHOD", &
                                 i_val=mp2_env%eri_method)
@@ -118,6 +123,9 @@ CONTAINS
 
       CALL section_vals_val_get(mp2_section, "RI_RPA%AXK", &
                                 l_val=mp2_env%ri_rpa%do_ri_axk)
+
+      CALL section_vals_val_get(mp2_section, "RI_RPA%RSE", &
+                                l_val=mp2_env%ri_rpa%do_rse)
 
       CALL section_vals_val_get(mp2_section, "RI_RPA%RI_G0W0%CORR_MOS_OCC", &
                                 i_val=mp2_env%ri_g0w0%corr_mos_occ)
@@ -298,8 +306,6 @@ CONTAINS
                                 l_val=mp2_env%ri_rpa_im_time%do_im_time_kpoints)
       CALL section_vals_val_get(im_time_section, "CUTOFF_W", &
                                 r_val=mp2_env%ri_rpa_im_time%cutoff)
-      CALL section_vals_val_get(im_time_section, "RI_G0W0", &
-                                l_val=mp2_env%ri_rpa_im_time%do_gw_im_time)
       CALL section_vals_val_get(im_time_section, "KPOINTS", &
                                 i_vals=mp2_env%ri_rpa_im_time%kp_grid)
       CALL section_vals_val_get(im_time_section, "EXP_KPOINTS", &
@@ -309,6 +315,8 @@ CONTAINS
                                 l_val=mp2_env%ri_rpa_im_time%do_dbcsr_t)
       CALL section_vals_val_get(mp2_section, "IM_TIME%MAX_BLOCK_SIZE_SQRT", &
                                 i_val=mp2_env%ri_rpa_im_time%max_bsize_sqrt)
+      CALL section_vals_val_get(mp2_section, "IM_TIME%GROUP_SIZE_INTERNAL", &
+                                l_val=mp2_env%ri_rpa_im_time%group_size_internal)
 
       CALL section_vals_val_get(mp2_section, "RI_LAPLACE%QUADRATURE_POINTS", &
                                 i_val=mp2_env%ri_laplace%n_quadrature)

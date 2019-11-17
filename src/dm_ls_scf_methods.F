@@ -15,11 +15,12 @@ MODULE dm_ls_scf_methods
                                               cp_logger_get_default_unit_nr,&
                                               cp_logger_type
    USE dbcsr_api,                       ONLY: &
-        dbcsr_add, dbcsr_add_on_diag, dbcsr_copy, dbcsr_create, dbcsr_desymmetrize, dbcsr_filter, &
-        dbcsr_finalize, dbcsr_frobenius_norm, dbcsr_get_data_type, dbcsr_get_occupation, &
-        dbcsr_iterator_blocks_left, dbcsr_iterator_next_block, dbcsr_iterator_start, &
-        dbcsr_iterator_stop, dbcsr_iterator_type, dbcsr_multiply, dbcsr_put_block, dbcsr_release, &
-        dbcsr_scale, dbcsr_set, dbcsr_trace, dbcsr_type, dbcsr_type_no_symmetry, dbcsr_type_real_4
+        dbcsr_add, dbcsr_add_on_diag, dbcsr_copy, dbcsr_create, dbcsr_desymmetrize, dbcsr_dot, &
+        dbcsr_filter, dbcsr_finalize, dbcsr_frobenius_norm, dbcsr_get_data_type, &
+        dbcsr_get_occupation, dbcsr_iterator_blocks_left, dbcsr_iterator_next_block, &
+        dbcsr_iterator_start, dbcsr_iterator_stop, dbcsr_iterator_type, dbcsr_multiply, &
+        dbcsr_put_block, dbcsr_release, dbcsr_scale, dbcsr_set, dbcsr_trace, dbcsr_type, &
+        dbcsr_type_no_symmetry, dbcsr_type_real_4
    USE dm_ls_scf_qs,                    ONLY: matrix_qs_to_ls
    USE dm_ls_scf_types,                 ONLY: ls_cluster_atomic,&
                                               ls_mstruct_type,&
@@ -83,7 +84,7 @@ CONTAINS
 
       ! get a useful output_unit
       logger => cp_get_default_logger()
-      IF (logger%para_env%mepos == logger%para_env%source) THEN
+      IF (logger%para_env%ionode) THEN
          unit_nr = cp_logger_get_default_unit_nr(logger, local=.TRUE.)
       ELSE
          unit_nr = -1
@@ -398,7 +399,7 @@ CONTAINS
       CALL timeset(routineN, handle)
 
       logger => cp_get_default_logger()
-      IF (logger%para_env%mepos == logger%para_env%source) THEN
+      IF (logger%para_env%ionode) THEN
          unit_nr = cp_logger_get_default_unit_nr(logger, local=.TRUE.)
       ELSE
          unit_nr = -1
@@ -479,7 +480,7 @@ CONTAINS
       CALL timeset(routineN, handle)
 
       logger => cp_get_default_logger()
-      IF (logger%para_env%mepos == logger%para_env%source) THEN
+      IF (logger%para_env%ionode) THEN
          unit_nr = cp_logger_get_default_unit_nr(logger, local=.TRUE.)
       ELSE
          unit_nr = -1
@@ -592,7 +593,7 @@ CONTAINS
       CALL timeset(routineN, handle)
 
       logger => cp_get_default_logger()
-      IF (logger%para_env%mepos == logger%para_env%source) THEN
+      IF (logger%para_env%ionode) THEN
          unit_nr = cp_logger_get_default_unit_nr(logger, local=.TRUE.)
       ELSE
          unit_nr = -1
@@ -695,8 +696,8 @@ CONTAINS
 
          ! get gamma
          ! Tr(F) = Tr(XX*tmp_gx) Tr(G) is equivalent
-         CALL dbcsr_trace(matrix_xsq, matrix_xidsq, trace_gx)
-         CALL dbcsr_trace(matrix_xsq, tmp_gx, trace_fx)
+         CALL dbcsr_dot(matrix_xsq, matrix_xidsq, trace_gx)
+         CALL dbcsr_dot(matrix_xsq, tmp_gx, trace_fx)
 
          ! if converged, and gam becomes noisy, fix it to 3, which results in a final McWeeny step.
          ! do this only if the electron count is reasonable.
@@ -877,7 +878,7 @@ CONTAINS
       CALL timeset(routineN, handle)
 
       logger => cp_get_default_logger()
-      IF (logger%para_env%mepos == logger%para_env%source) THEN
+      IF (logger%para_env%ionode) THEN
          unit_nr = cp_logger_get_default_unit_nr(logger, local=.TRUE.)
       ELSE
          unit_nr = -1
@@ -1042,6 +1043,10 @@ CONTAINS
       gama = gama-gama*gama
       DO WHILE (nu(i) < gama)
          ! safeguard against negative root, is skipping correct?
+         IF (wu(i) < 1.0e-14_dp) THEN
+            i = i-1
+            CYCLE
+         END IF
          IF ((1.0_dp-4.0_dp*nu(i)*nu(i)/wu(i)) < 0.0_dp) THEN
             i = i-1
             CYCLE

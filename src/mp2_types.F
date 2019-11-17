@@ -18,9 +18,14 @@ MODULE mp2_types
    USE hfx_types,                       ONLY: hfx_release,&
                                               hfx_type,&
                                               pair_list_element_type
-   USE input_constants,                 ONLY: &
-        do_eri_mme, mp2_method_direct, mp2_method_gpw, mp2_method_laplace, mp2_method_none, &
-        mp2_ri_optimize_basis, ri_mp2_laplace, ri_mp2_method_gpw, ri_rpa_method_gpw
+   USE input_constants,                 ONLY: do_eri_mme,&
+                                              mp2_method_direct,&
+                                              mp2_method_gpw,&
+                                              mp2_method_none,&
+                                              mp2_ri_optimize_basis,&
+                                              ri_mp2_laplace,&
+                                              ri_mp2_method_gpw,&
+                                              ri_rpa_method_gpw
    USE kinds,                           ONLY: default_path_length,&
                                               dp
 #include "./base/base_uses.f90"
@@ -35,7 +40,6 @@ MODULE mp2_types
              integ_mat_buffer_type, &
              integ_mat_buffer_type_2D, &
              mp2_method_none, &
-             mp2_method_laplace, &
              mp2_method_direct, &
              mp2_method_gpw, &
              mp2_ri_optimize_basis, &
@@ -73,6 +77,7 @@ MODULE mp2_types
       INTEGER                                  :: potential_type !! 1/r, TShPSC, slab truncation
       REAL(dp)                                 :: truncation_radius !! truncation radius if cutoff potential in use
       CHARACTER(default_path_length)           :: filename
+      REAL(KIND=dp)                            :: omega ! Range separation parameter for longrange potential
    END TYPE
 
    TYPE mp2_gpw_type
@@ -100,9 +105,12 @@ MODULE mp2_types
       LOGICAL                  :: do_admm
       LOGICAL                  :: do_RI_overlap
       LOGICAL                  :: do_ri_axk
+      LOGICAL                  :: do_rse
       TYPE(dbcsr_type), POINTER             :: mo_coeff_o, &
                                                mo_coeff_v
       REAL(KIND=dp)            :: ener_axk
+      REAL(KIND=dp)            :: rse_corr_diag
+      REAL(KIND=dp)            :: rse_corr
    END TYPE
 
    TYPE ri_rpa_im_time_util
@@ -143,9 +151,9 @@ MODULE mp2_types
                                             sizes_array_cm_mao_virt, starts_array_cm_mao_virt, &
                                             ends_array_cm_mao_virt
       INTEGER, DIMENSION(:), POINTER     :: nmao_occ, nmao_virt, kp_grid
-      LOGICAL                  :: do_gw_im_time, do_im_time_kpoints
+      LOGICAL                  :: do_im_time_kpoints
       REAL(KIND=dp)            :: stabilize_exp
-      LOGICAL  :: do_dbcsr_t
+      LOGICAL  :: do_dbcsr_t, group_size_internal
       INTEGER  :: max_bsize_sqrt
    END TYPE
 
@@ -249,6 +257,9 @@ MODULE mp2_types
       INTEGER  :: eri_method
       TYPE(cp_eri_mme_param), POINTER  :: eri_mme_param
       INTEGER, DIMENSION(:), POINTER  :: eri_blksize => NULL()
+      LOGICAL  :: do_svd
+      REAL(KIND=dp) :: eps_svd
+      REAL(KIND=dp) :: omega_metric
    END TYPE
 
    TYPE integ_mat_buffer_type

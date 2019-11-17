@@ -25,13 +25,13 @@ MODULE input_cp2k_mp2
                                               medium_print_level,&
                                               silent_print_level
    USE input_constants,                 ONLY: &
-        do_eri_gpw, do_eri_mme, do_eri_os, do_hfx_potential_coulomb, do_mp2_potential_tshpsc, &
-        gaussian, gw_no_print_exx, gw_pade_approx, gw_print_exx, gw_read_exx, gw_skip_for_regtest, &
-        gw_two_pole_model, mp2_method_direct, mp2_method_gpw, mp2_method_none, &
-        mp2_ri_optimize_basis, numerical, ri_coulomb, ri_mp2_laplace, ri_mp2_method_gpw, &
-        ri_overlap, ri_rpa_g0w0_crossing_bisection, ri_rpa_g0w0_crossing_newton, &
-        ri_rpa_g0w0_crossing_none, ri_rpa_g0w0_crossing_z_shot, ri_rpa_method_gpw, &
-        wfc_mm_style_gemm, wfc_mm_style_syrk
+        do_eri_gpw, do_eri_mme, do_eri_os, do_potential_coulomb, do_potential_id, &
+        do_potential_long, do_potential_tshpsc, gaussian, gw_no_print_exx, gw_pade_approx, &
+        gw_print_exx, gw_read_exx, gw_skip_for_regtest, gw_two_pole_model, mp2_method_direct, &
+        mp2_method_gpw, mp2_method_none, mp2_ri_optimize_basis, numerical, ri_default, &
+        ri_mp2_laplace, ri_mp2_method_gpw, ri_rpa_g0w0_crossing_bisection, &
+        ri_rpa_g0w0_crossing_newton, ri_rpa_g0w0_crossing_none, ri_rpa_g0w0_crossing_z_shot, &
+        ri_rpa_method_gpw, wfc_mm_style_gemm, wfc_mm_style_syrk
    USE input_cp2k_hfx,                  ONLY: create_hfx_section
    USE input_keyword_types,             ONLY: keyword_create,&
                                               keyword_release,&
@@ -180,11 +180,22 @@ CONTAINS
          variants=(/"RI"/), &
          description="Define which RI metric should be used for calculating B^P_ia.", &
          usage="RI_METRIC COULOMB", &
-         enum_c_vals=s2a("COULOMB", "OVERLAP"), &
-         enum_i_vals=(/ri_coulomb, ri_overlap/), &
-         enum_desc=s2a("Use Coulomb metric.", &
-                       "Use overlap metric, recommended in combination with imaginary time for O(N^3) RPA."), &
-         default_i_val=ri_coulomb)
+         enum_c_vals=s2a("DEFAULT", "COULOMB", "OVERLAP", "LONGRANGE"), &
+         enum_i_vals=(/ri_default, do_potential_coulomb, do_potential_id, do_potential_long/), &
+         enum_desc=s2a("Use overlap metric for cubic scaling methods and Coulomb metric for higher scaling methods.", &
+                       "Use Coulomb metric.", &
+                       "Use overlap metric, recommended in combination with imaginary time for O(N^3) RPA.", &
+                       "Use longrange metric. Not recommended with DO_SVD .TRUE."), &
+         default_i_val=ri_default)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create( &
+         keyword, __LOCATION__, &
+         name="OMEGA_METRIC", &
+         description="Range-separation parameter for longrange potential.", &
+         usage="OMEGA_METRIC 0.5", &
+         default_r_val=0.5_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
@@ -220,14 +231,31 @@ CONTAINS
       CALL section_release(print_key)
 
       CALL keyword_create( &
-         keyword, __LOCATION__, &
-         name="IM_TIME", &
+         keyword, __LOCATION__, name="IM_TIME", &
          variants=(/"IMAG_TIME"/), &
-         description="Turns on cubic scaling RI-RPA and Laplace-SOS-MP2 method using the imaginary time formalism. "// &
+         description="Turns on cubic scaling RI-RPA, GW and Laplace-SOS-MP2 method using the imaginary time formalism. "// &
          "If no IM_TIME section is present, the default parameters are used.", &
          usage="IM_TIME", &
          default_l_val=.FALSE., &
          lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="DO_SVD", &
+                          description="Wether to perform a singular value decomposition instead of the Cholesky decomposition "// &
+                          "of the potential operator in the RI basis. Computationally expensive but numerically more stable. "// &
+                          "It reduces the computational costs of some subsequent steps. Recommended when a longrange Coulomb "// &
+                          "potential is employed.", &
+                          usage="DO_SVD  .TRUE.", &
+                          default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="EPS_SVD", &
+                          description="Include all singular vectors with a singular value smaller than EPS_SVD. "// &
+                          "Is used to provide info on smallest eigenvalues.", &
+                          usage="EPS_SVD  1.0e-5", &
+                          default_r_val=1.0E-3_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
@@ -565,8 +593,7 @@ CONTAINS
          keyword, __LOCATION__, &
          name="RI_G0W0", &
          variants=(/"GW"/), &
-         description="Decide whether to perform an RI_G0W0 calculation on top of RI_RPA. "// &
-         "For cubic-scaling GW, please use IM_TIME_GW.", &
+         description="Decide whether to perform an RI_G0W0 calculation on top of RI_RPA. ", &
          usage="RI_G0W0", &
          default_l_val=.FALSE., &
          lone_keyword_l_val=.TRUE.)
@@ -578,6 +605,17 @@ CONTAINS
          name="RI_AXK", &
          variants=(/"AXK"/), &
          description="Decide whether to perform an RPA-AXK calculation.", &
+         usage="RI_AXK", &
+         default_l_val=.FALSE., &
+         lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create( &
+         keyword, __LOCATION__, &
+         name="RSE", &
+         variants=(/"SE"/), &
+         description="Decide whether to add singles correction.", &
          usage="RI_AXK", &
          default_l_val=.FALSE., &
          lone_keyword_l_val=.TRUE.)
@@ -1198,7 +1236,7 @@ CONTAINS
       NULLIFY (keyword, subsection)
 
       CALL keyword_create(keyword, __LOCATION__, name="_SECTION_PARAMETERS_", &
-                          description="Activates cubic-scaling RPA and Laplace-SOS-MP2 calculations.", &
+                          description="Activates cubic-scaling RPA, GW and Laplace-SOS-MP2 calculations.", &
                           usage="&im_time .TRUE.", &
                           default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)
       CALL section_add_keyword(section, keyword)
@@ -1232,7 +1270,8 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create(keyword, __LOCATION__, name="GROUP_SIZE_3c", &
-                          description="Group size used for cutting the RI index P in (alpha beta P) and for "// &
+                          description="This keyword is not needed if DO_DBCSR_T enabled. "// &
+                          "Group size used for cutting the RI index P in (alpha beta P) and for "// &
                           "the multiplication M^occ/virt(it)=(alpha beta P)*D^occ/virt. Has to be increased "// &
                           "for larger systems, at least linearly with system size, at most quadratically in  "// &
                           "system size.", &
@@ -1242,7 +1281,8 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create(keyword, __LOCATION__, name="GROUP_SIZE_P", &
-                          description="Group size used for the calculation of P(it)=(Mocc(it))^T*Mvirt(it). "// &
+                          description="This keyword is not needed if DO_DBCSR_T enabled. "// &
+                          "Group size used for the calculation of P(it)=(Mocc(it))^T*Mvirt(it). "// &
                           "Default is to use a single process. A larger group size (for example the node size), "// &
                           "could be recommended for larger systems, since the P matrix is replicated in every group. ", &
                           usage="GROUP_SIZE_P 8", &
@@ -1279,19 +1319,6 @@ CONTAINS
 
       CALL keyword_create( &
          keyword, __LOCATION__, &
-         name="RI_G0W0", &
-         variants=(/"GW"/), &
-         description="Decide whether to perform a cubic scaling GW calculation on top of imag. time RPA. "// &
-         "The corresponding RI_G0W0 section has to be placed inside the RI_RPA section. The keyword RI_G0W0 "// &
-         "inside RI_RPA must not be set.", &
-         usage="IM_TIME_GW", &
-         default_l_val=.FALSE., &
-         lone_keyword_l_val=.TRUE.)
-      CALL section_add_keyword(section, keyword)
-      CALL keyword_release(keyword)
-
-      CALL keyword_create( &
-         keyword, __LOCATION__, &
          name="DO_KPOINTS", &
          description="Besides in DFT, this keyword has to be switched on if one wants to do kpoints in. "// &
          "cubic RPA.", &
@@ -1308,6 +1335,16 @@ CONTAINS
          usage="DO_DBCSR_T", &
          default_l_val=.TRUE., &
          lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create( &
+         keyword, __LOCATION__, &
+         name="GROUP_SIZE_INTERNAL", &
+         description="If DO_DBCSR_T and this keyword set to .TRUE., group sizes are automatic and keywords GROUP_SIZE_3C "// &
+         "& GROUP_SIZE_P are ignored. This should be set to .FALSE. for testing purposes only.", &
+         usage="GROUP_SIZE_INTERNAL F", &
+         default_l_val=.TRUE.)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
@@ -1577,7 +1614,7 @@ CONTAINS
       CPASSERT(.NOT. ASSOCIATED(section))
       CALL section_create(section, __LOCATION__, name="INTERACTION_POTENTIAL", &
                           description="Parameters the interaction potential in computing the biel integrals", &
-                          n_keywords=1, n_subsections=0, repeats=.FALSE.)
+                          n_keywords=4, n_subsections=0, repeats=.FALSE.)
 
       NULLIFY (keyword)
       CALL keyword_create( &
@@ -1586,17 +1623,19 @@ CONTAINS
          description="Which interaction potential should be used "// &
          "(Coulomb, TShPSC operator).", &
          usage="POTENTIAL_TYPE TSHPSC", &
-         enum_c_vals=s2a("COULOMB", "TShPSC"), &
-         enum_i_vals=(/do_hfx_potential_coulomb, &
-                       do_mp2_potential_TShPSC/), &
+         enum_c_vals=s2a("COULOMB", "TShPSC", "LONGRANGE"), &
+         enum_i_vals=(/do_potential_coulomb, &
+                       do_potential_TShPSC, &
+                       do_potential_long/), &
          enum_desc=s2a("Coulomb potential: 1/r", &
                        "TShPSC:<ul><li>1/x - s/Rc for x &le; Rc</li>"// &
                        "<li>(1 - s)/Rc - (x - Rc)/Rc^2 + (x - Rc)^2/Rc^3 - "// &
                        "(2*n^2 - 7*n + 9 - 4*s)*(x - Rc)^3/(Rc^4*(n^2 - 2*n + 1)*(n - 1)) + "// &
                        "(6-3*s - 4*n + n^2)*(x - Rc)^4/(Rc^5*(n^4 - 4*n^3 + 6*n^2 - 4*n + 1)) "// &
                        "for Rc &lt; x &le; n*Rc (4th order polynomial)</li>"// &
-                       "<li>0 for x &gt; n*Rc</li></ul>"), &
-         default_i_val=do_hfx_potential_coulomb)
+                       "<li>0 for x &gt; n*Rc</li></ul>", &
+                       "Longrange Coulomg potential: erf(w*r)/r)"), &
+         default_i_val=do_potential_coulomb)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
@@ -1616,6 +1655,15 @@ CONTAINS
          "evaluation of the TShPSC G0 ", &
          usage="TShPSC_DATA t_sh_p_s_c.dat", &
          default_c_val="t_sh_p_s_c.dat")
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create( &
+         keyword, __LOCATION__, &
+         name="OMEGA", &
+         description="Range separation parameter for the longrange potential. Only valid when longrange potential is requested.", &
+         usage="OMEGA 0.5", type_of_var=real_t, &
+         default_r_val=0.5_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 

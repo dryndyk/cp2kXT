@@ -56,7 +56,7 @@ MODULE input_cp2k_xc
    LOGICAL, PRIVATE, PARAMETER :: debug_this_module = .TRUE.
    CHARACTER(len=*), PARAMETER, PRIVATE :: moduleN = 'input_cp2k_xc'
 
-   PUBLIC :: create_xc_section
+   PUBLIC :: create_xc_section, create_libxc_section
 
 CONTAINS
 
@@ -1034,7 +1034,8 @@ CONTAINS
       ! nonlocal section
       NULLIFY (subsection, keyword)
       CALL section_create(subsection, __LOCATION__, name="NON_LOCAL", &
-                          description="Information on the non local dispersion functional", &
+                          description="Information on the non local part of dispersion functionals."// &
+                          "Correct functionals require a corresponding setting of XC_FUNCTIONAL.", &
                           n_keywords=0, n_subsections=0, repeats=.TRUE.)
 
       CALL keyword_create(keyword, __LOCATION__, name="TYPE", &
@@ -1227,6 +1228,20 @@ CONTAINS
                           usage="use_finer_grid", default_l_val=.FALSE., &
                           lone_keyword_l_val=.TRUE.)
       CALL section_add_keyword(subsection, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="2ND_DERIV_ANALYTICAL", &
+                          description="Use analytical formulas or finite differences for 2nd derivatives of XC", &
+                          usage="2ND_DERIV_ANALYTICAL logical", default_l_val=.TRUE., &
+                          lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="3RD_DERIV_ANALYTICAL", &
+                          description="Use analytical formulas or finite differences for 3rd derivatives of XC", &
+                          usage="3RD_DERIV_ANALYTICAL logical", default_l_val=.TRUE., &
+                          lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
       CALL section_add_subsection(section, subsection)

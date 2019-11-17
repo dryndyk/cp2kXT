@@ -23,7 +23,8 @@ MODULE environment
    USE cp_files,                        ONLY: close_file,&
                                               get_data_dir,&
                                               open_file
-   USE cp_fm_diag,                      ONLY: diag_init
+   USE cp_fm_diag,                      ONLY: diag_finalize,&
+                                              diag_init
    USE cp_fm_diag_utils,                ONLY: cp_fm_redistribute_init
    USE cp_fm_struct,                    ONLY: cp_fm_struct_config
    USE cp_fm_types,                     ONLY: cp_fm_setup
@@ -156,7 +157,7 @@ CONTAINS
       IF (id_cp2k_version == id_development_version) dev_flag = " (Development Version)"
 
       ! Init the default logger
-      IF (para_env%source == para_env%mepos) THEN
+      IF (para_env%ionode) THEN
          my_output_unit = output_unit
       ELSE
          my_output_unit = -1
@@ -497,8 +498,8 @@ CONTAINS
       CHARACTER(len=default_string_length)               :: env_num, model_name, project_name
       CHARACTER(LEN=default_string_length), &
          DIMENSION(:), POINTER                           :: trace_routines
-      INTEGER :: i_diag, i_fft, iforce_eval, method_name_id, n_rep_val, nforce_eval, num_threads, &
-         output_unit, print_level, trace_max, unit_nr
+      INTEGER :: cpuid, cpuid_static, i_diag, i_fft, iforce_eval, method_name_id, n_rep_val, &
+         nforce_eval, num_threads, output_unit, print_level, trace_max, unit_nr
       INTEGER(kind=int_8) :: Buffers, Buffers_avr, Buffers_max, Buffers_min, Cached, Cached_avr, &
          Cached_max, Cached_min, MemFree, MemFree_avr, MemFree_max, MemFree_min, MemLikelyFree, &
          MemLikelyFree_avr, MemLikelyFree_max, MemLikelyFree_min, MemTotal, MemTotal_avr, &
@@ -566,7 +567,7 @@ CONTAINS
 
       IF (trace .AND. (.NOT. trace_master .OR. para_env%mepos == 0)) THEN
          unit_nr = -1
-         IF (logger%para_env%mepos == logger%para_env%source .OR. .NOT. trace_master) &
+         IF (logger%para_env%ionode .OR. .NOT. trace_master) &
             unit_nr = cp_logger_get_default_unit_nr(logger, local=.TRUE.)
          WRITE (tracing_string, "(I6.6,A1,I6.6)") para_env%mepos, ":", para_env%num_pe
          IF (ASSOCIATED(trace_routines)) THEN
@@ -793,15 +794,27 @@ CONTAINS
             start_section_label//"| This output is from process", para_env%mepos
 
          CALL m_cpuinfo(model_name)
-         WRITE (UNIT=output_unit, FMT="(T2,A)") &
-            start_section_label//"| CPU model name : "//TRIM(model_name)
+         WRITE (UNIT=output_unit, FMT="(T2,A,T30,A51)") &
+            start_section_label//"| CPU model name", ADJUSTR(TRIM(model_name))
 
-         IF (m_cpuid_static() .LT. m_cpuid()) THEN
+         cpuid = m_cpuid()
+         cpuid_static = m_cpuid_static()
+
+         IF ((cpuid > 0) .OR. (cpuid_static > 0)) THEN
+            WRITE (UNIT=output_unit, FMT="(T2,A,T75,I6)") &
+               start_section_label//"| CPUID", cpuid
+            IF (cpuid /= cpuid_static) THEN
+               WRITE (UNIT=output_unit, FMT="(T2,A,T75,I6)") &
+                  start_section_label//"| Compiled for CPUID", cpuid_static
+            END IF
+         END IF
+
+         IF (cpuid_static < cpuid) THEN
             ! base/machine_cpuid.c relies on the (same) target flags as the Fortran code
             CALL cp_hint(__LOCATION__, "The compiler target flags ("// &
-                         TRIM(m_cpuid_name(m_cpuid_static()))//") used to build"//NEW_LINE("C")// &
+                         TRIM(m_cpuid_name(cpuid_static))//") used to build"//NEW_LINE("C")// &
                          "   this binary cannot exploit all extensions of this CPU model ("// &
-                         TRIM(m_cpuid_name(m_cpuid()))//")."//NEW_LINE("C")// &
+                         TRIM(m_cpuid_name(cpuid))//")."//NEW_LINE("C")// &
                          "   Consider compiler target flags as part of FCFLAGS and CFLAGS (ARCH file).")
          END IF
 
@@ -975,7 +988,8 @@ CONTAINS
 
       LOGICAL                                            :: fallback_applied
 
-      CALL diag_init(diag_lib=TRIM(globenv%diag_library), fallback_applied=fallback_applied, k_elpa=globenv%k_elpa, &
+      CALL diag_init(diag_lib=TRIM(globenv%diag_library), fallback_applied=fallback_applied, &
+                     elpa_kernel=globenv%k_elpa, &
                      elpa_qr=globenv%elpa_qr, elpa_print=globenv%elpa_print, &
                      elpa_qr_unsafe=globenv%elpa_qr_unsafe)
 
@@ -1133,6 +1147,7 @@ CONTAINS
          CALL deallocate_spherical_harmonics()
          CALL deallocate_orbital_pointers()
          CALL deallocate_md_ftable()
+         CALL diag_finalize()
          ! finalize the fft (i.e. writes the wisdom if FFTW3 )
          CALL finalize_fft(para_env, globenv%fftw_wisdom_file_name)
       ENDIF
@@ -1189,7 +1204,7 @@ CONTAINS
             WRITE (UNIT=iw, FMT="()")
             WRITE (UNIT=iw, FMT="(T2,A)") "-------------------------------------------------------------------------------"
          ENDIF
-         IF (cg_mode == CALLGRAPH_ALL .OR. para_env%mepos == para_env%source) &
+         IF (cg_mode == CALLGRAPH_ALL .OR. para_env%ionode) &
             CALL timings_report_callgraph(TRIM(cg_filename)//".callgraph")
       END IF
 

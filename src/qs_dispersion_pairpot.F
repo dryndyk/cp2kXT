@@ -44,8 +44,7 @@ MODULE qs_dispersion_pairpot
                                               dp
    USE mathconstants,                   ONLY: twopi
    USE memory_utilities,                ONLY: reallocate
-   USE message_passing,                 ONLY: mp_allgather,&
-                                              mp_bcast,&
+   USE message_passing,                 ONLY: mp_bcast,&
                                               mp_max,&
                                               mp_shift,&
                                               mp_sum
@@ -97,7 +96,7 @@ MODULE qs_dispersion_pairpot
       REAL(KIND=dp), DIMENSION(:, :), POINTER :: rik
    END TYPE dcnum_type
 
-   PUBLIC :: d3_cnumber, dcnum_type, d3_cnumber_bcast
+   PUBLIC :: d3_cnumber, dcnum_type, dcnum_distribute
 
 ! **************************************************************************************************
 
@@ -880,7 +879,7 @@ CONTAINS
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: rcpbc
       REAL(KIND=dp), DIMENSION(3)                        :: fdij, fdik, ra, rab, rb, rb0, rbc, rc, &
                                                             rc0, rca, rij, rik, sab_max
-      REAL(KIND=dp), DIMENSION(3, 3)                     :: dvirial, pv_virial_thread
+      REAL(KIND=dp), DIMENSION(3, 3)                     :: dvirial, pv_loc, pv_virial_thread
       REAL(KIND=dp), DIMENSION(:), POINTER               :: atener
       REAL(KIND=dp), DIMENSION(:, :, :), POINTER         :: atstr
       TYPE(atomic_kind_type), DIMENSION(:), POINTER      :: atomic_kind_set
@@ -964,6 +963,9 @@ CONTAINS
          use_virial = virial%pv_availability .AND. (.NOT. virial%pv_numer)
          IF (use_virial .AND. debugall) THEN
             dvirial = virial%pv_virial
+         END IF
+         IF (use_virial) THEN
+            pv_loc = virial%pv_virial
          END IF
       ELSE IF ((dispersion_env%pp_type == vdw_pairpot_dftd3 .OR. &
                 dispersion_env%pp_type == vdw_pairpot_dftd3bj) .AND. dispersion_env%doabc) THEN
@@ -1747,6 +1749,10 @@ CONTAINS
          DEALLOCATE (atom2mol)
       END IF
 
+      IF (calculate_forces .AND. use_virial) THEN
+         virial%pv_vdw = virial%pv_virial-pv_loc
+      END IF
+
       IF (ASSOCIATED(dispersion_env%dftd_section)) THEN
          CALL cp_print_key_finished_output(unit_nr, logger, dispersion_env%dftd_section, "PRINT_DFTD")
       END IF
@@ -1861,7 +1867,7 @@ CONTAINS
                                                             nlines, nn
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: pars
 
-      IF (para_env%source == para_env%mepos) THEN
+      IF (para_env%ionode) THEN
          ! Read the DFT-D3 C6AB parameters from file "filename"
          CALL open_file(file_name=filename, unit_number=funit, file_form="FORMATTED")
          READ (funit, *) nl, nlines
@@ -1869,7 +1875,7 @@ CONTAINS
       CALL mp_bcast(nl, para_env%source, para_env%group)
       CALL mp_bcast(nlines, para_env%source, para_env%group)
       ALLOCATE (pars(nl))
-      IF (para_env%source == para_env%mepos) THEN
+      IF (para_env%ionode) THEN
          READ (funit, *) pars(1:nl)
          CALL close_file(unit_number=funit)
       END IF
@@ -3158,69 +3164,6 @@ CONTAINS
 
    END SUBROUTINE d3_cnumber
 
-! **************************************************************************************************
-!> \brief Broadcast the DCNUM array to all processes (sum up results)
-!> \param dcnum ...
-!> \param para_env ...
-! **************************************************************************************************
-   SUBROUTINE d3_cnumber_bcast(dcnum, para_env)
-      TYPE(dcnum_type), DIMENSION(:), INTENT(INOUT)      :: dcnum
-      TYPE(cp_para_env_type), POINTER                    :: para_env
-
-      CHARACTER(LEN=*), PARAMETER :: routineN = 'd3_cnumber_bcast', &
-         routineP = moduleN//':'//routineN
-
-      INTEGER                                            :: iatom, ip, j, jn, natom, ne, nn, np, ntot
-      INTEGER, ALLOCATABLE, DIMENSION(:)                 :: nl1, nne
-      INTEGER, ALLOCATABLE, DIMENSION(:, :)              :: nlist
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: dv1
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: dvals, r1
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :, :)     :: rik
-
-      np = para_env%num_pe
-      IF (np > 1) THEN
-         natom = SIZE(dcnum)
-         ALLOCATE (nne(np))
-         DO iatom = 1, natom
-            ne = dcnum(iatom)%neighbors
-            CALL mp_allgather(ne, nne, para_env%group)
-            nn = MAXVAL(nne)
-            ALLOCATE (nlist(nn, np), nl1(nn))
-            nl1 = 0
-            nl1(1:ne) = dcnum(iatom)%nlist(1:ne)
-            CALL mp_allgather(nl1, nlist, para_env%group)
-            ALLOCATE (dvals(nn, np), dv1(nn))
-            dv1 = 0.0_dp
-            dv1(1:ne) = dcnum(iatom)%dvals(1:ne)
-            CALL mp_allgather(dv1, dvals, para_env%group)
-            ALLOCATE (rik(3, nn, np), r1(3, nn))
-            r1 = 0.0_dp
-            r1(1:3, 1:ne) = dcnum(iatom)%rik(1:3, 1:ne)
-            CALL mp_allgather(r1, rik, para_env%group)
-            !
-            ntot = SUM(nne)
-            !
-            dcnum(iatom)%neighbors = ntot
-            CALL reallocate(dcnum(iatom)%nlist, 1, ntot)
-            CALL reallocate(dcnum(iatom)%dvals, 1, ntot)
-            CALL reallocate(dcnum(iatom)%rik, 1, 3, 1, ntot)
-            !
-            jn = 0
-            DO ip = 1, np
-               DO j = 1, nne(ip)
-                  jn = jn+1
-                  dcnum(iatom)%nlist(jn) = nlist(j, ip)
-                  dcnum(iatom)%dvals(jn) = dvals(j, ip)
-                  dcnum(iatom)%rik(1:3, jn) = rik(1:3, j, ip)
-               END DO
-            END DO
-            !
-            DEALLOCATE (nlist, dvals, rik, nl1, dv1, r1)
-         END DO
-         DEALLOCATE (nne)
-      END IF
-
-   END SUBROUTINE d3_cnumber_bcast
 ! **************************************************************************************************
 
 END MODULE qs_dispersion_pairpot

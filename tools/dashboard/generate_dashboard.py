@@ -155,6 +155,8 @@ def gen_frontpage(config, log, status_fn, outdir):
         for issue in issues:
             link_pattern = "dashboard.cp2k.org/archive/{}/".format(s)
             matching_labels = [label for label in issue['labels'] if s in label['name']]
+            if "pull_request" in issue:
+                continue  # GitHub's REST API v3 considers every pull request an issue.
             if link_pattern in issue['body'] or any(matching_labels):
                 issue_tmpl = '<a href="{}">#{}</a>'
                 matching_issues.append(issue_tmpl.format(issue['html_url'], issue['number']))
@@ -307,9 +309,10 @@ def gen_plots(archive_reports, log, outdir, full_archive):
             raw_output +=  "%8d    %40s"%(-age, report['git-sha'])
             for pname, cname in tags:
                 pp = [pp for pp in report['plotpoints'] if(pp['plot']==pname and pp['name']==cname)]
-                assert(len(pp)<=1)
+                if len(pp) > 1:
+                    print("Warning: Found redundant plot points.")
                 if(pp):
-                    raw_output += "   %18f   %22f"%(pp[0]['y'],pp[0]['yerr'])
+                    raw_output += "   %18f   %22f"%(pp[-1]['y'],pp[-1]['yerr'])
                 else:
                     raw_output += "   %18s   %22s"%("?","?")
             raw_output += "\n"
@@ -344,15 +347,16 @@ def gen_plots(archive_reports, log, outdir, full_archive):
         ax.legend(bbox_to_anchor=(1.01, 1), loc='upper left',
                   numpoints=1, fancybox=True, shadow=True, borderaxespad=0.0)
         visibles = [[y for x,y in zip(c['x'],c['y']) if x>=-max_age] for c in p['curves'].values()] # visible y-values
+        visibles = [ys for ys in visibles if ys] # remove completely invisible curves
         if not visibles:
-            print("Warning: Found no visible plot point.")
+            print("Warning: Found no visible plot curve.")
         else:
-            ymin = min([min(ys) for ys in visibles if ys]) # lowest point from lowest curve
-            ymax = max([max(ys) for ys in visibles if ys]) # highest point from highest curve
+            ymin = min([min(ys) for ys in visibles]) # lowest point from lowest curve
+            ymax = max([max(ys) for ys in visibles]) # highest point from highest curve
             if(full_archive):
                 ax.set_ylim(0.98*ymin, 1.02*ymax)
             else:
-                ymax2 = max([min(ys) for ys in visibles if ys]) # lowest point from highest curve
+                ymax2 = max([min(ys) for ys in visibles]) # lowest point from highest curve
                 ax.set_ylim(0.98*ymin, min(1.02*ymax, 1.3*ymax2))  # protect against outlayers
         fig.savefig(outdir+pname+fig_ext)
         plt.close(fig)
@@ -371,11 +375,17 @@ def send_notification(report, last_ok, log, name, s):
     if(idx_end == idx_last_ok): return # probably a flapping tester
     emails = set([log[i]['author-email'] for i in range(idx_end, idx_last_ok)])
     emails = [e for e in emails if "noreply" not in e]
+    emails_str = ", ".join(emails)
+    if not emails:
+        return # no author emails found
+    if len(emails) > 3:
+        print("Spam protection, found more than three authors: " + emails_str)
+        return
     if (not send_emails):
-        print("Email sending disabled, would otherwise send to: "+msg['To'])
+        print("Email sending disabled, would otherwise send to: " + emails_str)
         return
 
-    print("Sending email to: "+", ".join(emails))
+    print("Sending email to: " + emails_str)
 
     msg_txt  = "Dear CP2K developer,\n\n"
     msg_txt += "the dashboard has detected a problem that one of your recent commits might have introduced.\n\n"
@@ -551,6 +561,10 @@ def retrieve_report(url):
         r.raise_for_status()
         if r.status_code == 304:  # Not Modified - cache hit
             return data_file.read_text()
+
+        # check report size
+        report_size = int(r.headers['Content-Length'])
+        assert report_size < 3*1024*1024  # 3 MB
 
         # cache miss - store response
         if 'ETag' in r.headers:

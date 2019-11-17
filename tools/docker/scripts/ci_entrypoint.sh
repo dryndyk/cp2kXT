@@ -18,20 +18,16 @@ shopt -u nullglob
 if [ -n "${GIT_REF}" ]; then
     echo -e "\n========== Fetching Git Commit =========="
     cd /workspace/cp2k
-    git fetch origin "${GIT_BRANCH}"
-    git -c advice.detachedHead=false checkout "${GIT_REF}"
+    git fetch --quiet origin "${GIT_BRANCH}"
+    git reset --quiet --hard "${GIT_REF}"
     git submodule update --init --recursive
     git --no-pager log -1 --pretty='%nCommitSHA: %H%nCommitTime: %ci%nCommitAuthor: %an%nCommitSubject: %s%n'
 
 elif [ -d  /mnt/cp2k ]; then
     echo -e "\n========== Copying Changed Files =========="
-    # Don't skip by matching timestamp since Git (previous mirror) does not preserve timestamps
-    # and we end up with an outdated tree if the contents of /mnt/cp2k have been modified before
-    # the Docker image was generated.
-    # Also ignore the checksum since it is safe to assume that most files have not changed (which would
-    # mean they have the same filesize) which would mean we would do a read+read(+write) on most files
-    # anyway at which point it is simpler to do a read+write (e.g. replace the whole tree).
-    rsync --ignore-times                         \
+    # We can't rely on timestamps as they depend on the git checkout time.
+    # Hence, we use checksums despite the IO because a full rebuild would be even more costly.
+    rsync --checksum                             \
           --delete                               \
           --executability                        \
           --verbose                              \

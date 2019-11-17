@@ -2,8 +2,8 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 
-elpa_ver="2017.05.003"
-elpa_sha256="bccd49ce35a323bd734b17642aed8f2588fea4cc78ee8133d88554753bc3bf1b"
+elpa_ver="2019.05.001"
+elpa_sha256="772c03dab8713ba3891b17757a0b8429b3c4bec4b261dd337ed4b34311f6b221"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -17,6 +17,9 @@ ELPA_LDFLAGS=''
 ELPA_LIBS=''
 ELPA_CFLAGS_OMP=''
 ELPA_LIBS_OMP=''
+# ELPA 2019.05.001 has a parallel build issue, restricting to -j1
+ELPA_MAKEOPTS='-j1'
+
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
@@ -42,7 +45,7 @@ case "$with_elpa" in
                 echo "elpa-${elpa_ver}.tar.gz is found"
             else
                 download_pkg ${DOWNLOADER_FLAGS} ${elpa_sha256} \
-                             https://elpa.mpcdf.mpg.de/html/Releases/${elpa_ver}/elpa-${elpa_ver}.tar.gz
+                             https://www.cp2k.org/static/downloads/elpa-${elpa_ver}.tar.gz
             fi
             [ -d elpa-${elpa_ver} ] && rm -rf elpa-${elpa_ver}
             echo "Installing from scratch into ${pkg_install_dir}"
@@ -63,13 +66,12 @@ case "$with_elpa" in
                 cray_ldflags="-dynamic"
             fi
             # ELPA-2017xxxx enables AVX2 by default, switch off if machine doesn't support it.
-            # In addition, --disable-option-checking is needed for older versions, which don't know
-            # about this option.
             has_AVX=`grep '\bavx\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
             [ "${has_AVX}" == "yes" ] && AVX_flag="-mavx" || AVX_flag=""
             has_AVX2=`grep '\bavx2\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
             [ "${has_AVX2}" == "yes" ] && AVX_flag="-mavx2"
             has_AVX512=`grep '\bavx512f\b' /proc/cpuinfo 1>/dev/null && echo 'yes' || echo 'no'`
+            has_GPU=$([ "$ENABLE_CUDA" == "__TRUE__" ] && echo "yes" || echo "no")
             FMA_flag=`grep '\bfma\b' /proc/cpuinfo 1>/dev/null && echo '-mfma' || echo '-mno-fma'`
             SSE4_flag=`grep '\bsse4_1\b' /proc/cpuinfo 1>/dev/null && echo '-msse4' || echo '-mno-sse4'`
             # non-threaded version
@@ -79,10 +81,11 @@ case "$with_elpa" in
                           --enable-openmp=no \
                           --enable-shared=no \
                           --enable-static=yes \
-                          --disable-option-checking \
                           --enable-avx=${has_AVX} \
                           --enable-avx2=${has_AVX2} \
                           --enable-avx512=${has_AVX512} \
+                          --enable-gpu=${has_GPU} \
+                          --with-cuda-path=${CUDA_PATH} \
                           FC=${MPIFC} \
                           CC=${MPICC} \
                           CXX=${MPICXX} \
@@ -92,7 +95,7 @@ case "$with_elpa" in
                           LDFLAGS="-Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags}" \
                           LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}")" \
                           > configure.log 2>&1
-            make -j $NPROCS >  make.log 2>&1
+            make -j $NPROCS ${ELPA_MAKEOPTS} >  make.log 2>&1
             make install > install.log 2>&1
             cd ..
             # threaded version
@@ -103,10 +106,11 @@ case "$with_elpa" in
                               --enable-openmp=yes \
                               --enable-shared=no \
                               --enable-static=yes \
-                              --disable-option-checking \
                               --enable-avx=${has_AVX} \
                               --enable-avx2=${has_AVX2} \
                               --enable-avx512=${has_AVX512} \
+                              --enable-gpu=${has_GPU} \
+                              --with-cuda-path=${CUDA_PATH} \
                               FC=${MPIFC} \
                               CC=${MPICC} \
                               CXX=${MPICXX} \
@@ -116,7 +120,7 @@ case "$with_elpa" in
                               LDFLAGS="-Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags}" \
                               LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" OMP)" \
                               > configure.log 2>&1
-                make -j $NPROCS >  make.log 2>&1
+                make -j $NPROCS ${ELPA_MAKEOPTS} >  make.log 2>&1
                 make install > install.log 2>&1
                 cd ..
             fi
@@ -208,7 +212,7 @@ export ELPA_LIBS="${ELPA_LIBS}"
 export ELPA_CFLAGS_OMP="${ELPA_CFLAGS_OMP}"
 export ELPA_LDFLAGS_OMP="${ELPA_LDFLAGS_OMP}"
 export ELPA_LIBS_OMP="${ELPA_LIBS_OMP}"
-export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__ELPA=${elpa_ver:0:4}${elpa_ver:5:2}|)"
+export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__ELPA|)"
 export CP_CFLAGS="\${CP_CFLAGS} IF_MPI(IF_OMP(${ELPA_CFLAGS_OMP}|${ELPA_CFLAGS})|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${ELPA_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(IF_OMP(${ELPA_LIBS_OMP}|${ELPA_LIBS})|) \${CP_LIBS}"

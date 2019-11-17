@@ -217,10 +217,6 @@ MODULE input_constants
                                                almo_frz_crystal = 2, &
                                                almo_frz_both = 3
 
-   INTEGER, PARAMETER, PUBLIC               :: pw_interp = 1, &
-                                               spline3_nopbc_interp = 2, &
-                                               spline3_pbc_interp = 3
-
    INTEGER, PARAMETER, PUBLIC               :: do_gapw_gcs = 1, &
                                                do_gapw_gct = 2, &
                                                do_gapw_log = 3
@@ -546,7 +542,9 @@ MODULE input_constants
    INTEGER, PARAMETER, PUBLIC               :: sic_list_all = 1, &
                                                sic_list_unpaired = 2
    INTEGER, PARAMETER, PUBLIC               :: tddfpt_singlet = 0, &
-                                               tddfpt_triplet = 1
+                                               tddfpt_triplet = 1, &
+                                               tddfpt_spin_cons = 2, &
+                                               tddfpt_spin_flip = 3
    INTEGER, PARAMETER, PUBLIC               :: tddfpt_lanczos = 0, &
                                                tddfpt_davidson = 1
    INTEGER, PARAMETER, PUBLIC               :: oe_none = 0, &
@@ -614,7 +612,8 @@ MODULE input_constants
                                                xas_tp_xfh = 5, &
                                                xas_dscf = 6, &
                                                xas_tp_flex = 7
-   INTEGER, PARAMETER, PUBLIC               :: xas_1s_type = 1, &
+   INTEGER, PARAMETER, PUBLIC               :: xas_not_excited = 0, &
+                                               xas_1s_type = 1, &
                                                xas_2s_type = 2, &
                                                xas_2p_type = 3, &
                                                xas_3s_type = 4, &
@@ -628,6 +627,14 @@ MODULE input_constants
                                                xas_dip_vel = 2
    INTEGER, PARAMETER, PUBLIC               :: xas_scf_default = 0, &
                                                xas_scf_general = 1
+
+   ! Time-dependent XAS
+   INTEGER, PARAMETER, PUBLIC               :: xas_tdp_by_index = 1, &
+                                               xas_tdp_by_kind = 2, &
+                                               xas_tdp_roks = 1, &
+                                               xas_tdp_uks = 2, &
+                                               xas_tdp_diag_std = 1, &
+                                               xas_tdp_diag_syevr = 2
 
    ! Form of dipole operator for TDDFPT oscillator strength calculation
    INTEGER, PARAMETER, PUBLIC               :: tddfpt_dipole_berry = 1, &
@@ -731,17 +738,18 @@ MODULE input_constants
                                                clustering_h_on_heavier = 2, &
                                                clustering_small_on_larger = 3
 
-   ! HFX potential type
-   INTEGER, PARAMETER, PUBLIC               :: do_hfx_potential_coulomb = 1, &
-                                               do_hfx_potential_short = 2, &
-                                               do_hfx_potential_long = 3, &
-                                               do_hfx_potential_mix_cl = 4, &
-                                               do_hfx_potential_gaussian = 5, &
-                                               do_hfx_potential_mix_lg = 6, &
-                                               do_hfx_potential_id = 7, &
-                                               do_hfx_potential_truncated = 8, &
-                                               do_hfx_potential_mix_cl_trunc = 9, &
-                                               do_mp2_potential_TShPSC = 1009
+   ! HFX potential type (ri_default for RI but used with potentials)
+   INTEGER, PARAMETER, PUBLIC               :: do_potential_coulomb = 1, &
+                                               do_potential_short = 2, &
+                                               do_potential_long = 3, &
+                                               do_potential_mix_cl = 4, &
+                                               do_potential_gaussian = 5, &
+                                               do_potential_mix_lg = 6, &
+                                               do_potential_id = 7, &
+                                               do_potential_truncated = 8, &
+                                               do_potential_mix_cl_trunc = 9, &
+                                               do_potential_TShPSC = 1009, &
+                                               ri_default = 10001
 
    ! HFX periodic number of shells
    INTEGER, PARAMETER, PUBLIC               :: do_hfx_auto_shells = -1
@@ -946,7 +954,6 @@ MODULE input_constants
 
    ! some MP2 parameters
    INTEGER, PARAMETER, PUBLIC               :: mp2_method_none = 0, &
-                                               mp2_method_laplace = 2, &
                                                mp2_method_direct = 4, &
                                                mp2_method_gpw = 6, &
                                                ri_mp2_method_gpw = 7, &
@@ -954,9 +961,7 @@ MODULE input_constants
                                                ri_mp2_laplace = 9, &
                                                mp2_ri_optimize_basis = 10, &
                                                wfc_mm_style_gemm = 11, &
-                                               wfc_mm_style_syrk = 12, &
-                                               ri_coulomb = 13, &
-                                               ri_overlap = 14
+                                               wfc_mm_style_syrk = 12
 
    ! G0W0 parameter
    INTEGER, PARAMETER, PUBLIC               :: ri_rpa_g0w0_crossing_none = 0, &

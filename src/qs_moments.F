@@ -48,8 +48,8 @@ MODULE qs_moments
    USE cp_result_types,                 ONLY: cp_result_type
    USE dbcsr_api,                       ONLY: &
         dbcsr_copy, dbcsr_create, dbcsr_deallocate_matrix, dbcsr_desymmetrize, &
-        dbcsr_distribution_type, dbcsr_get_block_p, dbcsr_multiply, dbcsr_p_type, dbcsr_set, &
-        dbcsr_trace, dbcsr_type, dbcsr_type_symmetric
+        dbcsr_distribution_type, dbcsr_dot, dbcsr_get_block_p, dbcsr_multiply, dbcsr_p_type, &
+        dbcsr_set, dbcsr_trace, dbcsr_type, dbcsr_type_symmetric
    USE distribution_1d_types,           ONLY: distribution_1d_type
    USE kinds,                           ONLY: default_string_length,&
                                               dp
@@ -1168,7 +1168,7 @@ CONTAINS
       ! charge
       trace = 0.0_dp
       DO ispin = 1, dft_control%nspins
-         CALL dbcsr_trace(rho_ao(ispin)%matrix, matrix_s(1)%matrix, trace)
+         CALL dbcsr_dot(rho_ao(ispin)%matrix, matrix_s(1)%matrix, trace)
          rmom(1, 1) = rmom(1, 1)+trace
       END DO
 
@@ -1530,14 +1530,14 @@ CONTAINS
 
       trace = 0.0_dp
       DO ispin = 1, dft_control%nspins
-         CALL dbcsr_trace(rho_ao(ispin)%matrix, matrix_s(1)%matrix, trace)
+         CALL dbcsr_dot(rho_ao(ispin)%matrix, matrix_s(1)%matrix, trace)
          rmom(1, 1) = rmom(1, 1)+trace
       END DO
 
       DO i = 1, SIZE(moments)
          strace = 0._dp
          DO ispin = 1, dft_control%nspins
-            CALL dbcsr_trace(rho_ao(ispin)%matrix, moments(i)%matrix, trace)
+            CALL dbcsr_dot(rho_ao(ispin)%matrix, moments(i)%matrix, trace)
             strace = strace+trace
          END DO
          rmom(i+1, 1) = strace
@@ -1582,7 +1582,7 @@ CONTAINS
          nm = SIZE(magmom)
          ALLOCATE (mmom(nm))
 
-         ! Allocate matrices to store the matrix product to be traced (dbcsr_trace only works for products of
+         ! Allocate matrices to store the matrix product to be traced (dbcsr_dot only works for products of
          ! symmetric matrices)
          NULLIFY (rho_magmom_ao)
          ALLOCATE (rho_magmom_ao)
@@ -1685,9 +1685,9 @@ CONTAINS
          DO l = 0, nmom
             SELECT CASE (l)
             CASE (0)
-               WRITE (unit_number, "(T3,A,T32,3F14.8)") "Reference Point [Bohr]", rcc
+               WRITE (unit_number, "(T3,A,T33,3F16.8)") "Reference Point [Bohr]", rcc
                WRITE (unit_number, "(T3,A)") "Charges"
-               WRITE (unit_number, "(T5,A,T18,F14.8,T36,A,T42,F14.8,T60,A,T68,F14.8)") &
+               WRITE (unit_number, "(T5,A,T18,F14.8,T36,A,T42,F14.8,T60,A,T67,F14.8)") &
                   "Electronic=", rmom(1, 1), "Core=", rmom(1, 2), "Total=", rmom(1, 3)
             CASE (1)
                IF (periodic) THEN
@@ -1701,7 +1701,7 @@ CONTAINS
                ENDIF
                dd = SQRT(SUM(rmom(2:4, 3)**2))*debye
                WRITE (unit_number, "(T3,A)") "Dipole moment [Debye]"
-               WRITE (unit_number, "(T5,3(A,A,F14.8,1X),T60,A,T68,F14.8)") &
+               WRITE (unit_number, "(T5,3(A,A,F14.8,1X),T60,A,T67,F14.8)") &
                   (TRIM(rlab(i)), "=", rmom(i, 3)*debye, i=2, 4), "Total=", dd
             CASE (2)
                WRITE (unit_number, "(T3,A)") "Quadrupole moment [Debye*Angstrom]"
@@ -1743,7 +1743,7 @@ CONTAINS
             IF (nmom >= 1) THEN
                dd = SQRT(SUM(mmom(1:3)**2))
                WRITE (unit_number, "(T3,A)") "Magnetic Dipole Moment (only orbital contrib.) [a.u.]"
-               WRITE (unit_number, "(T5,3(A,A,F14.8,1X),T60,A,T68,F14.8)") &
+               WRITE (unit_number, "(T5,3(A,A,F14.8,1X),T60,A,T67,F14.8)") &
                   (TRIM(rlab(i+1)), "=", mmom(i), i=1, 3), "Total=", dd
             END IF
          END IF

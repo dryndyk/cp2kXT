@@ -83,6 +83,7 @@ MODULE force_env_methods
                                               parsef
    USE global_types,                    ONLY: global_environment_type,&
                                               globenv_retain
+   USE grrm_utils,                      ONLY: write_grrm
    USE input_constants,                 ONLY: &
         debug_run, dfet, dmfet, mix_cdft, mix_coupled, mix_generic, mix_linear_combination, &
         mix_minimum, mix_restrained, mixed_cdft_serial, use_bazant_eip, use_lenosky_eip
@@ -156,6 +157,7 @@ MODULE force_env_methods
                                               qs_rho_type
    USE restraint,                       ONLY: restraint_control
    USE string_utilities,                ONLY: compress
+   USE virial_methods,                  ONLY: write_stress_components
    USE virial_types,                    ONLY: cp_virial,&
                                               sym_virial,&
                                               virial_create,&
@@ -183,7 +185,7 @@ CONTAINS
 !> \brief Interface routine for force and energy calculations
 !> \param force_env the force_env of which you want the energy and forces
 !> \param calc_force if false the forces *might* be left unchanged
-!>        or be unvalid, no guarantee on them is done.Defaults to true
+!>        or be invalid, no guarantees can be given. Defaults to true
 !> \param consistent_energies Performs an additional qs_ks_update_qs_env, so
 !>          that the energies are appropriate to the forces, they are in the
 !>          non-selfconsistent case not consistent to each other! [08.2005, TdK]
@@ -207,7 +209,7 @@ CONTAINS
       REAL(kind=dp), PARAMETER                           :: ateps = 1.0E-6_dp
 
       INTEGER                                            :: i, j, nat, ndigits, output_unit, &
-                                                            print_forces
+                                                            print_forces, print_grrm
       LOGICAL                                            :: calculate_forces, &
                                                             calculate_stress_tensor, &
                                                             energy_consistency, eval_ef, &
@@ -258,7 +260,11 @@ CONTAINS
          CASE (use_qs_force)
             CALL qs_calc_energy_force(force_env%qs_env, calculate_forces, energy_consistency, linres_run)
          CASE (use_pwdft_force)
-            CALL pwdft_calc_energy_force(force_env%pwdft_env, calculate_forces)
+            IF (virial%pv_availability .AND. calculate_stress_tensor) THEN
+               CALL pwdft_calc_energy_force(force_env%pwdft_env, calculate_forces,.NOT. virial%pv_numer)
+            ELSE
+               CALL pwdft_calc_energy_force(force_env%pwdft_env, calculate_forces, .FALSE.)
+            END IF
          CASE (use_eip_force)
             IF (force_env%eip_env%eip_model == use_lenosky_eip) THEN
                CALL eip_lenosky(force_env%eip_env)
@@ -380,6 +386,9 @@ CONTAINS
                CALL section_vals_val_get(force_env%force_env_section, "PRINT%STRESS_TENSOR%NDIGITS", &
                                          i_val=ndigits)
                CALL write_stress_tensor(virial%pv_virial, output_unit, cell, ndigits, virial%pv_numer)
+               IF ((.NOT. virial%pv_numer) .AND. (force_env%in_use == use_qs_force)) THEN
+                  CALL write_stress_components(virial, output_unit)
+               END IF
             END IF
             CALL cp_print_key_finished_output(output_unit, logger, force_env%force_env_section, &
                                               "PRINT%STRESS_TENSOR")
@@ -420,6 +429,16 @@ CONTAINS
          CALL cp_print_key_finished_output(output_unit, logger, force_env%force_env_section, &
                                            "PRINT%PROGRAM_RUN_INFO")
       END IF
+
+      ! Print GRMM interface file
+      print_grrm = cp_print_key_unit_nr(logger, force_env%force_env_section, "PRINT%GRRM", &
+                                        file_position="REWIND", extension=".rrm")
+      IF (print_grrm > 0) THEN
+         CALL force_env_get(force_env, subsys=subsys)
+         CALL cp_subsys_get(subsys, particles=particles)
+         CALL write_grrm(print_grrm, particles%els, e_pot)
+      END IF
+      CALL cp_print_key_finished_output(print_grrm, logger, force_env%force_env_section, "PRINT%GRRM")
 
       ! Atomic stress
       output_unit = cp_print_key_unit_nr(logger, force_env%force_env_section, "PRINT%PROGRAM_RUN_INFO", &
@@ -940,8 +959,7 @@ CONTAINS
                                              skip_external_control=.TRUE.)
 
             ! Only the rank 0 process collect info for each computation
-            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%mepos == &
-                force_env%sub_force_env(iforce_eval)%force_env%para_env%source) THEN
+            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%ionode) THEN
                CALL force_env_get(force_env%sub_force_env(iforce_eval)%force_env, &
                                   potential_energy=energy)
                CALL cp_subsys_get(subsystems(iforce_eval)%subsys, &
@@ -973,8 +991,7 @@ CONTAINS
          ALLOCATE (global_forces(iforce_eval)%forces(3, glob_natoms(iforce_eval)))
          global_forces(iforce_eval)%forces = 0.0_dp
          IF (ASSOCIATED(force_env%sub_force_env(iforce_eval)%force_env)) THEN
-            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%mepos == &
-                force_env%sub_force_env(iforce_eval)%force_env%para_env%source) THEN
+            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%ionode) THEN
                ! Forces
                DO iparticle = 1, glob_natoms(iforce_eval)
                   global_forces(iforce_eval)%forces(:, iparticle) = &
@@ -993,8 +1010,7 @@ CONTAINS
          !Transfer results
          source = 0
          IF (ASSOCIATED(force_env%sub_force_env(iforce_eval)%force_env)) THEN
-            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%mepos == &
-                force_env%sub_force_env(iforce_eval)%force_env%para_env%source) &
+            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%ionode) &
                source = force_env%para_env%mepos
          ENDIF
          CALL mp_sum(source, force_env%para_env%group)
@@ -1267,8 +1283,7 @@ CONTAINS
                                           calc_force=calculate_forces, &
                                           skip_external_control=.TRUE.)
          ! Only the rank 0 process collect info for each computation
-         IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%mepos == &
-             force_env%sub_force_env(iforce_eval)%force_env%para_env%source) THEN
+         IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%ionode) THEN
             CALL force_env_get(force_env%sub_force_env(iforce_eval)%force_env, &
                                potential_energy=energy)
             CALL cp_subsys_get(subsystems(iforce_eval)%subsys, &
@@ -1323,8 +1338,7 @@ CONTAINS
                CALL force_env_get(force_env%sub_force_env(iforce_eval)%force_env, qs_env=qs_env)
             END IF
             CALL get_qs_env(qs_env, dft_control=dft_control)
-            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%mepos == &
-                force_env%sub_force_env(iforce_eval)%force_env%para_env%source) &
+            IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%ionode) &
                force_env%mixed_env%strength(iforce_eval, :) = dft_control%qs_control%cdft_control%strength(:)
          END DO
          CALL mp_sum(force_env%mixed_env%strength, force_env%para_env%group)
@@ -1471,8 +1485,7 @@ CONTAINS
          ENDIF
 
          ! Only the rank 0 process collect info for each computation
-         IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%mepos == &
-             force_env%sub_force_env(iforce_eval)%force_env%para_env%source) THEN
+         IF (force_env%sub_force_env(iforce_eval)%force_env%para_env%ionode) THEN
             CALL force_env_get(force_env%sub_force_env(iforce_eval)%force_env, &
                                potential_energy=energy)
             CALL cp_subsys_get(subsystems(iforce_eval)%subsys, &
@@ -1926,8 +1939,7 @@ CONTAINS
          ENDIF
 
          ! Substitute the correct energy in energies: only on rank 0
-         IF (force_env%sub_force_env(cluster_subsys_num)%force_env%para_env%mepos == &
-             force_env%sub_force_env(cluster_subsys_num)%force_env%para_env%source) THEN
+         IF (force_env%sub_force_env(cluster_subsys_num)%force_env%para_env%ionode) THEN
             energies(cluster_subsys_num) = cluster_energy
          ENDIF
       ENDIF
@@ -2095,8 +2107,7 @@ CONTAINS
       ENDDO ! i_iter
 
       ! Substitute the correct energy in energies: only on rank 0
-      IF (force_env%sub_force_env(cluster_subsys_num)%force_env%para_env%mepos == &
-          force_env%sub_force_env(cluster_subsys_num)%force_env%para_env%source) THEN
+      IF (force_env%sub_force_env(cluster_subsys_num)%force_env%para_env%ionode) THEN
          energies(cluster_subsys_num) = cluster_energy
       ENDIF
 

@@ -51,9 +51,9 @@ MODULE qs_scf_post_gpw
    USE cp_para_types,                   ONLY: cp_para_env_type
    USE cp_realspace_grid_cube,          ONLY: cp_pw_to_cube
    USE dbcsr_api,                       ONLY: &
-        convert_dbcsr_to_csr, csr_create_from_dbcsr, csr_dbcsr_blkrow_dist, csr_destroy, csr_type, &
-        csr_write, dbcsr_copy, dbcsr_desymmetrize, dbcsr_has_symmetry, dbcsr_p_type, &
-        dbcsr_release, dbcsr_type
+        dbcsr_convert_dbcsr_to_csr, dbcsr_copy, dbcsr_csr_create_from_dbcsr, &
+        dbcsr_csr_dbcsr_blkrow_dist, dbcsr_csr_destroy, dbcsr_csr_type, dbcsr_csr_write, &
+        dbcsr_desymmetrize, dbcsr_has_symmetry, dbcsr_p_type, dbcsr_release, dbcsr_type
    USE dct,                             ONLY: pw_shrink
    USE et_coupling_types,               ONLY: set_et_coupling_type
    USE hirshfeld_methods,               ONLY: comp_hirshfeld_charges,&
@@ -157,6 +157,8 @@ MODULE qs_scf_post_gpw
                                               qs_loc_env_init,&
                                               qs_loc_init,&
                                               retain_history
+   USE qs_local_properties,             ONLY: qs_local_energy,&
+                                              qs_local_stress
    USE qs_mo_io,                        ONLY: write_dm_binary_restart,&
                                               write_mo_set
    USE qs_mo_methods,                   ONLY: calculate_subspace_eigenvalues,&
@@ -373,6 +375,8 @@ CONTAINS
          print_key => section_vals_get_subs_vals(loc_print_section, "WANNIER_CUBES")
          p_loc = p_loc .OR. BTEST(cp_print_key_should_output(logger%iter_info, print_key), cp_p_file)
          print_key => section_vals_get_subs_vals(loc_print_section, "MOLECULAR_STATES")
+         p_loc = p_loc .OR. BTEST(cp_print_key_should_output(logger%iter_info, print_key), cp_p_file)
+         print_key => section_vals_get_subs_vals(loc_print_section, "MOLECULAR_MOMENTS")
          p_loc = p_loc .OR. BTEST(cp_print_key_should_output(logger%iter_info, print_key), cp_p_file)
       ELSE
          p_loc = .FALSE.
@@ -2304,6 +2308,12 @@ CONTAINS
          CALL pw_pool_give_back_pw(auxbas_pw_pool, aux_g%pw)
       END IF
 
+      ! Write cube files from the local energy
+      CALL qs_scf_post_local_energy(input, logger, qs_env)
+
+      ! Write cube files from the local stress tensor
+      CALL qs_scf_post_local_stress(input, logger, qs_env)
+
       ! Write cube files from the implicit Poisson solver
       CALL qs_scf_post_ps_implicit(input, logger, qs_env)
 
@@ -2649,6 +2659,163 @@ CONTAINS
    END SUBROUTINE project_function_b
 
 ! **************************************************************************************************
+!> \brief Performs printing of cube files from local energy
+!> \param input input
+!> \param logger the logger
+!> \param qs_env the qs_env in which the qs_env lives
+!> \par History
+!>      07.2019 created
+!> \author JGH
+! **************************************************************************************************
+   SUBROUTINE qs_scf_post_local_energy(input, logger, qs_env)
+      TYPE(section_vals_type), POINTER                   :: input
+      TYPE(cp_logger_type), POINTER                      :: logger
+      TYPE(qs_environment_type), POINTER                 :: qs_env
+
+      CHARACTER(len=*), PARAMETER :: routineN = 'qs_scf_post_local_energy', &
+         routineP = moduleN//':'//routineN
+
+      CHARACTER(LEN=default_path_length)                 :: filename, my_pos_cube
+      INTEGER                                            :: handle, io_unit, natom, unit_nr
+      LOGICAL                                            :: append_cube, gapw, gapw_xc, mpi_io
+      TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(particle_list_type), POINTER                  :: particles
+      TYPE(pw_env_type), POINTER                         :: pw_env
+      TYPE(pw_p_type)                                    :: eden
+      TYPE(pw_pool_type), POINTER                        :: auxbas_pw_pool
+      TYPE(qs_subsys_type), POINTER                      :: subsys
+      TYPE(section_vals_type), POINTER                   :: dft_section
+
+      CALL timeset(routineN, handle)
+      io_unit = cp_logger_get_default_io_unit(logger)
+      IF (BTEST(cp_print_key_should_output(logger%iter_info, input, &
+                                           "DFT%PRINT%LOCAL_ENERGY_CUBE"), cp_p_file)) THEN
+         dft_section => section_vals_get_subs_vals(input, "DFT")
+         CALL get_qs_env(qs_env=qs_env, dft_control=dft_control, natom=natom)
+         gapw = dft_control%qs_control%gapw
+         gapw_xc = dft_control%qs_control%gapw_xc
+         CALL get_qs_env(qs_env=qs_env, pw_env=pw_env, subsys=subsys)
+         CALL qs_subsys_get(subsys, particles=particles)
+         CALL pw_env_get(pw_env, auxbas_pw_pool=auxbas_pw_pool)
+         CALL pw_pool_create_pw(auxbas_pw_pool, eden%pw, use_data=REALDATA3D, in_space=REALSPACE)
+         !
+         CALL qs_local_energy(qs_env, eden)
+         !
+         append_cube = section_get_lval(input, "DFT%PRINT%LOCAL_ENERGY_CUBE%APPEND")
+         IF (append_cube) THEN
+            my_pos_cube = "APPEND"
+         ELSE
+            my_pos_cube = "REWIND"
+         END IF
+         mpi_io = .TRUE.
+         unit_nr = cp_print_key_unit_nr(logger, input, "DFT%PRINT%LOCAL_ENERGY_CUBE", &
+                                        extension=".cube", middle_name="local_energy", &
+                                        file_position=my_pos_cube, mpi_io=mpi_io)
+         CALL cp_pw_to_cube(eden%pw, &
+                            unit_nr, "LOCAL ENERGY", particles=particles, &
+                            stride=section_get_ivals(dft_section, &
+                                                     "PRINT%LOCAL_ENERGY_CUBE%STRIDE"), mpi_io=mpi_io)
+         IF (io_unit > 0) THEN
+            INQUIRE (UNIT=unit_nr, NAME=filename)
+            IF (gapw .OR. gapw_xc) THEN
+               WRITE (UNIT=io_unit, FMT="(/,T3,A,A)") &
+                  "The soft part of the local energy is written to the file: ", TRIM(ADJUSTL(filename))
+            ELSE
+               WRITE (UNIT=io_unit, FMT="(/,T3,A,A)") &
+                  "The local energy is written to the file: ", TRIM(ADJUSTL(filename))
+            END IF
+         END IF
+         CALL cp_print_key_finished_output(unit_nr, logger, input, &
+                                           "DFT%PRINT%LOCAL_ENERGY_CUBE", mpi_io=mpi_io)
+         !
+         CALL pw_pool_give_back_pw(auxbas_pw_pool, eden%pw)
+      END IF
+      CALL timestop(handle)
+
+   END SUBROUTINE qs_scf_post_local_energy
+
+! **************************************************************************************************
+!> \brief Performs printing of cube files from local energy
+!> \param input input
+!> \param logger the logger
+!> \param qs_env the qs_env in which the qs_env lives
+!> \par History
+!>      07.2019 created
+!> \author JGH
+! **************************************************************************************************
+   SUBROUTINE qs_scf_post_local_stress(input, logger, qs_env)
+      TYPE(section_vals_type), POINTER                   :: input
+      TYPE(cp_logger_type), POINTER                      :: logger
+      TYPE(qs_environment_type), POINTER                 :: qs_env
+
+      CHARACTER(len=*), PARAMETER :: routineN = 'qs_scf_post_local_stress', &
+         routineP = moduleN//':'//routineN
+
+      CHARACTER(LEN=default_path_length)                 :: filename, my_pos_cube
+      INTEGER                                            :: handle, io_unit, natom, unit_nr
+      LOGICAL                                            :: append_cube, gapw, gapw_xc, mpi_io
+      REAL(KIND=dp)                                      :: beta
+      TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(particle_list_type), POINTER                  :: particles
+      TYPE(pw_env_type), POINTER                         :: pw_env
+      TYPE(pw_p_type)                                    :: stress
+      TYPE(pw_pool_type), POINTER                        :: auxbas_pw_pool
+      TYPE(qs_subsys_type), POINTER                      :: subsys
+      TYPE(section_vals_type), POINTER                   :: dft_section
+
+      CALL timeset(routineN, handle)
+      io_unit = cp_logger_get_default_io_unit(logger)
+      IF (BTEST(cp_print_key_should_output(logger%iter_info, input, &
+                                           "DFT%PRINT%LOCAL_STRESS_CUBE"), cp_p_file)) THEN
+         dft_section => section_vals_get_subs_vals(input, "DFT")
+         CALL get_qs_env(qs_env=qs_env, dft_control=dft_control, natom=natom)
+         gapw = dft_control%qs_control%gapw
+         gapw_xc = dft_control%qs_control%gapw_xc
+         CALL get_qs_env(qs_env=qs_env, pw_env=pw_env, subsys=subsys)
+         CALL qs_subsys_get(subsys, particles=particles)
+         CALL pw_env_get(pw_env, auxbas_pw_pool=auxbas_pw_pool)
+         CALL pw_pool_create_pw(auxbas_pw_pool, stress%pw, use_data=REALDATA3D, in_space=REALSPACE)
+         !
+         ! use beta=0: kinetic energy density in symmetric form
+         beta = 0.0_dp
+         CALL qs_local_stress(qs_env, pressure=stress, beta=beta)
+         !
+         append_cube = section_get_lval(input, "DFT%PRINT%LOCAL_STRESS_CUBE%APPEND")
+         IF (append_cube) THEN
+            my_pos_cube = "APPEND"
+         ELSE
+            my_pos_cube = "REWIND"
+         END IF
+         mpi_io = .TRUE.
+         unit_nr = cp_print_key_unit_nr(logger, input, "DFT%PRINT%LOCAL_STRESS_CUBE", &
+                                        extension=".cube", middle_name="local_stress", &
+                                        file_position=my_pos_cube, mpi_io=mpi_io)
+         CALL cp_pw_to_cube(stress%pw, &
+                            unit_nr, "LOCAL STRESS", particles=particles, &
+                            stride=section_get_ivals(dft_section, &
+                                                     "PRINT%LOCAL_STRESS_CUBE%STRIDE"), mpi_io=mpi_io)
+         IF (io_unit > 0) THEN
+            INQUIRE (UNIT=unit_nr, NAME=filename)
+            WRITE (UNIT=io_unit, FMT="(/,T3,A)") "Write 1/3*Tr(sigma) to cube file"
+            IF (gapw .OR. gapw_xc) THEN
+               WRITE (UNIT=io_unit, FMT="(T3,A,A)") &
+                  "The soft part of the local stress is written to the file: ", TRIM(ADJUSTL(filename))
+            ELSE
+               WRITE (UNIT=io_unit, FMT="(T3,A,A)") &
+                  "The local stress is written to the file: ", TRIM(ADJUSTL(filename))
+            END IF
+         END IF
+         CALL cp_print_key_finished_output(unit_nr, logger, input, &
+                                           "DFT%PRINT%LOCAL_STRESS_CUBE", mpi_io=mpi_io)
+         !
+         CALL pw_pool_give_back_pw(auxbas_pw_pool, stress%pw)
+      END IF
+
+      CALL timestop(handle)
+
+   END SUBROUTINE qs_scf_post_local_stress
+
+! **************************************************************************************************
 !> \brief Performs printing of cube files related to the implicit Poisson solver
 !> \param input input
 !> \param logger the logger
@@ -2874,7 +3041,7 @@ CONTAINS
       LOGICAL                                            :: bin, do_kpoints, do_ks_csr_write, uptr
       REAL(KIND=dp)                                      :: thld
       TYPE(cp_logger_type), POINTER                      :: logger
-      TYPE(csr_type)                                     :: ks_mat_csr
+      TYPE(dbcsr_csr_type)                               :: ks_mat_csr
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: matrix_ks
       TYPE(dbcsr_type)                                   :: matrix_ks_nosym
       TYPE(section_vals_type), POINTER                   :: dft_section
@@ -2913,18 +3080,18 @@ CONTAINS
                CALL dbcsr_copy(matrix_ks_nosym, matrix_ks(ispin)%matrix)
             END IF
 
-            CALL csr_create_from_dbcsr(matrix_ks_nosym, ks_mat_csr, csr_dbcsr_blkrow_dist)
-            CALL convert_dbcsr_to_csr(matrix_ks_nosym, ks_mat_csr)
+            CALL dbcsr_csr_create_from_dbcsr(matrix_ks_nosym, ks_mat_csr, dbcsr_csr_dbcsr_blkrow_dist)
+            CALL dbcsr_convert_dbcsr_to_csr(matrix_ks_nosym, ks_mat_csr)
 
             WRITE (file_name, '(A,I0)') "KS_SPIN_", ispin
             unit_nr = cp_print_key_unit_nr(logger, dft_section, "PRINT%KS_CSR_WRITE", &
                                            extension=".csr", middle_name=TRIM(file_name), &
                                            file_status="REPLACE", file_form=fileformat)
-            CALL csr_write(ks_mat_csr, unit_nr, upper_triangle=uptr, threshold=thld, binary=bin)
+            CALL dbcsr_csr_write(ks_mat_csr, unit_nr, upper_triangle=uptr, threshold=thld, binary=bin)
 
             CALL cp_print_key_finished_output(unit_nr, logger, dft_section, "PRINT%KS_CSR_WRITE")
 
-            CALL csr_destroy(ks_mat_csr)
+            CALL dbcsr_csr_destroy(ks_mat_csr)
             CALL dbcsr_release(matrix_ks_nosym)
          END DO
       END IF
@@ -2951,7 +3118,7 @@ CONTAINS
       LOGICAL                                            :: bin, do_kpoints, do_s_csr_write, uptr
       REAL(KIND=dp)                                      :: thld
       TYPE(cp_logger_type), POINTER                      :: logger
-      TYPE(csr_type)                                     :: s_mat_csr
+      TYPE(dbcsr_csr_type)                               :: s_mat_csr
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: matrix_s
       TYPE(dbcsr_type)                                   :: matrix_s_nosym
       TYPE(section_vals_type), POINTER                   :: dft_section
@@ -2990,18 +3157,18 @@ CONTAINS
                CALL dbcsr_copy(matrix_s_nosym, matrix_s(ispin)%matrix)
             END IF
 
-            CALL csr_create_from_dbcsr(matrix_s_nosym, s_mat_csr, csr_dbcsr_blkrow_dist)
-            CALL convert_dbcsr_to_csr(matrix_s_nosym, s_mat_csr)
+            CALL dbcsr_csr_create_from_dbcsr(matrix_s_nosym, s_mat_csr, dbcsr_csr_dbcsr_blkrow_dist)
+            CALL dbcsr_convert_dbcsr_to_csr(matrix_s_nosym, s_mat_csr)
 
             WRITE (file_name, '(A,I0)') "S_SPIN_", ispin
             unit_nr = cp_print_key_unit_nr(logger, dft_section, "PRINT%S_CSR_WRITE", &
                                            extension=".csr", middle_name=TRIM(file_name), &
                                            file_status="REPLACE", file_form=fileformat)
-            CALL csr_write(s_mat_csr, unit_nr, upper_triangle=uptr, threshold=thld, binary=bin)
+            CALL dbcsr_csr_write(s_mat_csr, unit_nr, upper_triangle=uptr, threshold=thld, binary=bin)
 
             CALL cp_print_key_finished_output(unit_nr, logger, dft_section, "PRINT%S_CSR_WRITE")
 
-            CALL csr_destroy(s_mat_csr)
+            CALL dbcsr_csr_destroy(s_mat_csr)
             CALL dbcsr_release(matrix_s_nosym)
          END DO
       END IF

@@ -43,11 +43,10 @@ MODULE f77_interface
                                               cp_subsys_set,&
                                               cp_subsys_type,&
                                               unpack_subsys_particles
-   USE dbcsr_acc_device,                ONLY: acc_get_ndevices,&
-                                              acc_set_active_device
-   USE dbcsr_api,                       ONLY: dbcsr_finalize_lib,&
-                                              dbcsr_init_lib,&
-                                              dbcsr_set_hooks
+   USE dbcsr_api,                       ONLY: dbcsr_acc_get_ndevices,&
+                                              dbcsr_acc_set_active_device,&
+                                              dbcsr_finalize_lib,&
+                                              dbcsr_init_lib
    USE eip_environment,                 ONLY: eip_init
    USE eip_environment_types,           ONLY: eip_env_create,&
                                               eip_env_release,&
@@ -245,7 +244,7 @@ CONTAINS
          NULLIFY (default_para_env)
          CALL cp_para_env_create(default_para_env, group=mpi_comm_default, &
                                  owns_group=.FALSE.)
-         IF (default_para_env%source == default_para_env%mepos) THEN
+         IF (default_para_env%ionode) THEN
             unit_nr = default_output_unit
          ELSE
             unit_nr = -1
@@ -268,16 +267,15 @@ CONTAINS
          !   *** init the bibliography ***
          CALL add_all_references()
 
-         IF (acc_get_ndevices() > 0) &
-            CALL acc_set_active_device(MOD(default_para_env%mepos, acc_get_ndevices()))
+         IF (dbcsr_acc_get_ndevices() > 0) &
+            CALL dbcsr_acc_set_active_device(MOD(default_para_env%mepos, dbcsr_acc_get_ndevices()))
 
          CALL pw_cuda_init()
 
          ! Initialize the DBCSR configuration
-         CALL dbcsr_init_lib()
          ! Attach the time handler hooks to DBCSR
-         CALL dbcsr_set_hooks(timeset_hook, timestop_hook, &
-                              cp_abort_hook, cp_warn_hook)
+         CALL dbcsr_init_lib(default_para_env%group, timeset_hook, timestop_hook, &
+                             cp_abort_hook, cp_warn_hook, io_unit=unit_nr)
       ELSE
          ierr = cp_failure_level
       END IF
@@ -309,7 +307,7 @@ CONTAINS
          ierr = cp_failure_level
       ELSE
          ! Finalize the DBCSR configuration
-         CALL dbcsr_finalize_lib(group=default_para_env%group, output_unit=0)
+         CALL dbcsr_finalize_lib()
          CALL pw_cuda_finalize()
          DO ienv = n_f_envs, 1, -1
             CALL destroy_force_env(f_envs(ienv)%f_env%id_nr, ierr=ierr)
@@ -625,7 +623,7 @@ CONTAINS
       IF (PRESENT(output_unit)) THEN
          unit_nr = output_unit
       ELSE
-         IF (para_env%mepos == para_env%source) THEN
+         IF (para_env%ionode) THEN
             IF (output_path == "__STD_OUT__") THEN
                unit_nr = default_output_unit
             ELSE
@@ -1451,7 +1449,7 @@ CONTAINS
          para_env => default_para_env
          CALL cp_para_env_retain(para_env)
       END IF
-      IF (para_env%mepos == para_env%source) THEN
+      IF (para_env%ionode) THEN
          IF (output_file_path == "__STD_OUT__") THEN
             unit_nr = default_output_unit
          ELSE
@@ -1473,7 +1471,7 @@ CONTAINS
       input_file => read_input(input_declaration, input_file_path, initial_variables=empty_initial_variables, &
                                para_env=para_env)
       CALL check_cp2k_input(input_declaration, input_file, para_env=para_env, output_unit=unit_nr)
-      IF (my_echo_input .AND. para_env%mepos == para_env%source) THEN
+      IF (my_echo_input .AND. para_env%ionode) THEN
          CALL section_vals_write(input_file, &
                                  unit_nr=cp_logger_get_default_unit_nr(logger, local=.FALSE.), hide_root=.TRUE., &
                                  hide_defaults=.FALSE.)

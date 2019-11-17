@@ -68,7 +68,7 @@ MODULE mp2
         hfx_type
    USE input_constants,                 ONLY: &
         cholesky_inverse, do_admm_basis_projection, do_admm_purify_none, do_eri_gpw, do_eri_mme, &
-        do_mp2_potential_TShPSC, gw_print_exx, gw_read_exx, hfx_do_eval_energy, xc_none
+        do_potential_TShPSC, gw_print_exx, gw_read_exx, hfx_do_eval_energy, xc_none
    USE input_section_types,             ONLY: section_vals_get,&
                                               section_vals_get_subs_vals,&
                                               section_vals_type,&
@@ -93,9 +93,14 @@ MODULE mp2
    USE mp2_direct_method,               ONLY: mp2_canonical_direct_single_batch
    USE mp2_gpw,                         ONLY: mp2_gpw_main
    USE mp2_optimize_ri_basis,           ONLY: optimize_ri_basis_main
-   USE mp2_types,                       ONLY: &
-        mp2_biel_type, mp2_method_direct, mp2_method_gpw, mp2_method_laplace, &
-        mp2_ri_optimize_basis, mp2_type, ri_mp2_laplace, ri_mp2_method_gpw, ri_rpa_method_gpw
+   USE mp2_types,                       ONLY: mp2_biel_type,&
+                                              mp2_method_direct,&
+                                              mp2_method_gpw,&
+                                              mp2_ri_optimize_basis,&
+                                              mp2_type,&
+                                              ri_mp2_laplace,&
+                                              ri_mp2_method_gpw,&
+                                              ri_rpa_method_gpw
    USE particle_types,                  ONLY: particle_type
    USE physcon,                         ONLY: evolt
    USE qs_energy_types,                 ONLY: qs_energy_type
@@ -189,7 +194,6 @@ CONTAINS
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
       TYPE(qs_kind_type), POINTER                        :: qs_kind
       TYPE(qs_matrix_pools_type), POINTER                :: my_mpools
-      TYPE(qs_rho_type), POINTER                         :: rho
       TYPE(qs_scf_env_type), POINTER                     :: scf_env
       TYPE(section_vals_type), POINTER                   :: hfx_sections, input
       TYPE(virial_type), POINTER                         :: virial
@@ -220,7 +224,6 @@ CONTAINS
                          para_env=para_env, &
                          blacs_env=blacs_env, &
                          energy=energy, &
-                         rho=rho, &
                          kpoints=kpoints, &
                          scf_env=scf_env, &
                          matrix_ks_kp=matrix_ks_transl, &
@@ -241,7 +244,6 @@ CONTAINS
                          para_env=para_env, &
                          blacs_env=blacs_env, &
                          energy=energy, &
-                         rho=rho, &
                          mos=mos, &
                          scf_env=scf_env, virial=virial, &
                          matrix_ks=matrix_ks, &
@@ -309,22 +311,9 @@ CONTAINS
          mp2_env%mp2_memory = mp2_env%mp2_memory-mem_real
          IF (mp2_env%mp2_memory < 0.0_dp) mp2_env%mp2_memory = 1.0_dp
 
-         IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T68,F9.2,A4)') 'Available memory per MPI processes for MP2:', &
+         IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T68,F9.2,A4)') 'Available memory per MPI process for MP2:', &
             mp2_env%mp2_memory, ' MiB'
       END IF
-
-      ! just check that GW is used correctly
-
-      ! 1. cubic-scaling GW may not be used together with normal N^4 GW
-      CPASSERT(.NOT. (mp2_env%ri_rpa%do_ri_g0w0 .AND. mp2_env%ri_rpa_im_time%do_gw_im_time))
-
-      ! 2. cubic-scaling GW can only be used if cubic-scaling RPA is switched on
-      IF (mp2_env%ri_rpa_im_time%do_gw_im_time) THEN
-         CPASSERT(mp2_env%do_im_time)
-      END IF
-
-      ! 3. N^4 GW cannot be used together with cubic-scaling RPA
-      CPASSERT(.NOT. (mp2_env%ri_rpa%do_ri_g0w0 .AND. mp2_env%do_im_time))
 
       IF (unit_nr > 0) CALL m_flush(unit_nr)
 
@@ -479,7 +468,7 @@ CONTAINS
 
       ! calculate the matrix sigma_x - vxc for G0W0
       t3 = 0
-      IF (mp2_env%ri_rpa%do_ri_g0w0 .OR. mp2_env%ri_rpa_im_time%do_gw_im_time) THEN
+      IF (mp2_env%ri_rpa%do_ri_g0w0) THEN
          CALL compute_vec_Sigma_x_minus_vxc_gw(qs_env, mp2_env, mos_mp2, E_ex_from_GW, t3, unit_nr)
       END IF
       IF (free_hfx_buffer) THEN
@@ -527,8 +516,6 @@ CONTAINS
 
       t1 = m_walltime()
       SELECT CASE (mp2_env%method)
-      CASE (mp2_method_laplace)
-         CPABORT("laplace not implemented")
       CASE (mp2_method_direct)
          IF (unit_nr > 0) WRITE (unit_nr, *)
 
@@ -566,8 +553,7 @@ CONTAINS
             Emp2_AA_ex = 0.0_dp
             CALL mp2_direct_energy(dimen, nelec_alpha, nelec_alpha, mp2_biel, &
                                    mp2_env, C_alpha, Auto_alpha, Emp2_AA, Emp2_AA_Cou, Emp2_AA_ex, &
-                                   qs_env, rho, para_env, &
-                                   unit_nr)
+                                   qs_env, para_env, unit_nr)
             IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T56,F25.14)') 'MP2 Energy Alpha-Alpha = ', Emp2_AA
             IF (unit_nr > 0) WRITE (unit_nr, *)
 
@@ -576,8 +562,7 @@ CONTAINS
             Emp2_BB_ex = 0.0_dp
             CALL mp2_direct_energy(dimen, nelec_beta, nelec_beta, mp2_biel, mp2_env, &
                                    C_beta, Auto_beta, Emp2_BB, Emp2_BB_Cou, Emp2_BB_ex, &
-                                   qs_env, rho, para_env, &
-                                   unit_nr)
+                                   qs_env, para_env, unit_nr)
             IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T56,F25.14)') 'MP2 Energy Beta-Beta= ', Emp2_BB
             IF (unit_nr > 0) WRITE (unit_nr, *)
 
@@ -586,8 +571,7 @@ CONTAINS
             Emp2_AB_ex = 0.0_dp
             CALL mp2_direct_energy(dimen, nelec_alpha, nelec_beta, mp2_biel, mp2_env, C_alpha, &
                                    Auto_alpha, Emp2_AB, Emp2_AB_Cou, Emp2_AB_ex, &
-                                   qs_env, rho, para_env, &
-                                   unit_nr, C_beta, Auto_beta)
+                                   qs_env, para_env, unit_nr, C_beta, Auto_beta)
             IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T56,F25.14)') 'MP2 Energy Alpha-Beta= ', Emp2_AB
             IF (unit_nr > 0) WRITE (unit_nr, *)
 
@@ -613,8 +597,7 @@ CONTAINS
             Auto(:) = mo_eigenvalues(:)
 
             CALL mp2_direct_energy(dimen, nelectron/2, nelectron/2, mp2_biel, mp2_env, C, Auto, Emp2, Emp2_Cou, Emp2_ex, &
-                                   qs_env, rho, para_env, &
-                                   unit_nr)
+                                   qs_env, para_env, unit_nr)
 
          END IF
 
@@ -652,16 +635,14 @@ CONTAINS
             ! optimize basis
             CALL optimize_ri_basis_main(Emp2, Emp2_Cou, Emp2_ex, Emp2_S, Emp2_T, dimen, natom, nelectron, &
                                         mp2_biel, mp2_env, C, Auto, &
-                                        kind_of, qs_env, rho, para_env, &
-                                        unit_nr, &
+                                        kind_of, qs_env, para_env, unit_nr, &
                                         nelec_beta, C_beta, Auto_beta)
 
          ELSE
             ! optimize basis
             CALL optimize_ri_basis_main(Emp2, Emp2_Cou, Emp2_ex, Emp2_S, Emp2_T, dimen, natom, nelectron/2, &
                                         mp2_biel, mp2_env, C, Auto, &
-                                        kind_of, qs_env, rho, para_env, &
-                                        unit_nr)
+                                        kind_of, qs_env, para_env, unit_nr)
          END IF
 
       CASE (mp2_method_gpw)
@@ -742,12 +723,21 @@ CONTAINS
          IF (mp2_env%ri_rpa%do_ri_axk) THEN
             IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T56,F25.14)') 'RI-RPA-AXK energy=', mp2_env%ri_rpa%ener_axk
          ENDIF
+         IF (mp2_env%ri_rpa%do_rse) THEN
+            IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T56,F25.14)') 'Diagonal singles correction (dRSE) = ', &
+               mp2_env%ri_rpa%rse_corr_diag
+            IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T56,F25.14)') 'Full singles correction (RSE) =', &
+               mp2_env%ri_rpa%rse_corr
+         ENDIF
       END IF
       IF (unit_nr > 0) WRITE (unit_nr, *)
 
       ! we have it !!!!
       IF (mp2_env%ri_rpa%do_ri_axk) THEN
          Emp2 = Emp2+mp2_env%ri_rpa%ener_axk
+      ENDIF
+      IF (mp2_env%ri_rpa%do_rse) THEN
+         Emp2 = Emp2+mp2_env%ri_rpa%rse_corr
       ENDIF
       energy%mp2 = Emp2
       energy%total = energy%total+Emp2
@@ -799,7 +789,7 @@ CONTAINS
          hfx_sections => section_vals_get_subs_vals(input, "DFT%XC%WF_CORRELATION%RI_RPA%HF")
          CALL section_vals_get(hfx_sections, explicit=do_exx)
          IF (do_exx) THEN
-            do_gw = mp2_env%ri_rpa%do_ri_g0w0 .OR. mp2_env%ri_rpa_im_time%do_gw_im_time
+            do_gw = mp2_env%ri_rpa%do_ri_g0w0
             do_admm = mp2_env%ri_rpa%do_admm
             CALL calculate_exx(qs_env, unit_nr, do_gw, do_admm, E_ex_from_GW, t3)
          END IF
@@ -854,14 +844,13 @@ CONTAINS
 !> \param Emp2_Cou ...
 !> \param Emp2_ex ...
 !> \param qs_env ...
-!> \param rho ...
 !> \param para_env ...
 !> \param unit_nr ...
 !> \param C_j ...
 !> \param Auto_j ...
 ! **************************************************************************************************
    SUBROUTINE mp2_direct_energy(dimen, occ_i, occ_j, mp2_biel, mp2_env, C_i, Auto_i, Emp2, Emp2_Cou, Emp2_ex, &
-                                qs_env, rho, para_env, &
+                                qs_env, para_env, &
                                 unit_nr, C_j, Auto_j)
       INTEGER, INTENT(IN)                                :: dimen, occ_i, occ_j
       TYPE(mp2_biel_type), INTENT(IN)                    :: mp2_biel
@@ -870,7 +859,6 @@ CONTAINS
       REAL(KIND=dp), DIMENSION(dimen), INTENT(IN)        :: Auto_i
       REAL(KIND=dp), INTENT(OUT)                         :: Emp2, Emp2_Cou, Emp2_ex
       TYPE(qs_environment_type), POINTER                 :: qs_env
-      TYPE(qs_rho_type), POINTER                         :: rho
       TYPE(cp_para_env_type), POINTER                    :: para_env
       INTEGER, INTENT(IN)                                :: unit_nr
       REAL(KIND=dp), DIMENSION(dimen, dimen), &
@@ -902,7 +890,7 @@ CONTAINS
       alpha_beta_case = .FALSE.
       IF (PRESENT(C_j) .AND. PRESENT(Auto_j)) alpha_beta_case = .TRUE.
 
-      IF (unit_nr > 0 .AND. mp2_env%potential_parameter%potential_type == do_mp2_potential_TShPSC) THEN
+      IF (unit_nr > 0 .AND. mp2_env%potential_parameter%potential_type == do_potential_TShPSC) THEN
          IF (unit_nr > 0) WRITE (unit_nr, '(T3,A,T64,F12.6,A5)') 'Truncated MP2 method, Rt=', &
             mp2_env%potential_parameter%truncation_radius, ' Bohr'
       END IF
@@ -1116,11 +1104,11 @@ CONTAINS
          DEALLOCATE (ij_list_proc_temp)
 
          IF (.NOT. alpha_beta_case) THEN
-            CALL mp2_canonical_direct_single_batch(Emp2, Emp2_Cou, Emp2_ex, mp2_env, qs_env, rho, para_env_sub, &
+            CALL mp2_canonical_direct_single_batch(Emp2, Emp2_Cou, Emp2_ex, mp2_env, qs_env, para_env_sub, &
                                                    mp2_biel, dimen, C_i, Auto_i, i_batch_start, Ni_occupied, occ_i, &
                                                    elements_ij_proc, ij_list_proc, Nj_occupied, j_batch_start)
          ELSE
-            CALL mp2_canonical_direct_single_batch(Emp2, Emp2_Cou, Emp2_ex, mp2_env, qs_env, rho, para_env_sub, &
+            CALL mp2_canonical_direct_single_batch(Emp2, Emp2_Cou, Emp2_ex, mp2_env, qs_env, para_env_sub, &
                                                    mp2_biel, dimen, C_i, Auto_i, i_batch_start, Ni_occupied, occ_i, &
                                                    elements_ij_proc, ij_list_proc, Nj_occupied, j_batch_start, &
                                                    occ_j, C_j, Auto_j)
@@ -1231,9 +1219,10 @@ CONTAINS
             ELSE
                matrix_ks_2d(1:ns, 1:1) => matrix_ks(1:ns)
             END IF
-            CALL integrate_four_center(qs_env, matrix_ks_2d, eh1, rho_ao_2d, hfx_sections, &
+            CALL integrate_four_center(qs_env, qs_env%mp2_env%ri_rpa%x_data, matrix_ks_2d, eh1, &
+                                       rho_ao_2d, hfx_sections, &
                                        para_env, .TRUE., irep, .TRUE., &
-                                       ispin=1, do_exx=.TRUE.)
+                                       ispin=1)
             ehfx = ehfx+eh1
          END DO
 
@@ -1568,9 +1557,10 @@ CONTAINS
                   matrix_ks_2d(1:ns, 1:1) => matrix_ks(1:ns)
                END IF
 
-               CALL integrate_four_center(qs_env, matrix_ks_2d, eh1, rho_ao_2d, hfx_sections, &
+               CALL integrate_four_center(qs_env, qs_env%mp2_env%ri_rpa%x_data, matrix_ks_2d, eh1, &
+                                          rho_ao_2d, hfx_sections, &
                                           para_env, .TRUE., irep, .TRUE., &
-                                          ispin=1, do_exx=.TRUE.)
+                                          ispin=1)
                ehfx = ehfx+eh1
             END DO
          END IF

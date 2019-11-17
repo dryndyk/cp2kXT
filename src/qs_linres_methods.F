@@ -57,6 +57,7 @@ MODULE qs_linres_methods
                                               ot_precond_solver_default,&
                                               state_loc_all
    USE input_section_types,             ONLY: section_get_ival,&
+                                              section_get_lval,&
                                               section_get_rval,&
                                               section_vals_get_subs_vals,&
                                               section_vals_type,&
@@ -64,9 +65,14 @@ MODULE qs_linres_methods
    USE kinds,                           ONLY: default_path_length,&
                                               default_string_length,&
                                               dp
+   USE lri_environment_types,           ONLY: lri_density_type,&
+                                              lri_environment_type,&
+                                              lri_kind_type
+   USE lri_ks_methods,                  ONLY: calculate_lri_ks_matrix
    USE machine,                         ONLY: m_flush,&
                                               m_walltime
-   USE message_passing,                 ONLY: mp_bcast
+   USE message_passing,                 ONLY: mp_bcast,&
+                                              mp_sum
    USE mulliken,                        ONLY: ao_charges
    USE particle_types,                  ONLY: particle_type
    USE preconditioner,                  ONLY: apply_preconditioner,&
@@ -94,7 +100,9 @@ MODULE qs_linres_methods
    USE qs_environment_types,            ONLY: get_qs_env,&
                                               qs_environment_type
    USE qs_gapw_densities,               ONLY: prepare_gapw_den
-   USE qs_integrate_potential,          ONLY: integrate_v_rspace
+   USE qs_integrate_potential,          ONLY: integrate_v_rspace,&
+                                              integrate_v_rspace_diagonal,&
+                                              integrate_v_rspace_one_center
    USE qs_kind_types,                   ONLY: get_qs_kind,&
                                               get_qs_kind_set,&
                                               qs_kind_type
@@ -122,10 +130,12 @@ MODULE qs_linres_methods
    USE qs_vxc_atom,                     ONLY: calculate_xc_2nd_deriv_atom
    USE string_utilities,                ONLY: xstring
    USE xc,                              ONLY: xc_calc_2nd_deriv,&
-                                              xc_prep_2nd_deriv
+                                              xc_prep_2nd_deriv,&
+                                              xc_vxc_pw_create
    USE xc_derivatives,                  ONLY: xc_functionals_get_needs
    USE xc_rho_cflags_types,             ONLY: xc_rho_cflags_type
    USE xc_rho_set_types,                ONLY: xc_rho_set_create,&
+                                              xc_rho_set_get,&
                                               xc_rho_set_release,&
                                               xc_rho_set_type,&
                                               xc_rho_set_update
@@ -666,7 +676,10 @@ CONTAINS
 
       IF (linres_control%do_kernel) THEN
 
-         ! build DM
+         ! build DM, refill p1, build_dm_response keeps sparse structure
+         DO ispin = 1, nspins
+            CALL dbcsr_copy(p_env%p1(ispin)%matrix, matrix_s(1)%matrix)
+         ENDDO
          CALL build_dm_response(c0, v, p_env%p1)
          DO ispin = 1, nspins
             CALL dbcsr_filter(p_env%p1(ispin)%matrix, linres_control%eps_filter)
@@ -833,21 +846,32 @@ CONTAINS
       TYPE(cp_fm_p_type), DIMENSION(:), POINTER          :: c0, v, Av, chc
 
       CHARACTER(len=*), PARAMETER :: routineN = 'apply_op_2_dft', routineP = moduleN//':'//routineN
+      REAL(KIND=dp), PARAMETER                           :: h = 0.001_dp
 
-      INTEGER                                            :: handle, ispin, ncol, ns, nspins
+      INTEGER                                            :: handle, ikind, ispin, ncol, nkind, ns, &
+                                                            nspins
       INTEGER, DIMENSION(2, 3)                           :: bo
-      LOGICAL                                            :: gapw, gapw_xc, lr_triplet, lsd
-      REAL(KIND=dp)                                      :: energy_hartree, energy_hartree_1c, fac
+      LOGICAL                                            :: deriv2_analytic, gapw, gapw_xc, &
+                                                            lr_triplet, lrigpw, lsd
+      REAL(KIND=dp)                                      :: energy_hartree, energy_hartree_1c, exc, &
+                                                            fac
+      REAL(KIND=dp), DIMENSION(3, 3)                     :: virial_xc
+      REAL(kind=dp), DIMENSION(:, :, :), POINTER         :: rho3, rhoa, rhob
+      TYPE(atomic_kind_type), DIMENSION(:), POINTER      :: atomic_kind_set
       TYPE(cp_logger_type), POINTER                      :: logger
-      TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: rho1_ao, rho_ao
+      TYPE(cp_para_env_type), POINTER                    :: para_env
+      TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: k1mat, rho1_ao, rho_ao
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: ksmat, psmat
       TYPE(dft_control_type), POINTER                    :: dft_control
       TYPE(linres_control_type), POINTER                 :: linres_control
+      TYPE(lri_density_type), POINTER                    :: lri_density
+      TYPE(lri_environment_type), POINTER                :: lri_env
+      TYPE(lri_kind_type), DIMENSION(:), POINTER         :: lri_v_int
       TYPE(pw_env_type), POINTER                         :: pw_env
       TYPE(pw_p_type)                                    :: rho1_tot_gspace, v_hartree_gspace, &
                                                             v_hartree_rspace
-      TYPE(pw_p_type), DIMENSION(:), POINTER             :: rho1_g, rho1_g_pw, rho1_r, rho1_r_pw, &
-                                                            tau_pw, v_rspace_new, v_xc
+      TYPE(pw_p_type), DIMENSION(:), POINTER :: rho1_g, rho1_g_pw, rho1_r, rho1_r_pw, rho_g, &
+         rho_r, tau, tau_pw, v_rspace_new, v_xc, vxc_rho_1, vxc_rho_2, vxc_rho_3, vxc_rho_4
       TYPE(pw_poisson_type), POINTER                     :: poisson_env
       TYPE(pw_pool_p_type), DIMENSION(:), POINTER        :: pw_pools
       TYPE(pw_pool_type), POINTER                        :: auxbas_pw_pool
@@ -886,6 +910,14 @@ CONTAINS
                       rho=rho, &
                       linres_control=linres_control, &
                       dft_control=dft_control)
+
+      lrigpw = dft_control%qs_control%lrigpw
+      IF (lrigpw) THEN
+         CALL get_qs_env(qs_env, &
+                         lri_env=lri_env, &
+                         lri_density=lri_density, &
+                         atomic_kind_set=atomic_kind_set)
+      ENDIF
 
       CALL qs_rho_get(rho, rho_ao=rho_ao)
 
@@ -972,52 +1004,159 @@ CONTAINS
 
       NULLIFY (tau_pw)
 
-      !------!
-      ! rho1 !
-      !------!
-      bo = rho1_r(1)%pw%pw_grid%bounds_local
-      ! create the place where to store the argument for the functionals
-      CALL xc_rho_set_create(rho1_set, bo, &
-                             rho_cutoff=section_get_rval(xc_section, "DENSITY_CUTOFF"), &
-                             drho_cutoff=section_get_rval(xc_section, "GRADIENT_CUTOFF"), &
-                             tau_cutoff=section_get_rval(xc_section, "TAU_CUTOFF"))
+      deriv2_analytic = section_get_lval(xc_section, "2ND_DERIV_ANALYTICAL")
 
-      xc_fun_section => section_vals_get_subs_vals(xc_section, "XC_FUNCTIONAL")
-      needs = xc_functionals_get_needs(xc_fun_section, lsd, .TRUE.)
+      IF (deriv2_analytic) THEN
+         !------!
+         ! rho1 !
+         !------!
+         bo = rho1_r(1)%pw%pw_grid%bounds_local
+         ! create the place where to store the argument for the functionals
+         CALL xc_rho_set_create(rho1_set, bo, &
+                                rho_cutoff=section_get_rval(xc_section, "DENSITY_CUTOFF"), &
+                                drho_cutoff=section_get_rval(xc_section, "GRADIENT_CUTOFF"), &
+                                tau_cutoff=section_get_rval(xc_section, "TAU_CUTOFF"))
 
-      ! calculate the arguments needed by the functionals
-      CALL xc_rho_set_update(rho1_set, rho1_r_pw, rho1_g_pw, tau_pw, needs, &
-                             section_get_ival(xc_section, "XC_GRID%XC_DERIV"), &
-                             section_get_ival(xc_section, "XC_GRID%XC_SMOOTH_RHO"), &
-                             auxbas_pw_pool)
+         xc_fun_section => section_vals_get_subs_vals(xc_section, "XC_FUNCTIONAL")
+         needs = xc_functionals_get_needs(xc_fun_section, lsd, .TRUE.)
 
-      ALLOCATE (v_xc(nspins))
-      DO ispin = 1, nspins
-         NULLIFY (v_xc(ispin)%pw)
-         CALL pw_pool_create_pw(auxbas_pw_pool, v_xc(ispin)%pw, &
-                                use_data=REALDATA3D, &
-                                in_space=REALSPACE)
-         CALL pw_zero(v_xc(ispin)%pw)
-      END DO
+         ! calculate the arguments needed by the functionals
+         CALL xc_rho_set_update(rho1_set, rho1_r_pw, rho1_g_pw, tau_pw, needs, &
+                                section_get_ival(xc_section, "XC_GRID%XC_DERIV"), &
+                                section_get_ival(xc_section, "XC_GRID%XC_SMOOTH_RHO"), &
+                                auxbas_pw_pool)
 
-      fac = 0._dp
-      IF (nspins == 1) THEN
-         IF (lr_triplet) fac = -1.0_dp
+         ALLOCATE (v_xc(nspins))
+         DO ispin = 1, nspins
+            NULLIFY (v_xc(ispin)%pw)
+            CALL pw_pool_create_pw(auxbas_pw_pool, v_xc(ispin)%pw, &
+                                   use_data=REALDATA3D, &
+                                   in_space=REALSPACE)
+            CALL pw_zero(v_xc(ispin)%pw)
+         END DO
+
+         fac = 0._dp
+         IF (nspins == 1) THEN
+            IF (lr_triplet) fac = -1.0_dp
+         END IF
+
+         CALL xc_calc_2nd_deriv(v_xc, p_env%kpp1_env%deriv_set, p_env%kpp1_env%rho_set, &
+                                rho1_set, auxbas_pw_pool, xc_section=xc_section, &
+                                tddfpt_fac=fac)
+
+         DO ispin = 1, nspins
+            v_rspace_new(ispin)%pw => v_xc(ispin)%pw
+         END DO
+         DEALLOCATE (v_xc)
+
+         IF (gapw) CALL calculate_xc_2nd_deriv_atom(p_env, qs_env, xc_section, do_tddft=.FALSE., &
+                                                    do_triplet=lr_triplet)
+
+         CALL xc_rho_set_release(rho1_set)
+
+      ELSE
+         NULLIFY (tau)
+         ALLOCATE (v_xc(nspins))
+         DO ispin = 1, nspins
+            NULLIFY (v_xc(ispin)%pw)
+            CALL pw_pool_create_pw(auxbas_pw_pool, v_xc(ispin)%pw, &
+                                   use_data=REALDATA3D, &
+                                   in_space=REALSPACE)
+            CALL pw_zero(v_xc(ispin)%pw)
+         END DO
+         ! finite differences
+         CPASSERT(.NOT. gapw)
+         IF (nspins == 2) THEN
+            NULLIFY (vxc_rho_1, vxc_rho_2, rho_g)
+            ALLOCATE (rho_r(2))
+            DO ispin = 1, nspins
+               NULLIFY (rho_r(ispin)%pw)
+               CALL pw_pool_create_pw(auxbas_pw_pool, rho_r(ispin)%pw, in_space=REALSPACE, use_data=REALDATA3D)
+            END DO
+            CALL xc_rho_set_get(p_env%kpp1_env%rho_set, rhoa=rhoa, rhob=rhob)
+            rho_r(1)%pw%cr3d(:, :, :) = rhoa(:, :, :)+0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            rho_r(2)%pw%cr3d(:, :, :) = rhob(:, :, :)+0.5_dp*h*rho1_r(2)%pw%cr3d(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_1, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            rho_r(1)%pw%cr3d(:, :, :) = rhoa(:, :, :)-0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            rho_r(2)%pw%cr3d(:, :, :) = rhob(:, :, :)-0.5_dp*h*rho1_r(2)%pw%cr3d(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_2, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            v_xc(1)%pw%cr3d(:, :, :) = (vxc_rho_1(1)%pw%cr3d(:, :, :)-vxc_rho_2(1)%pw%cr3d(:, :, :))/h
+            v_xc(2)%pw%cr3d(:, :, :) = (vxc_rho_1(2)%pw%cr3d(:, :, :)-vxc_rho_2(2)%pw%cr3d(:, :, :))/h
+            DO ispin = 1, nspins
+               CALL pw_pool_give_back_pw(auxbas_pw_pool, rho_r(ispin)%pw)
+            END DO
+            DEALLOCATE (rho_r)
+            DO ispin = 1, nspins
+               CALL pw_release(vxc_rho_1(ispin)%pw)
+               CALL pw_release(vxc_rho_2(ispin)%pw)
+            END DO
+            DEALLOCATE (vxc_rho_1, vxc_rho_2)
+         ELSE IF (nspins == 1 .AND. (lr_triplet)) THEN
+            NULLIFY (vxc_rho_1, vxc_rho_2, vxc_rho_3, vxc_rho_4, rho_g)
+            ALLOCATE (rho_r(2))
+            DO ispin = 1, 2
+               NULLIFY (rho_r(ispin)%pw)
+               CALL pw_pool_create_pw(auxbas_pw_pool, rho_r(ispin)%pw, in_space=REALSPACE, use_data=REALDATA3D)
+            END DO
+            CALL xc_rho_set_get(p_env%kpp1_env%rho_set, rhoa=rhoa, rhob=rhob)
+            ! K(alpha,alpha)
+            rho_r(1)%pw%cr3d(:, :, :) = rhoa(:, :, :)+0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            rho_r(2)%pw%cr3d(:, :, :) = rhob(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_1, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            rho_r(1)%pw%cr3d(:, :, :) = rhoa(:, :, :)-0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            rho_r(2)%pw%cr3d(:, :, :) = rhob(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_2, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            v_xc(1)%pw%cr3d(:, :, :) = (vxc_rho_1(1)%pw%cr3d(:, :, :)-vxc_rho_2(1)%pw%cr3d(:, :, :))/h
+            ! K(alpha,beta)
+            rho_r(1)%pw%cr3d(:, :, :) = rhoa(:, :, :)
+            rho_r(2)%pw%cr3d(:, :, :) = rhob(:, :, :)+0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_3, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            rho_r(1)%pw%cr3d(:, :, :) = rhoa(:, :, :)
+            rho_r(2)%pw%cr3d(:, :, :) = rhob(:, :, :)-0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_4, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            v_xc(1)%pw%cr3d(:, :, :) = v_xc(1)%pw%cr3d(:, :, :)- &
+                                       (vxc_rho_3(1)%pw%cr3d(:, :, :)-vxc_rho_4(1)%pw%cr3d(:, :, :))/h
+            DO ispin = 1, 2
+               CALL pw_pool_give_back_pw(auxbas_pw_pool, rho_r(ispin)%pw)
+            END DO
+            DEALLOCATE (rho_r)
+            DO ispin = 1, 2
+               CALL pw_release(vxc_rho_1(ispin)%pw)
+               CALL pw_release(vxc_rho_2(ispin)%pw)
+               CALL pw_release(vxc_rho_3(ispin)%pw)
+               CALL pw_release(vxc_rho_4(ispin)%pw)
+            END DO
+            DEALLOCATE (vxc_rho_1, vxc_rho_2, vxc_rho_3, vxc_rho_4)
+         ELSE
+            NULLIFY (vxc_rho_1, vxc_rho_2, rho_r, rho_g)
+            ALLOCATE (rho_r(1))
+            NULLIFY (rho_r(1)%pw)
+            CALL pw_pool_create_pw(auxbas_pw_pool, rho_r(1)%pw, in_space=REALSPACE, use_data=REALDATA3D)
+            CALL xc_rho_set_get(p_env%kpp1_env%rho_set, rho=rho3)
+            rho_r(1)%pw%cr3d(:, :, :) = rho3(:, :, :)+0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_1, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            rho_r(1)%pw%cr3d(:, :, :) = rho3(:, :, :)-0.5_dp*h*rho1_r(1)%pw%cr3d(:, :, :)
+            CALL xc_vxc_pw_create(vxc_rho_2, tau_pw, exc, rho_r, rho_g, tau, xc_section, &
+                                  auxbas_pw_pool, .FALSE., virial_xc)
+            v_xc(1)%pw%cr3d(:, :, :) = (vxc_rho_1(1)%pw%cr3d(:, :, :)-vxc_rho_2(1)%pw%cr3d(:, :, :))/h
+            CALL pw_pool_give_back_pw(auxbas_pw_pool, rho_r(1)%pw)
+            DEALLOCATE (rho_r)
+            CALL pw_release(vxc_rho_1(1)%pw)
+            CALL pw_release(vxc_rho_2(1)%pw)
+            DEALLOCATE (vxc_rho_1, vxc_rho_2)
+         END IF
+         DO ispin = 1, nspins
+            v_rspace_new(ispin)%pw => v_xc(ispin)%pw
+         END DO
+         DEALLOCATE (v_xc)
       END IF
-
-      CALL xc_calc_2nd_deriv(v_xc, p_env%kpp1_env%deriv_set, p_env%kpp1_env%rho_set, &
-                             rho1_set, auxbas_pw_pool, xc_section=xc_section, &
-                             tddfpt_fac=fac)
-
-      DO ispin = 1, nspins
-         v_rspace_new(ispin)%pw => v_xc(ispin)%pw
-      END DO
-      DEALLOCATE (v_xc)
-
-      IF (gapw) CALL calculate_xc_2nd_deriv_atom(p_env, qs_env, xc_section, do_tddft=.FALSE., &
-                                                 do_triplet=lr_triplet)
-
-      CALL xc_rho_set_release(rho1_set)
 
       DO ispin = 1, SIZE(rho1_r_pw)
          CALL pw_release(rho1_r_pw(ispin)%pw)
@@ -1116,11 +1255,32 @@ CONTAINS
             ! remove kpp1_env%v_ao and work directly on k_p_p1 ?
             CALL dbcsr_set(p_env%kpp1_env%v_ao(ispin)%matrix, 0.0_dp)
 
-            CALL integrate_v_rspace(v_rspace=v_rspace_new(ispin), &
-                                    pmat=rho_ao(ispin), &
-                                    hmat=p_env%kpp1_env%v_ao(ispin), &
-                                    qs_env=qs_env, &
-                                    calculate_forces=.FALSE., gapw=gapw)
+            IF (lrigpw) THEN
+               lri_v_int => lri_density%lri_coefs(ispin)%lri_kinds
+               CALL get_qs_env(qs_env, para_env=para_env, nkind=nkind)
+               DO ikind = 1, nkind
+                  lri_v_int(ikind)%v_int = 0.0_dp
+               END DO
+               CALL integrate_v_rspace_one_center(v_rspace_new(ispin), qs_env, &
+                                                  lri_v_int, .FALSE., "LRI_AUX")
+               DO ikind = 1, nkind
+                  CALL mp_sum(lri_v_int(ikind)%v_int, para_env%group)
+               END DO
+               ALLOCATE (k1mat(1))
+               k1mat(1)%matrix => p_env%kpp1_env%v_ao(ispin)%matrix
+               IF (lri_env%exact_1c_terms) THEN
+                  CALL integrate_v_rspace_diagonal(v_rspace_new(ispin), k1mat(1)%matrix, &
+                                                   rho_ao(ispin)%matrix, qs_env, .FALSE., "ORB")
+               END IF
+               CALL calculate_lri_ks_matrix(lri_env, lri_v_int, k1mat, atomic_kind_set)
+               DEALLOCATE (k1mat)
+            ELSE
+               CALL integrate_v_rspace(v_rspace=v_rspace_new(ispin), &
+                                       pmat=rho_ao(ispin), &
+                                       hmat=p_env%kpp1_env%v_ao(ispin), &
+                                       qs_env=qs_env, &
+                                       calculate_forces=.FALSE., gapw=gapw)
+            END IF
 
          END IF
 

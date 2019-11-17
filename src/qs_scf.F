@@ -393,7 +393,7 @@ CONTAINS
       END IF
       CALL cp_add_iter_level(logger%iter_info, "QS_SCF")
 
-      ! check for external communicator and if the inermediate energy should be sended
+      ! check for external communicator and if the intermediate energy should be sent
       res_val_3(:) = -1.0_dp
       description = "[EXT_SCF_ENER_COMM]"
       IF (test_for_result(results, description=description)) THEN
@@ -893,7 +893,7 @@ CONTAINS
 ! **************************************************************************************************
 !> \brief perform a CDFT scf procedure in the given qs_env
 !> \param qs_env the qs_environment where to perform the scf procedure
-!> \param should_stop flag determing if calculation should stop
+!> \param should_stop flag determining if calculation should stop
 !> \par History
 !>      12.2015 Created
 !> \author Nico Holmberg
@@ -1323,7 +1323,7 @@ CONTAINS
             CALL build_diagonal_jacobian(qs_env, used_history)
          END IF
       END IF
-      IF (ASSOCIATED(scf_env%outer_scf%inv_jacobian) .AND. para_env%mepos == para_env%source) THEN
+      IF (ASSOCIATED(scf_env%outer_scf%inv_jacobian) .AND. para_env%ionode) THEN
          ! Write restart file for inverse Jacobian
          CALL print_inverse_jacobian(logger, scf_env%outer_scf%inv_jacobian, iter_count)
       END IF

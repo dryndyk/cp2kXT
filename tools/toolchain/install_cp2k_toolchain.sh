@@ -94,7 +94,7 @@ OPTIONS:
                           switch --math-mode to the respective modes, BUT
                           --with-reflapack option do not have this effect.
 --gpu-ver                 Selects the GPU architecture for which to compile. Available
-                          options are: K20X, K40, K80, P100, no. Default: no.
+                          options are: K20X, K40, K80, P100, V100, no. Default: no.
                           The script will determine the correct corresponding value for
                           nvcc's '-arch' flag.
 --libint-lmax             Maximum supported angular momentum by libint.
@@ -104,7 +104,7 @@ OPTIONS:
 
 The --enable-FEATURE options follow the rules:
   --enable-FEATURE=yes    Enable this particular feature
-  --enable-FEATHRE=no     Disable this particular feature
+  --enable-FEATURE=no     Disable this particular feature
   --enable-FEATURE        The option keyword alone is equivalent to
                           --enable-FEATURE=yes
 
@@ -211,8 +211,10 @@ The --with-PKG options follow the rules:
                           Default = no
   --with-quip             Enable interface to QUIP library
                           Default = no
+  --with-plumed           Enable interface to the PLUMED library.
+                          Default = no
   --with-sirius           Enable interface to the plane wave SIRIUS library.
-                          This package requires: gsl, libspg, elpa, scalapack, json-fortran, hdf5 and libxc.
+                          This package requires: gsl, libspg, elpa, scalapack, hdf5 and libxc.
                           Default = install
   --with-gsl              Enable the gnu scientific library
                           Default = install
@@ -223,10 +225,8 @@ The --with-PKG options follow the rules:
                           Default = install
   --with-hdf5             Enable the hdf5 library (used by the sirius library)
                           Default = install
-  --with-json-fortran     Enable the json fortran library (used by cp2k when sirius is activated)
-                          This package depends on cmake.
+  --with-spfft            Enable the spare fft used in SIRIUS (hard dependency)
                           Default = install
-
 
 FURTHER INSTRUCTIONS
 
@@ -259,11 +259,11 @@ EOF
 # PACKAGE LIST: register all new dependent tools and libs here. Order
 # is important, the first in the list gets installed first
 # ------------------------------------------------------------------------
-tool_list="valgrind cmake gcc"
+tool_list="gcc cmake valgrind"
 mpi_list="mpich openmpi"
 math_list="mkl acml openblas reflapack"
-lib_list="fftw libint libxc libsmm libxsmm scalapack elpa \
-          ptscotch parmetis metis superlu pexsi quip gsl spglib hdf5 libvdwxc sirius json_fortran"
+lib_list="fftw libint libxc libsmm libxsmm scalapack elpa plumed \
+          spfft ptscotch parmetis metis superlu pexsi quip gsl spglib hdf5 libvdwxc sirius"
 package_list="$tool_list $mpi_list $math_list $lib_list"
 # ------------------------------------------------------------------------
 
@@ -304,9 +304,9 @@ with_sirius="__INSTALL__"
 with_gsl="__INSTALL__"
 with_spglib="__INSTALL__"
 with_hdf5="__INSTALL__"
-with_json_fortran="__INSTALL__"
 with_elpa="__INSTALL__"
 with_libvdwxc="__INSTALL__"
+with_spfft=__INSTALL__
 
 # for MPI, we try to detect system MPI variant
 with_openmpi=__SYSTEM__
@@ -445,13 +445,16 @@ while [ $# -ge 1 ] ; do
                 P100)
                     export GPUVER=P100
                     ;;
+                V100)
+                    export GPUVER=V100
+                    ;;
                 no)
                     export GPUVER=no
                     ;;
                 *)
                     export GPUVER=no
                     report_error ${LINENO} \
-                    "--gpu-ver currently only supports K20X, K40, K80, P100 and no as options"
+                    "--gpu-ver currently only supports K20X, K40, K80, P100, V100 and no as options"
                     exit 1
             esac
             ;;
@@ -585,6 +588,9 @@ while [ $# -ge 1 ] ; do
         --with-quip*)
             with_quip=$(read_with $1)
             ;;
+        --with-plumed*)
+            with_plumed=$(read_with $1)
+            ;;
         --with-sirius*)
             with_sirius=$(read_with $1)
             ;;
@@ -597,11 +603,11 @@ while [ $# -ge 1 ] ; do
         --with-hdf5*)
             with_hdf5=$(read_with $1)
             ;;
-        --with-json*)
-            with_json_fortran=$(read_with $1)
-            ;;
         --with-libvdwxc*)
             with_libvdwxc=$(read_with $1)
+            ;;
+        --with-spfft*)
+            with_spfft=$(read_with $1)
             ;;
         --help*)
             show_help
@@ -639,7 +645,7 @@ if [ $ENABLE_TSAN = "__TRUE__" ] ; then
         [ "$with_reflapack" = "__DONTUSE__" ] && with_reflapack="__INSTALL__"
         export FAST_MATH_MODE=reflapack
     fi
-    echo "TSAN is enabled, canoot use libsmm"
+    echo "TSAN is enabled, cannot use libsmm"
     with_libsmm="__DONTUSE__"
 fi
 
@@ -668,6 +674,10 @@ if [ $MPI_MODE = no ] ; then
     if [ "$with_sirius" != "__DONTUSE__" ] ; then
         echo "Not using MPI, so sirius is disabled"
         with_sirius="__DONTUSE__"
+    fi
+    if [ "$with_spfft" != "__DONTUSE__" ] ; then
+        echo "Not using MPI, so spfft is disabled"
+        with_spfft="__DONTUSE__"
     fi
 else
     # if gcc is installed, then mpi needs to be installed too
@@ -738,13 +748,12 @@ if [ "$with_spglib" = "__INSTALL__" ] ; then
     [ "$with_cmake" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
 fi
 
-# json-fortran requires cmake.
-if [ "$with_json_fortran" = "__INSTALL__" ] ; then
-    [ "$with_cmake" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
-fi
-
 # SIRIUS dependencies. Remove the gsl library from the dependencies if SIRIUS is not activated
 if [ "$with_sirius" = "__INSTALL__" ] ; then
+    if [ "$with_spfft" = "__DONTUSE__" ] ; then
+        report_error "For SIRIUS to work you need a working spfft library use --with-spfft option to specify if you wish to install the library or specify its location."
+        exit 1
+    fi
     if [ "$with_gsl" = "__DONTUSE__" ] ; then
         report_error "For SIRIUS to work you need a working gsl library use --with-gsl option to specify if you wish to install the library or specify its location."
         exit 1
@@ -765,12 +774,7 @@ if [ "$with_sirius" = "__INSTALL__" ] ; then
         report_error "For SIRIUS to work you need a working hdf5 library use --with-hdf5 option to specify if you wish to install the library or specify its location."
         exit 1
     fi
-    if [ "$with_json_fortran" = "__DONTUSE__"  ] ; then
-        report_error "For SIRIUS to work you need a working json-fortran library use --with-json option to specify if you wish to install it or specify its location."
-    exit 1
-    fi
 fi
-
 
 # ------------------------------------------------------------------------
 # Preliminaries
@@ -889,12 +893,15 @@ case $GPUVER in
     P100)
         export ARCH_NUM=60
         ;;
+    V100)
+        export ARCH_NUM=70
+        ;;
     no)
         export ARCH_NUM=no
         ;;
     *)
         report_error ${LINENO} \
-        "--gpu-ver currently only supports K20X, K40, K80, P100 as options"
+        "--gpu-ver currently only supports K20X, K40, K80, P100, V100 as options"
 esac
 
 # write toolchain environment
@@ -914,14 +921,15 @@ done
 if [ "$dry_run" == "__TRUE__" ] ; then
     echo "Wrote only configuration files (--dry-run)."
 else
-    ./scripts/install_valgrind.sh
-    ./scripts/install_cmake.sh
     ./scripts/install_gcc.sh
     ./scripts/setup_buildtools.sh
+    ./scripts/install_cmake.sh
+    ./scripts/install_valgrind.sh
     ./scripts/install_mpich.sh
     ./scripts/install_openmpi.sh
     ./scripts/install_mathlibs.sh
     ./scripts/install_fftw.sh
+    ./scripts/install_spfft.sh
     ./scripts/install_libint.sh
     ./scripts/install_libxc.sh
     ./scripts/install_libsmm.sh
@@ -934,12 +942,12 @@ else
     ./scripts/install_superlu.sh
     ./scripts/install_pexsi.sh
     ./scripts/install_quip.sh
+    ./scripts/install_plumed.sh
     ./scripts/install_gsl.sh
     ./scripts/install_spglib.sh
     ./scripts/install_hdf5.sh
     ./scripts/install_libvdwxc.sh
     ./scripts/install_sirius.sh
-    ./scripts/install_json_fortran.sh
     ./scripts/generate_arch_files.sh
 fi
 

@@ -7,19 +7,21 @@ apt-get update -qq
 export DEBIAN_FRONTEND=noninteractive
 export DEBCONF_NONINTERACTIVE_SEEN=true
 apt-get install -qq --no-install-recommends \
-    build-essential       \
-    python-setuptools     \
-    python-wheel          \
-    python-pip            \
-    python-dev            \
+    python3-setuptools    \
+    python3-wheel         \
+    python3-pip           \
+    python3-dev           \
     postgresql            \
     rabbitmq-server       \
     sudo                  \
     ssh
 rm -rf /var/lib/apt/lists/*
 
-# install python packages
-pip install --quiet flake8 aiida ase
+# install dependencies of aiida-cp2k
+cd /opt/
+git clone --quiet https://github.com/aiidateam/aiida-cp2k.git
+pip3 install --quiet ./aiida-cp2k/[test]
+pip3 uninstall --quiet --yes aiida-cp2k
 
 # create ubuntu user with sudo powers
 adduser --disabled-password --gecos "" ubuntu
@@ -27,6 +29,9 @@ echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >>  /etc/sudoers
 
 # shellcheck disable=SC1091
 source /opt/cp2k-toolchain/install/setup
+
+# link mpi executables into path
+for i in $(dirname "$(which mpirun)")/* ; do ln -sf "$i" /usr/bin/; done
 
 # setup arch files
 cd /workspace/cp2k/arch
