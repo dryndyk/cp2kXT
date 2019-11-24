@@ -356,16 +356,16 @@ CONTAINS
       END IF
 
       IF (n_rep > 0) THEN
-         delta_npoles_min = NINT(0.5_dp*(negf_control%eta/(pi*MAXVAL(negf_control%contacts(:)%temperature))+1.0_dp))
+         delta_npoles_min = NINT(0.5_dp*(negf_control%eta/(pi*MAXVAL(negf_control%contacts(:)%temperature)) + 1.0_dp))
       ELSE
          delta_npoles_min = 1
       END IF
 
       IF (negf_control%delta_npoles < delta_npoles_min) THEN
          IF (n_rep > 0) THEN
-            eta_max = REAL(2*negf_control%delta_npoles-1, kind=dp)*pi*MAXVAL(negf_control%contacts(:)%temperature)
+            eta_max = REAL(2*negf_control%delta_npoles - 1, kind=dp)*pi*MAXVAL(negf_control%contacts(:)%temperature)
             temp_current = MAXVAL(negf_control%contacts(:)%temperature)*kelvin
-            temp_min = negf_control%eta/(pi*REAL(2*negf_control%delta_npoles-1, kind=dp))*kelvin
+            temp_min = negf_control%eta/(pi*REAL(2*negf_control%delta_npoles - 1, kind=dp))*kelvin
 
             WRITE (eta_current_str, '(ES11.4E2)') negf_control%eta
             WRITE (eta_max_str, '(ES11.4E2)') eta_max
@@ -400,7 +400,7 @@ CONTAINS
       DO i_rep = 1, n_rep
          IF (ALLOCATED(negf_control%contacts(i_rep)%atomlist_screening)) THEN
             IF (ALLOCATED(negf_control%contacts(i_rep)%atomlist_screening)) &
-               natoms_total = natoms_total+SIZE(negf_control%contacts(i_rep)%atomlist_screening)
+               natoms_total = natoms_total + SIZE(negf_control%contacts(i_rep)%atomlist_screening)
          END IF
       END DO
 
@@ -417,10 +417,10 @@ CONTAINS
             IF (ALLOCATED(negf_control%contacts(i_rep)%atomlist_screening)) THEN
                natoms_current = SIZE(negf_control%contacts(i_rep)%atomlist_screening)
 
-               negf_control%atomlist_S_screening(natoms_total+1:natoms_total+natoms_current) = &
+               negf_control%atomlist_S_screening(natoms_total + 1:natoms_total + natoms_current) = &
                   negf_control%contacts(i_rep)%atomlist_screening(1:natoms_current)
 
-               natoms_total = natoms_total+natoms_current
+               natoms_total = natoms_total + natoms_current
             END IF
          END DO
 
@@ -430,9 +430,9 @@ CONTAINS
          DEALLOCATE (inds)
 
          natoms_current = 1
-         DO i_rep = natoms_current+1, natoms_total
+         DO i_rep = natoms_current + 1, natoms_total
             IF (negf_control%atomlist_S_screening(i_rep) /= negf_control%atomlist_S_screening(natoms_current)) THEN
-               natoms_current = natoms_current+1
+               natoms_current = natoms_current + 1
                negf_control%atomlist_S_screening(natoms_current) = negf_control%atomlist_S_screening(i_rep)
             END IF
          END DO
@@ -515,7 +515,7 @@ CONTAINS
                END IF
             END DO
 
-            natoms_total = natoms_total+natoms_current
+            natoms_total = natoms_total + natoms_current
          END DO
       END IF
 
@@ -536,8 +536,8 @@ CONTAINS
                   DO imol = 1, nmols
                      molecule => molecule_set(iptr(imol))
                      CALL get_molecule(molecule, first_atom=first_atom, last_atom=last_atom)
-                     natoms_current = last_atom-first_atom+1
-                     natoms_total = natoms_total+natoms_current
+                     natoms_current = last_atom - first_atom + 1
+                     natoms_total = natoms_total + natoms_current
                   END DO
                ELSE
                   CALL cp_abort(__LOCATION__, &
@@ -559,8 +559,8 @@ CONTAINS
                CALL section_vals_val_get(input_section, "LIST", i_rep_section=i_rep_section, i_rep_val=irep, i_vals=iptr)
 
                natoms_current = SIZE(iptr)
-               atomlist(natoms_total+1:natoms_total+natoms_current) = iptr(1:natoms_current)
-               natoms_total = natoms_total+natoms_current
+               atomlist(natoms_total + 1:natoms_total + natoms_current) = iptr(1:natoms_current)
+               natoms_total = natoms_total + natoms_current
             END DO
          END IF
 
@@ -583,7 +583,7 @@ CONTAINS
                         CALL get_molecule(molecule, first_atom=first_atom, last_atom=last_atom)
 
                         DO natoms_current = first_atom, last_atom
-                           natoms_total = natoms_total+1
+                           natoms_total = natoms_total + 1
                            atomlist(natoms_total) = natoms_current
                         END DO
                      END DO
@@ -598,9 +598,9 @@ CONTAINS
          DEALLOCATE (inds)
 
          natoms_current = 1
-         DO iatom = natoms_current+1, natoms_total
+         DO iatom = natoms_current + 1, natoms_total
             IF (atomlist(iatom) /= atomlist(natoms_current)) THEN
-               natoms_current = natoms_current+1
+               natoms_current = natoms_current + 1
                atomlist(natoms_current) = atomlist(iatom)
             END IF
          END DO
