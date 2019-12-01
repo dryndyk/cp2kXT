@@ -543,11 +543,12 @@ CONTAINS
 
          CALL section_vals_val_get(mgrid_section, "MULTIGRID_CUTOFF", r_vals=cutofflist)
          IF (ASSOCIATED(cutofflist)) THEN
-            IF (SIZE(cutofflist, 1) /= ngrid_level) &
-               CPABORT("Inconsistent values for number of multi grids")
+            IF (SIZE(cutofflist, 1) /= ngrid_level) THEN
+               CPABORT("Number of multi-grids requested and number of cutoff values do not match")
+            END IF
             DO igrid_level = 1, ngrid_level
-               qs_control%e_cutoff(igrid_level) = cutofflist(igrid_level)*0.5_dp
-            ENDDO
+               qs_control%e_cutoff(igrid_level) = cutofflist(igrid_level)
+            END DO
          END IF
          ! set cutoff to smallest value in multgrid available with >= cutoff
          DO igrid_level = ngrid_level, 1, -1
@@ -564,15 +565,16 @@ CONTAINS
          IF (qs_control%commensurate_mgrids) qs_control%progression_factor = 4.0_dp
          qs_control%e_cutoff(1) = qs_control%cutoff
          DO igrid_level = 2, ngrid_level
-            qs_control%e_cutoff(igrid_level) = qs_control%e_cutoff(igrid_level - 1) &
-                                               /qs_control%progression_factor
+            qs_control%e_cutoff(igrid_level) = qs_control%e_cutoff(igrid_level - 1)/ &
+                                               qs_control%progression_factor
          END DO
       END IF
       ! check that multigrids are ordered
       DO igrid_level = 2, ngrid_level
-         IF (qs_control%e_cutoff(igrid_level) > &
-             qs_control%e_cutoff(igrid_level - 1)) THEN
-            CPABORT("Multi-grids not ordered")
+         IF (qs_control%e_cutoff(igrid_level) > qs_control%e_cutoff(igrid_level - 1)) THEN
+            CPABORT("The cutoff values for the multi-grids are not ordered from large to small")
+         ELSE IF (qs_control%e_cutoff(igrid_level) == qs_control%e_cutoff(igrid_level - 1)) THEN
+            CPABORT("The same cutoff value was specified for two multi-grids")
          END IF
       END DO
       CALL timestop(handle)
@@ -715,6 +717,7 @@ CONTAINS
       CALL section_vals_val_get(qs_section, "CLUSTER_EMBED_SUBSYS", l_val=qs_control%cluster_embed_subsys)
       CALL section_vals_val_get(qs_section, "HIGH_LEVEL_EMBED_SUBSYS", l_val=qs_control%high_level_embed_subsys)
       CALL section_vals_val_get(qs_section, "DFET_EMBEDDED", l_val=qs_control%dfet_embedded)
+      CALL section_vals_val_get(qs_section, "DMFET_EMBEDDED", l_val=qs_control%dmfet_embedded)
 
       ! Integers gapw
       CALL section_vals_val_get(qs_section, "LMAXN1", i_val=qs_control%gapw_control%lmax_sphere)

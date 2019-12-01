@@ -66,6 +66,7 @@ MODULE mp2_integrals
    USE kpoint_methods,                  ONLY: kpoint_init_cell_index
    USE kpoint_types,                    ONLY: get_kpoint_info,&
                                               kpoint_type
+   USE libint_2c_3c,                    ONLY: libint_potential_type
    USE machine,                         ONLY: m_flush
    USE message_passing,                 ONLY: mp_alltoall,&
                                               mp_cart_create,&
@@ -303,6 +304,7 @@ CONTAINS
          matrix_in_jm_beta, matrix_in_jnu, matrix_in_jnu_beta
       TYPE(dft_control_type), POINTER                    :: dft_control
       TYPE(gto_basis_set_p_type), DIMENSION(:), POINTER  :: basis_set_ao, basis_set_ri_aux
+      TYPE(libint_potential_type)                        :: pot_par
       TYPE(neighbor_list_3c_type)                        :: nl_3c
       TYPE(pw_env_type), POINTER                         :: pw_env_sub
       TYPE(pw_p_type)                                    :: pot_g, psi_L, rho_g, rho_r
@@ -854,12 +856,14 @@ CONTAINS
                ENDDO
             ENDDO
 
+            pot_par%potential_type = do_potential_id
             CALL build_3c_integrals(t_3c_overl_int, &
                                     qs_env%mp2_env%mp2_gpw%eps_filter, &
                                     qs_env, &
                                     nl_3c, &
                                     basis_i=basis_set_ri_aux, &
                                     basis_j=basis_set_ao, basis_k=basis_set_ao, &
+                                    potential_parameter=pot_par, &
                                     do_kpoints=do_kpoints_cubic_RPA)
 
             DEALLOCATE (basis_set_ri_aux, basis_set_ao)
@@ -1079,6 +1083,7 @@ CONTAINS
       LOGICAL                                            :: kp
       TYPE(dbcsr_t_distribution_type)                    :: dist
       TYPE(distribution_3d_type)                         :: dist_3d
+      TYPE(libint_potential_type)                        :: pot_par
       TYPE(particle_type), DIMENSION(:), POINTER         :: particle_set
 
       IF (PRESENT(do_kpoints)) THEN
@@ -1113,8 +1118,9 @@ CONTAINS
                                      nkind, particle_set, mp_comm_t3c_2, own_comm=.TRUE.)
 
          ! we rely on symmetry of the two AO-indices only if no k-points
+         pot_par%potential_type = do_potential_id
          CALL build_3c_neighbor_lists(nl_3c, basis_RI, basis_ao_1, basis_ao_2, &
-                                      dist_3d, "RPA_3c_nl", qs_env, &
+                                      dist_3d, pot_par, "RPA_3c_nl", qs_env, &
                                       sym_jk=.NOT. kp, own_dist=.TRUE.)
       ENDIF
 

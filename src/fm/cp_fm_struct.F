@@ -44,8 +44,8 @@ MODULE cp_fm_struct
    PUBLIC :: cp_fm_struct_create, cp_fm_struct_retain, cp_fm_struct_release, &
              cp_fm_struct_equivalent, &
              cp_fm_struct_get, cp_fm_struct_double, cp_fm_struct_config, &
-             cp_fm_struct_get_nrow_block, cp_fm_struct_get_ncol_block
-!***
+             cp_fm_struct_get_nrow_block, cp_fm_struct_get_ncol_block, &
+             cp_fm_struct_write_info
 
 ! **************************************************************************************************
 !> \brief keeps the information about the structure of a full matrix
@@ -106,8 +106,10 @@ CONTAINS
 !> \param context the blacs context of this matrix
 !> \param nrow_global the number of row of the full matrix
 !> \param ncol_global the number of colums of the full matrix
-!> \param nrow_block the number of rows of a block of the matrix ! useful defaults are in, do not specify
-!> \param ncol_block the number of colums of a block of the matrix ! useful defaults are in, do not specify
+!> \param nrow_block the number of rows of a block of the matrix,
+!>        omit or set to -1 to use the built-in defaults
+!> \param ncol_block the number of colums of a block of the matrix,
+!>        omit or set to -1 to use the built-in defaults
 !> \param descriptor the scalapack descriptor of the matrix (if not given
 !>        a new one is allocated
 !> \param first_p_pos ...
@@ -196,7 +198,8 @@ CONTAINS
 
       ! try to avoid small left-over blocks (anyway naive)
       IF (PRESENT(nrow_block)) THEN
-         fmstruct%nrow_block = nrow_block
+         IF (nrow_block > 0) & ! allows setting the number of blocks to -1 to explicitly set to auto
+            fmstruct%nrow_block = nrow_block
       END IF
       IF (.NOT. my_force_block) THEN
          dumblock = CEILING(REAL(fmstruct%nrow_global, KIND=dp)/ &
@@ -204,7 +207,8 @@ CONTAINS
          fmstruct%nrow_block = MAX(1, MIN(fmstruct%nrow_block, dumblock))
       END IF
       IF (PRESENT(ncol_block)) THEN
-         fmstruct%ncol_block = ncol_block
+         IF (ncol_block > 0) & ! allows setting the number of blocks to -1 to explicitly set to auto
+            fmstruct%ncol_block = ncol_block
       END IF
       IF (.NOT. my_force_block) THEN
          dumblock = CEILING(REAL(fmstruct%ncol_global, KIND=dp)/ &
@@ -501,6 +505,42 @@ CONTAINS
 
       ENDIF
    END SUBROUTINE cp_fm_struct_get
+
+! **************************************************************************************************
+!> \brief Write nicely formatted info about the FM struct to the given I/O unit
+!> \param fmstruct a cp_fm_struct_type instance
+!> \param io_unit the I/O unit to use for writing
+! **************************************************************************************************
+   SUBROUTINE cp_fm_struct_write_info(fmstruct, io_unit)
+      TYPE(cp_fm_struct_type), INTENT(IN), POINTER       :: fmstruct
+      INTEGER, INTENT(IN)                                :: io_unit
+
+      INTEGER, PARAMETER                                 :: oblock_size = 8
+
+      CHARACTER(len=30)                                  :: fm
+      INTEGER                                            :: oblock
+
+      WRITE (fm, "(A,I2,A)") "(A,I5,A,I5,A,", oblock_size, "I6)"
+
+      WRITE (io_unit, '(A,I12)') "CP_FM_STRUCT | No. of matrix columns:   ", fmstruct%ncol_global
+      WRITE (io_unit, '(A,I12)') "CP_FM_STRUCT | No. of matrix rows:      ", fmstruct%nrow_global
+      WRITE (io_unit, '(A,I12)') "CP_FM_STRUCT | No. of block columns:    ", fmstruct%ncol_block
+      WRITE (io_unit, '(A,I12)') "CP_FM_STRUCT | No. of block rows:       ", fmstruct%nrow_block
+
+      WRITE (io_unit, '(A)') "CP_FM_STRUCT | Number of local columns: "
+      DO oblock = 0, (SIZE(fmstruct%ncol_locals) - 1)/oblock_size
+         WRITE (io_unit, fm) "CP_FM_STRUCT | CPUs ", &
+            oblock*oblock_size, "..", (oblock + 1)*oblock_size - 1, ": ", &
+            fmstruct%ncol_locals(oblock*oblock_size:MIN(SIZE(fmstruct%ncol_locals), (oblock + 1)*oblock_size) - 1)
+      END DO
+
+      WRITE (io_unit, '(A)') "CP_FM_STRUCT | Number of local rows:    "
+      DO oblock = 0, (SIZE(fmstruct%nrow_locals) - 1)/oblock_size
+         WRITE (io_unit, fm) "CP_FM_STRUCT | CPUs ", &
+            oblock*oblock_size, "..", (oblock + 1)*oblock_size - 1, ": ", &
+            fmstruct%nrow_locals(oblock*oblock_size:MIN(SIZE(fmstruct%nrow_locals), (oblock + 1)*oblock_size) - 1)
+      END DO
+   END SUBROUTINE cp_fm_struct_write_info
 
 ! **************************************************************************************************
 !> \brief creates a struct with twice the number of blocks on each core.
