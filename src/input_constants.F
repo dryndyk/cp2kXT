@@ -632,9 +632,7 @@ MODULE input_constants
    INTEGER, PARAMETER, PUBLIC               :: xas_tdp_by_index = 1, &
                                                xas_tdp_by_kind = 2, &
                                                xas_tdp_roks = 1, &
-                                               xas_tdp_uks = 2, &
-                                               xas_tdp_diag_std = 1, &
-                                               xas_tdp_diag_syevr = 2
+                                               xas_tdp_uks = 2
 
    ! Form of dipole operator for TDDFPT oscillator strength calculation
    INTEGER, PARAMETER, PUBLIC               :: tddfpt_dipole_berry = 1, &
@@ -1125,5 +1123,9 @@ MODULE input_constants
                                                embed_diff = 1, &
                                                embed_fa = 2, &
                                                embed_resp = 3
+
+   ! MOLDEN format
+   INTEGER, PARAMETER, PUBLIC               :: gto_cartesian = 1, &
+                                               gto_spherical = 2
 
 END MODULE input_constants

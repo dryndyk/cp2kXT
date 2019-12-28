@@ -177,9 +177,8 @@ def prettifyFile(
 
     if is_fypp(infile):
         logger.warning(
-            "{}: fypp directives not fully supported, running only fprettify".format(
-                filename
-            )
+            "fypp directives not fully supported, running only fprettify",
+            extra={"ffilename": filename, "fline": 0},
         )
         replace = False
         normalize_use = False
@@ -235,7 +234,8 @@ def prettifyFile(
                     )
                 except normalizeFortranFile.InputStreamError as exc:
                     logger.error(
-                        "normalizeFortranFile could not parse file, file is not normalized"
+                        "normalizeFortranFile could not parse file, file is not normalized",
+                        extra={"ffilename": filename, "fline": 0},
                     )
                     outbuf.close()
                     inbuf.seek(0)
@@ -260,7 +260,9 @@ def prettifyFile(
             hash_prev = hash_new
 
         except:
-            logger.critical("error processing file '{}'".format(filename))
+            logger.critical(
+                "error processing file", extra={"ffilename": filename, "fline": 0}
+            )
             raise
 
     else:
@@ -449,7 +451,9 @@ def main(argv):
         logger.setLevel(level)
         sh = logging.StreamHandler()
         sh.setLevel(level)
-        formatter = logging.Formatter("%(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(levelname)s %(ffilename)s:%(fline)s: %(message)s"
+        )
         sh.setFormatter(formatter)
         logger.addHandler(sh)
 

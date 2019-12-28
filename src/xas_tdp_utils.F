@@ -10,19 +10,12 @@
 
 MODULE xas_tdp_utils
    USE ai_contraction_sphi,             ONLY: ab_contract
-   USE arnoldi_api,                     ONLY: arnoldi_data_type,&
-                                              arnoldi_ev,&
-                                              deallocate_arnoldi_data,&
-                                              get_selected_ritz_val,&
-                                              setup_arnoldi_data
    USE atomic_kind_types,               ONLY: atomic_kind_type
    USE basis_set_types,                 ONLY: get_gto_basis_set,&
                                               gto_basis_set_p_type,&
                                               gto_basis_set_type
    USE cell_types,                      ONLY: cell_type
-   USE constants_operator,              ONLY: operator_coulomb,&
-                                              operator_truncated,&
-                                              operator_verfc
+   USE constants_operator,              ONLY: operator_coulomb
    USE cp_array_utils,                  ONLY: cp_1d_i_p_type
    USE cp_blacs_env,                    ONLY: cp_blacs_env_type
    USE cp_cfm_basic_linalg,             ONLY: cp_cfm_gemm
@@ -50,7 +43,6 @@ MODULE xas_tdp_utils
                                               cp_fm_upper_to_full
    USE cp_fm_diag,                      ONLY: choose_eigv_solver,&
                                               cp_fm_geeig,&
-                                              cp_fm_geeig_syevr,&
                                               cp_fm_power
    USE cp_fm_struct,                    ONLY: cp_fm_struct_create,&
                                               cp_fm_struct_release,&
@@ -61,12 +53,12 @@ MODULE xas_tdp_utils
    USE cp_gemm_interface,               ONLY: cp_gemm
    USE cp_para_types,                   ONLY: cp_para_env_type
    USE dbcsr_api,                       ONLY: &
-        dbcsr_add, dbcsr_add_on_diag, dbcsr_copy, dbcsr_create, dbcsr_distribution_get, &
-        dbcsr_distribution_new, dbcsr_distribution_release, dbcsr_distribution_type, &
-        dbcsr_finalize, dbcsr_get_block_p, dbcsr_get_info, dbcsr_iterator_blocks_left, &
-        dbcsr_iterator_next_block, dbcsr_iterator_start, dbcsr_iterator_stop, dbcsr_iterator_type, &
-        dbcsr_multiply, dbcsr_p_type, dbcsr_put_block, dbcsr_release, dbcsr_reserve_all_blocks, &
-        dbcsr_set, dbcsr_type
+        dbcsr_add, dbcsr_copy, dbcsr_create, dbcsr_distribution_get, dbcsr_distribution_new, &
+        dbcsr_distribution_release, dbcsr_distribution_type, dbcsr_finalize, dbcsr_get_block_p, &
+        dbcsr_get_info, dbcsr_iterator_blocks_left, dbcsr_iterator_next_block, &
+        dbcsr_iterator_start, dbcsr_iterator_stop, dbcsr_iterator_type, dbcsr_multiply, &
+        dbcsr_p_type, dbcsr_put_block, dbcsr_release, dbcsr_reserve_all_blocks, dbcsr_set, &
+        dbcsr_type
    USE distribution_1d_types,           ONLY: distribution_1d_type
    USE distribution_2d_types,           ONLY: distribution_2d_create,&
                                               distribution_2d_type
@@ -76,12 +68,16 @@ MODULE xas_tdp_utils
    USE generic_os_integrals,            ONLY: int_operators_r12_ab_os
    USE input_constants,                 ONLY: &
         do_potential_coulomb, do_potential_id, do_potential_short, do_potential_truncated, &
-        tddfpt_singlet, tddfpt_spin_cons, tddfpt_spin_flip, tddfpt_triplet, xas_dip_len, &
-        xas_tdp_diag_std, xas_tdp_diag_syevr
+        tddfpt_singlet, tddfpt_spin_cons, tddfpt_spin_flip, tddfpt_triplet, xas_dip_len
    USE input_section_types,             ONLY: section_vals_val_get
    USE kinds,                           ONLY: dp,&
                                               int_8
-   USE libint_2c_3c,                    ONLY: libint_potential_type
+   USE libint_2c_3c,                    ONLY: eri_2center,&
+                                              libint_potential_type
+   USE libint_wrapper,                  ONLY: cp_libint_cleanup_2eri,&
+                                              cp_libint_init_2eri,&
+                                              cp_libint_set_contrdepth,&
+                                              cp_libint_t
    USE machine,                         ONLY: m_memory_details
    USE mathlib,                         ONLY: get_diag,&
                                               invmat_symm
@@ -513,27 +509,24 @@ CONTAINS
       CHARACTER(len=*), PARAMETER :: routineN = 'solve_xas_tdp_prob', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: diag_type, first_ex, handle, i, imo, &
-                                                            ispin, nao, ndo_mo, nelectron, nevals, &
-                                                            nocc, nrow, nspins
+      INTEGER                                            :: first_ex, handle, i, imo, ispin, nao, &
+                                                            ndo_mo, nelectron, nevals, nocc, nrow, &
+                                                            nspins
       LOGICAL                                            :: do_os, do_range, do_sf
-      REAL(dp)                                           :: max_ev, min_ev, shift
       REAL(dp), ALLOCATABLE, DIMENSION(:)                :: scaling, tmp_evals
       REAL(dp), DIMENSION(:), POINTER                    :: lr_evals
-      TYPE(arnoldi_data_type)                            :: my_arnoldi
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env
       TYPE(cp_fm_struct_type), POINTER                   :: ex_struct, fm_struct
       TYPE(cp_fm_type), POINTER                          :: c_diff, c_sum, lhs_matrix, lr_coeffs, &
                                                             rhs_matrix, work
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      TYPE(dbcsr_p_type), DIMENSION(2)                   :: matrices
-      TYPE(dbcsr_type)                                   :: proj_Q, tmp_mat
-      TYPE(dbcsr_type), POINTER                          :: matrix_tdp, sps
+      TYPE(dbcsr_type)                                   :: tmp_mat
+      TYPE(dbcsr_type), POINTER                          :: matrix_tdp
 
       CALL timeset(routineN, handle)
 
       NULLIFY (para_env, blacs_env, fm_struct, rhs_matrix, matrix_tdp, lhs_matrix, work)
-      NULLIFY (c_diff, c_sum, ex_struct, lr_evals, lr_coeffs, sps)
+      NULLIFY (c_diff, c_sum, ex_struct, lr_evals, lr_coeffs)
       CPASSERT(ASSOCIATED(xas_tdp_env))
 
       do_os = .FALSE.
@@ -554,7 +547,6 @@ CONTAINS
 
 !     Initialization
       nspins = 1; IF (do_os) nspins = 2
-      diag_type = xas_tdp_control%diag_type
       CALL cp_fm_get_info(donor_state%gs_coeffs, nrow_global=nao)
       CALL dbcsr_get_info(matrix_tdp, nfullrows_total=nrow)
       ndo_mo = donor_state%ndo_mo
@@ -563,55 +555,8 @@ CONTAINS
       first_ex = nocc + 1 !where to find the first proper eigenvalue
 
       !solve by energy_range or number of states ?
-      IF (xas_tdp_control%e_range > 0.0_dp) THEN
-
-         !Need to find out what the first excitation energy is => project out 0 eigenvalues
-         !then use arnoldi
-         do_range = .TRUE.
-
-         !Need to add shift*SPS to matrix_tdp. Q = 1-SP => SPS = (1-Q)*S (symmetric matrix)
-         !shift = 2*(E_homo - E-lomo) should be safe
-
-         ALLOCATE (sps)
-         CALL get_q_projector(proj_Q, donor_state, do_os, xas_tdp_env)
-         CALL dbcsr_create(matrix=sps, template=matrix_tdp, matrix_type="S")
-
-         CALL dbcsr_add_on_diag(proj_Q, -1.0_dp) ! -SP
-         CALL dbcsr_multiply('N', 'N', -1.0_dp, proj_Q, donor_state%metric(1)%matrix, &
-                             0.0_dp, sps, filter_eps=xas_tdp_control%eps_filter)
-
-         shift = 2.0_dp*MAXVAL(ABS(donor_state%energy_evals))
-         CALL dbcsr_add(sps, matrix_tdp, shift, 1.0_dp) ! store it in sps not to mess-up matrix_tdp
-
-         !estimating the first eigenvalue now
-         matrices(1)%matrix => sps
-         matrices(2)%matrix => donor_state%metric(1)%matrix
-         CALL setup_arnoldi_data(my_arnoldi, matrices, max_iter=20, threshold=1.0E-3_dp, &
-                                 selection_crit=3, nval_request=1, nrestarts=10, &
-                                 generalized_ev=.TRUE., iram=.FALSE.)
-         CALL arnoldi_ev(matrices, my_arnoldi)
-         min_ev = REAL(get_selected_ritz_val(my_arnoldi, 1), dp)
-         CALL deallocate_arnoldi_data(my_arnoldi)
-
-         !Now we have an estimate for lowest excitation energy => max_ev = min_ev + e_range
-         max_ev = min_ev + xas_tdp_control%e_range
-         min_ev = 0.8_dp*min_ev !for safety, in case of overestimation
-
-         CALL dbcsr_release(sps)
-         CALL dbcsr_release(proj_Q)
-         DEALLOCATE (sps)
-
-      ELSE !number of states
-
-         do_range = .FALSE.
-
-         nevals = nspins*nao - nocc/ndo_mo
-         IF (xas_tdp_control%n_excited > 0 .AND. xas_tdp_control%n_excited < nevals) THEN
-            nevals = xas_tdp_control%n_excited
-         END IF
-         nevals = ndo_mo*nevals !as in input description, multiply by # of donor MOs
-
-      END IF
+      do_range = .FALSE.
+      IF (xas_tdp_control%e_range > 0.0_dp) do_range = .TRUE.
 
       ! create the fm infrastructure
       ALLOCATE (tmp_evals(nrow))
@@ -631,28 +576,8 @@ CONTAINS
          CALL cp_fm_create(lhs_matrix, fm_struct)
          CALL copy_dbcsr_to_fm(donor_state%metric(1)%matrix, lhs_matrix)
 
-         IF (diag_type == xas_tdp_diag_std) THEN
-            !Diagonalisation (Cholesky decomposition). In TDA, c_sum = c^-
-            CALL cp_fm_geeig(rhs_matrix, lhs_matrix, c_sum, tmp_evals, work)
-
-         ELSE IF (diag_type == xas_tdp_diag_syevr .AND. do_range) THEN
-
-            !Using syevr to loko for eigenvalue in the given energy window
-            CALL cp_fm_geeig_syevr(rhs_matrix, lhs_matrix, c_sum, tmp_evals(nocc + 1:nrow), &
-                                   work, vlow=min_ev, vup=max_ev)
-
-            !In this case, eigenvectors are from the first comlumn on
-            first_ex = 1
-
-         ELSE !syevr, look for eigenvalues with indices
-
-            !Usgin syevr to only compute nevals
-            CALL cp_fm_geeig_syevr(rhs_matrix, lhs_matrix, c_sum, tmp_evals(nocc + 1:nocc + nevals), &
-                                   work, ilow=nocc + 1, iup=nocc + nevals)
-
-            !In this case, eigenvectors are from the first comlumn on
-            first_ex = 1
-         END IF
+         !Diagonalisation (Cholesky decomposition). In TDA, c_sum = c^-
+         CALL cp_fm_geeig(rhs_matrix, lhs_matrix, c_sum, tmp_evals, work)
 
 !        TDA specific clean-up
          CALL cp_fm_release(lhs_matrix)
@@ -722,17 +647,23 @@ CONTAINS
 !  first element is the first eval. Need a case study on do_range
       IF (do_range) THEN
 
-         WHERE (tmp_evals > max_ev) tmp_evals = 0.0_dp
+         WHERE (tmp_evals > tmp_evals(first_ex) + xas_tdp_control%e_range) tmp_evals = 0.0_dp
          nevals = MAXLOC(tmp_evals, 1) - nocc
 
          ALLOCATE (lr_evals(nevals))
-         lr_evals(:) = tmp_evals(nocc + 1:nocc + nevals)
+         lr_evals(:) = tmp_evals(first_ex:nocc + nevals)
 
       ELSE
 
-         !nevals is known from the start
+         !Determine the number of evals to keep base on N_EXCITED
+         nevals = nspins*nao - nocc/ndo_mo
+         IF (xas_tdp_control%n_excited > 0 .AND. xas_tdp_control%n_excited < nevals) THEN
+            nevals = xas_tdp_control%n_excited
+         END IF
+         nevals = ndo_mo*nevals !as in input description, multiply by # of donor MOs
+
          ALLOCATE (lr_evals(nevals))
-         lr_evals(:) = tmp_evals(nocc + 1:nocc + nevals)
+         lr_evals(:) = tmp_evals(first_ex:nocc + nevals)
       END IF
 
 !  Reorganize the eigenvectors in array of cp_fm so that each ndo_mo columns corresponds to an
@@ -1338,8 +1269,9 @@ CONTAINS
 
 ! **************************************************************************************************
 !> \brief Computes the two-center Exchange integral needed for the RI in kernel calculation. Stores
-!>        the integrals (P|Q)^-1 in the xas_tdp_env as global (small) arrays. Does that for a given
-!>        excited kind
+!>        the integrals in the xas_tdp_env as global (small) arrays. Does that for a given excited
+!>        kind. The quantity stored is M^-1 (P|Q) M^-1, where M is the RI metric. If the metric is
+!>        the same as the exchange potential, then we end up with the V-approximation (P|Q)^-1
 !> \param ex_kind ...
 !> \param xas_tdp_env ...
 !> \param xas_tdp_control ...
@@ -1357,13 +1289,20 @@ CONTAINS
       CHARACTER(len=*), PARAMETER :: routineN = 'compute_ri_exchange2_int', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: maxl, nsgf, unit_id
-      REAL(dp), DIMENSION(3)                             :: r
+      INTEGER                                            :: egfp, egfq, maxl, ncop, ncoq, nset, &
+                                                            nsgf, pset, qset, sgfp, sgfq, unit_id
+      INTEGER, DIMENSION(:), POINTER                     :: lmax, lmin, npgf_set, nsgf_set
+      INTEGER, DIMENSION(:, :), POINTER                  :: first_sgf
+      REAL(dp)                                           :: r(3)
+      REAL(dp), ALLOCATABLE, DIMENSION(:, :)             :: metric, pq, work
+      REAL(dp), DIMENSION(:, :), POINTER                 :: rpgf, sphi, zet
+      TYPE(cp_libint_t)                                  :: lib
       TYPE(cp_para_env_type), POINTER                    :: para_env
       TYPE(gto_basis_set_type), POINTER                  :: ri_basis
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
 
-      NULLIFY (ri_basis, qs_kind_set, para_env)
+      NULLIFY (ri_basis, qs_kind_set, para_env, lmin, lmax, npgf_set, zet, rpgf, first_sgf)
+      NULLIFY (sphi, nsgf_set)
 
 !  Initialization
       CALL get_qs_env(qs_env, qs_kind_set=qs_kind_set, para_env=para_env)
@@ -1373,42 +1312,123 @@ CONTAINS
 
 !  Get the RI basis of interest and its quantum numbers
       CALL get_qs_kind(qs_kind_set(ex_kind), basis_set=ri_basis, basis_type="RI_XAS")
-      CALL get_gto_basis_set(ri_basis, nsgf=nsgf, maxl=maxl)
-      ALLOCATE (xas_tdp_env%ri_inv_ex(nsgf, nsgf))
-      xas_tdp_env%ri_inv_ex = 0.0_dp
+      CALL get_gto_basis_set(ri_basis, nsgf=nsgf, maxl=maxl, npgf=npgf_set, lmin=lmin, &
+                             lmax=lmax, zet=zet, pgf_radius=rpgf, first_sgf=first_sgf, &
+                             nsgf_set=nsgf_set, sphi=sphi, nset=nset)
+      ALLOCATE (metric(nsgf, nsgf))
+      metric = 0.0_dp
 
       r = 0.0_dp
 
-      SELECT CASE (xas_tdp_control%x_op)
-      CASE (do_potential_coulomb)
-         CALL int_operators_r12_ab_os(r12_operator=operator_coulomb, vab=xas_tdp_env%ri_inv_ex, &
-                                      rab=r, fba=ri_basis, fbb=ri_basis, &
-                                      calculate_forces=.FALSE.)
-      CASE (do_potential_truncated)
+      !init the libint 2-center object
+      CALL cp_libint_init_2eri(lib, maxl)
+      CALL cp_libint_set_contrdepth(lib, 1)
 
-         !Make sure the operator is up to date
+      !make sure the truncted coulomb is initialized
+      IF (xas_tdp_control%ri_m_potential%potential_type == do_potential_truncated) THEN
+
          IF (2*maxl + 1 > get_lmax_init()) THEN
             IF (para_env%mepos == 0) THEN
-               CALL open_file(unit_number=unit_id, file_name=xas_tdp_control%x_t_c_filename)
+               CALL open_file(unit_number=unit_id, file_name=xas_tdp_control%ri_m_potential%filename)
             END IF
             CALL init(2*maxl + 1, unit_id, para_env%mepos, para_env%group)
             IF (para_env%mepos == 0) THEN
                CALL close_file(unit_id)
             END IF
          END IF
+      END IF
 
-         CALL int_operators_r12_ab_os(r12_operator=operator_truncated, vab=xas_tdp_env%ri_inv_ex, &
-                                      rab=r, fba=ri_basis, fbb=ri_basis, &
-                                      r_cutoff=xas_tdp_control%x_range, calculate_forces=.FALSE.)
+!  Compute the RI metric
+      DO pset = 1, nset
+         ncop = npgf_set(pset)*ncoset(lmax(pset))
+         sgfp = first_sgf(1, pset)
+         egfp = sgfp + nsgf_set(pset) - 1
 
-      CASE (do_potential_short)
-         CALL int_operators_r12_ab_os(r12_operator=operator_verfc, vab=xas_tdp_env%ri_inv_ex, &
-                                      rab=r, fba=ri_basis, fbb=ri_basis, &
-                                      omega=xas_tdp_control%x_omega, calculate_forces=.FALSE.)
-      END SELECT
+         DO qset = 1, nset
+            ncoq = npgf_set(qset)*ncoset(lmax(qset))
+            sgfq = first_sgf(1, qset)
+            egfq = sgfq + nsgf_set(qset) - 1
 
-!  Inverting
-      CALL invmat_symm(xas_tdp_env%ri_inv_ex)
+            ALLOCATE (work(ncop, ncoq))
+            work = 0.0_dp
+
+            CALL eri_2center(work, lmin(pset), lmax(pset), npgf_set(pset), zet(:, pset), rpgf(:, pset), &
+                             r, lmin(qset), lmax(qset), npgf_set(qset), zet(:, qset), rpgf(:, qset), &
+                             r, 0.0_dp, lib, xas_tdp_control%ri_m_potential)
+
+            CALL ab_contract(metric(sgfp:egfp, sgfq:egfq), work, sphi(:, sgfp:), sphi(:, sgfq:), &
+                             ncop, ncoq, nsgf_set(pset), nsgf_set(qset))
+
+            DEALLOCATE (work)
+         END DO !qset
+      END DO !pset
+
+!  Inverting (to M^-1)
+      CALL invmat_symm(metric)
+
+      IF (.NOT. xas_tdp_control%do_ri_metric) THEN
+
+         !If no metric, then x_pot = ri_m_pot and (P|Q)^-1 = M^-1 (V-approximation)
+         ALLOCATE (xas_tdp_env%ri_inv_ex(nsgf, nsgf))
+         xas_tdp_env%ri_inv_ex(:, :) = metric(:, :)
+         CALL cp_libint_cleanup_2eri(lib)
+         RETURN
+
+      END IF
+
+      !make sure the truncted coulomb is initialized
+      IF (xas_tdp_control%x_potential%potential_type == do_potential_truncated) THEN
+
+         IF (2*maxl + 1 > get_lmax_init()) THEN
+            IF (para_env%mepos == 0) THEN
+               CALL open_file(unit_number=unit_id, file_name=xas_tdp_control%x_potential%filename)
+            END IF
+            CALL init(2*maxl + 1, unit_id, para_env%mepos, para_env%group)
+            IF (para_env%mepos == 0) THEN
+               CALL close_file(unit_id)
+            END IF
+         END IF
+      END IF
+
+!  Compute the proper exchange 2-center
+      ALLOCATE (pq(nsgf, nsgf))
+      pq = 0.0_dp
+
+      DO pset = 1, nset
+         ncop = npgf_set(pset)*ncoset(lmax(pset))
+         sgfp = first_sgf(1, pset)
+         egfp = sgfp + nsgf_set(pset) - 1
+
+         DO qset = 1, nset
+            ncoq = npgf_set(qset)*ncoset(lmax(qset))
+            sgfq = first_sgf(1, qset)
+            egfq = sgfq + nsgf_set(qset) - 1
+
+            ALLOCATE (work(ncop, ncoq))
+            work = 0.0_dp
+
+            CALL eri_2center(work, lmin(pset), lmax(pset), npgf_set(pset), zet(:, pset), rpgf(:, pset), &
+                             r, lmin(qset), lmax(qset), npgf_set(qset), zet(:, qset), rpgf(:, qset), &
+                             r, 0.0_dp, lib, xas_tdp_control%x_potential)
+
+            CALL ab_contract(pq(sgfp:egfp, sgfq:egfq), work, sphi(:, sgfp:), sphi(:, sgfq:), &
+                             ncop, ncoq, nsgf_set(pset), nsgf_set(qset))
+
+            DEALLOCATE (work)
+         END DO !qset
+      END DO !pset
+
+!  Compute and store M^-1 (P|Q) M^-1
+      ALLOCATE (xas_tdp_env%ri_inv_ex(nsgf, nsgf))
+      xas_tdp_env%ri_inv_ex = 0.0_dp
+
+      CALL dgemm('N', 'N', nsgf, nsgf, nsgf, 1.0_dp, metric, nsgf, pq, nsgf, &
+                 0.0_dp, xas_tdp_env%ri_inv_ex, nsgf)
+      CALL dgemm('N', 'N', nsgf, nsgf, nsgf, 1.0_dp, xas_tdp_env%ri_inv_ex, nsgf, metric, nsgf, &
+                 0.0_dp, pq, nsgf)
+      xas_tdp_env%ri_inv_ex(:, :) = pq(:, :)
+
+      CALL cp_libint_cleanup_2eri(lib)
 
    END SUBROUTINE compute_ri_exchange2_int
 
@@ -1632,7 +1652,7 @@ CONTAINS
 
 ! **************************************************************************************************
 !> \brief Computes the RI exchange 3-center integrals (ab|c), where c is from the RI_XAS basis and
-!>        centered on excited atoms and kind
+!>        centered on excited atoms and kind. The operator used is that of the RI metric
 !> \param ex_atom the excited atom on which the third center is
 !> \param xas_tdp_env ...
 !> \param xas_tdp_control ...
@@ -1654,7 +1674,6 @@ CONTAINS
       INTEGER, ALLOCATABLE, DIMENSION(:)                 :: exat
       TYPE(cp_para_env_type), POINTER                    :: para_env
       TYPE(gto_basis_set_p_type), DIMENSION(:), POINTER  :: basis_set_orb, basis_set_ri
-      TYPE(libint_potential_type)                        :: pot
       TYPE(neighbor_list_set_p_type), DIMENSION(:), &
          POINTER                                         :: ab_list, ac_list
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
@@ -1676,8 +1695,9 @@ CONTAINS
       ALLOCATE (exat(1))
       exat(1) = ex_atom
       CALL build_xas_tdp_ovlp_nl(ab_list, basis_set_orb, basis_set_orb, qs_env)
-      CALL build_xas_tdp_3c_nl(ac_list, basis_set_orb, basis_set_ri, xas_tdp_control%x_op, &
-                               qs_env, excited_atoms=exat, x_range=xas_tdp_control%x_range)
+      CALL build_xas_tdp_3c_nl(ac_list, basis_set_orb, basis_set_ri, &
+                               xas_tdp_control%ri_m_potential%potential_type, qs_env, &
+                               excited_atoms=exat, x_range=xas_tdp_control%ri_m_potential%cutoff_radius)
 
       CALL get_opt_3c_dist2d(xas_tdp_env%opt_dist2d_ex, ab_list, ac_list, basis_set_orb, &
                              basis_set_orb, basis_set_ri, qs_env)
@@ -1687,19 +1707,17 @@ CONTAINS
 !  Build the ab and ac centers neighbor lists based on the optimize distribution
       CALL build_xas_tdp_ovlp_nl(ab_list, basis_set_orb, basis_set_orb, qs_env, &
                                  ext_dist2d=xas_tdp_env%opt_dist2d_ex)
-      CALL build_xas_tdp_3c_nl(ac_list, basis_set_orb, basis_set_ri, xas_tdp_control%x_op, &
-                               qs_env, excited_atoms=exat, x_range=xas_tdp_control%x_range, &
+      CALL build_xas_tdp_3c_nl(ac_list, basis_set_orb, basis_set_ri, &
+                               xas_tdp_control%ri_m_potential%potential_type, qs_env, &
+                               excited_atoms=exat, x_range=xas_tdp_control%ri_m_potential%cutoff_radius, &
                                ext_dist2d=xas_tdp_env%opt_dist2d_ex)
 
 !  Allocate, init and compute the integrals.
       ALLOCATE (xas_tdp_env%ri_o3c_ex)
       CALL init_o3c_container(xas_tdp_env%ri_o3c_ex, 1, basis_set_orb, basis_set_orb, &
                               basis_set_ri, ab_list, ac_list)
-      pot%potential_type = xas_tdp_control%x_op
-      pot%cutoff_radius = xas_tdp_control%x_range
-      pot%omega = xas_tdp_control%x_omega
-      pot%filename = xas_tdp_control%x_t_c_filename
-      CALL calculate_o3c_libint_integrals(xas_tdp_env%ri_o3c_ex, potential_parameter=pot, &
+      CALL calculate_o3c_libint_integrals(xas_tdp_env%ri_o3c_ex, &
+                                          potential_parameter=xas_tdp_control%ri_m_potential, &
                                           para_env=para_env, eps_screen=xas_tdp_control%eps_screen)
 
 ! Clean-up
