@@ -111,7 +111,7 @@ ALL_NONEXE_OBJECTS = $(filter-out $(ALL_EXE_OBJECTS), $(ALL_OBJECTS))
 ifeq ($(ONEVERSION),)
 ORIG_TARGET = default_target
 
-fes :
+fes:
 	@+$(MAKE) --no-print-directory -f $(MAKEFILE) $(VERSION) ORIG_TARGET=graph
 
 $(EXE_NAMES) all toolversions extversions extclean libcp2k cp2k_shell exts $(EXTSPACKAGES) python-bindings test testbg:

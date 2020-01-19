@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -264,7 +264,6 @@ MODULE cp_control_types
 !                     Gaussian-type functions (primitive basis functions).
 ! **************************************************************************************************
    TYPE qs_control_type
-      CHARACTER(LEN=10)                    :: method
       INTEGER                              :: method_id
       REAL(KIND=dp)                        :: eps_core_charge, &
                                               eps_kg_orb, &
@@ -386,6 +385,17 @@ MODULE cp_control_types
    END TYPE tddfpt_control_type
 
 ! **************************************************************************************************
+! \brief Control parameters for simplified Tamm Dancoff approximation (sTDA)
+! \par  ATTRIBUTES
+! \par  NOTES
+! **************************************************************************************************
+   TYPE stda_control_type
+      LOGICAL                                :: do_ewald
+      REAL(KIND=dp)                          :: hfx_fraction
+      REAL(KIND=dp)                          :: eps_td_filter
+   END TYPE stda_control_type
+
+! **************************************************************************************************
 ! \brief Control parameters for a Time-Dependent DFT calculation.
 ! **************************************************************************************************
    TYPE tddfpt2_control_type
@@ -401,6 +411,14 @@ MODULE cp_control_types
       INTEGER                              :: nlumo
       !> minimal number of MPI processes to be used per excited state
       INTEGER                              :: nprocs
+      !> type of kernel function/approximation to use
+      INTEGER                              :: kernel
+      !> options used in sTDA calculation (Kernel)
+      TYPE(stda_control_type)              :: stda_control
+      !> algorithm to correct orbital energies
+      INTEGER                              :: oe_corr
+      !> eigenvalue shifts
+      REAL(KIND=dp)                        :: ev_shift, eos_shift
       !> target accuracy
       REAL(kind=dp)                        :: conv
       !> the smallest excitation amplitude to print
@@ -529,7 +547,8 @@ MODULE cp_control_types
              s2_restraint_type, &
              admm_control_type, &
              rtp_control_type, &
-             sccs_control_type
+             sccs_control_type, &
+             stda_control_type
 
    ! Public subroutines
 

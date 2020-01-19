@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -111,6 +111,9 @@ MODULE force_env_methods
                                               mixed_environment_type
    USE mixed_environment_utils,         ONLY: get_subsys_map_index,&
                                               mixed_map_forces
+   USE molecule_kind_list_types,        ONLY: molecule_kind_list_type
+   USE molecule_kind_types,             ONLY: get_molecule_kind,&
+                                              molecule_kind_type
    USE optimize_dmfet_potential,        ONLY: build_full_dm,&
                                               check_dmfet,&
                                               prepare_dmfet_opt,&
@@ -156,6 +159,7 @@ MODULE force_env_methods
    USE qs_rho_types,                    ONLY: qs_rho_get,&
                                               qs_rho_type
    USE restraint,                       ONLY: restraint_control
+   USE scine_utils,                     ONLY: write_scine
    USE string_utilities,                ONLY: compress
    USE virial_methods,                  ONLY: write_stress_components
    USE virial_types,                    ONLY: cp_virial,&
@@ -208,8 +212,10 @@ CONTAINS
          routineP = moduleN//':'//routineN
       REAL(kind=dp), PARAMETER                           :: ateps = 1.0E-6_dp
 
-      INTEGER                                            :: i, j, nat, ndigits, output_unit, &
-                                                            print_forces, print_grrm
+      INTEGER                                            :: i, ikind, j, nat, ndigits, nfixed_atoms, &
+                                                            nfixed_atoms_total, nkind, &
+                                                            output_unit, print_forces, print_grrm, &
+                                                            print_scine
       LOGICAL                                            :: calculate_forces, &
                                                             calculate_stress_tensor, &
                                                             energy_consistency, eval_ef, &
@@ -222,6 +228,9 @@ CONTAINS
       TYPE(cell_type), POINTER                           :: cell
       TYPE(cp_logger_type), POINTER                      :: logger
       TYPE(cp_subsys_type), POINTER                      :: subsys
+      TYPE(molecule_kind_list_type), POINTER             :: molecule_kinds
+      TYPE(molecule_kind_type), DIMENSION(:), POINTER    :: molecule_kind_set
+      TYPE(molecule_kind_type), POINTER                  :: molecule_kind
       TYPE(particle_list_type), POINTER                  :: core_particles, particles, &
                                                             shell_particles
       TYPE(virial_type), POINTER                         :: virial
@@ -435,10 +444,31 @@ CONTAINS
                                         file_position="REWIND", extension=".rrm")
       IF (print_grrm > 0) THEN
          CALL force_env_get(force_env, subsys=subsys)
-         CALL cp_subsys_get(subsys, particles=particles)
-         CALL write_grrm(print_grrm, particles%els, e_pot)
+         CALL cp_subsys_get(subsys=subsys, particles=particles, &
+                            molecule_kinds=molecule_kinds)
+         ! Count the number of fixed atoms
+         nfixed_atoms_total = 0
+         nkind = molecule_kinds%n_els
+         molecule_kind_set => molecule_kinds%els
+         DO ikind = 1, nkind
+            molecule_kind => molecule_kind_set(ikind)
+            CALL get_molecule_kind(molecule_kind, nfixd=nfixed_atoms)
+            nfixed_atoms_total = nfixed_atoms_total + nfixed_atoms
+         END DO
+         !
+         CALL write_grrm(print_grrm, force_env, particles%els, e_pot, fixed_atoms=nfixed_atoms_total)
       END IF
       CALL cp_print_key_finished_output(print_grrm, logger, force_env%force_env_section, "PRINT%GRRM")
+
+      print_scine = cp_print_key_unit_nr(logger, force_env%force_env_section, "PRINT%SCINE", &
+                                         file_position="REWIND", extension=".scine")
+      IF (print_scine > 0) THEN
+         CALL force_env_get(force_env, subsys=subsys)
+         CALL cp_subsys_get(subsys=subsys, particles=particles)
+         !
+         CALL write_scine(print_scine, force_env, particles%els, e_pot)
+      END IF
+      CALL cp_print_key_finished_output(print_scine, logger, force_env%force_env_section, "PRINT%SCINE")
 
       ! Atomic stress
       output_unit = cp_print_key_unit_nr(logger, force_env%force_env_section, "PRINT%PROGRAM_RUN_INFO", &
@@ -612,7 +642,6 @@ CONTAINS
                   CALL real_to_scaled(s, ref_pos_shell(i, 1:3), cell_local)
                   CALL scaled_to_real(shell_particles%els(i)%r, s, cell)
                END DO
-
                ! Compute energies
                CALL force_env_calc_energy_force(force_env, &
                                                 calc_force=.FALSE., &
@@ -625,12 +654,21 @@ CONTAINS
             CALL init_cell(cell)
             numer_stress(ip, iq) = 0.5_dp*(numer_energy(1) - numer_energy(2))/dx_w
             IF (output_unit > 0) THEN
-               WRITE (UNIT=output_unit, FMT="(T7,A,F7.4,A,T27,A,F7.4,A,T49,A)") &
-                  "E("//ACHAR(119 + ip)//ACHAR(119 + iq)//" +", dx_w, ")", &
-                  "E("//ACHAR(119 + ip)//ACHAR(119 + iq)//" -", dx_w, ")", &
-                  "f(numerical)"
-               WRITE (UNIT=output_unit, FMT="(3(1X,F19.8))") &
-                  numer_energy(1:2), numer_stress(ip, iq)
+               IF (globenv%run_type_id == debug_run) THEN
+                  WRITE (UNIT=output_unit, FMT="(T2,A,T19,A,F7.4,A,T44,A,F7.4,A,T69,A)") &
+                     "DEBUG|", "E("//ACHAR(119 + ip)//ACHAR(119 + iq)//" +", dx_w, ")", &
+                     "E("//ACHAR(119 + ip)//ACHAR(119 + iq)//" -", dx_w, ")", &
+                     "f(numerical)"
+                  WRITE (UNIT=output_unit, FMT="(T2,A,2(1X,F24.8),1X,F22.8)") &
+                     "DEBUG|", numer_energy(1:2), numer_stress(ip, iq)
+               ELSE
+                  WRITE (UNIT=output_unit, FMT="(T7,A,F7.4,A,T27,A,F7.4,A,T49,A)") &
+                     "E("//ACHAR(119 + ip)//ACHAR(119 + iq)//" +", dx_w, ")", &
+                     "E("//ACHAR(119 + ip)//ACHAR(119 + iq)//" -", dx_w, ")", &
+                     "f(numerical)"
+                  WRITE (UNIT=output_unit, FMT="(3(1X,F19.8))") &
+                     numer_energy(1:2), numer_stress(ip, iq)
+               END IF
             END IF
          END DO
       END DO

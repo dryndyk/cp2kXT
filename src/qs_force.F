@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -31,6 +31,7 @@ MODULE qs_force
                                               dbcsr_set
    USE dft_plus_u,                      ONLY: plus_u
    USE efield_utils,                    ONLY: calculate_ecore_efield
+   USE energy_corrections,              ONLY: energy_correction
    USE input_constants,                 ONLY: do_admm_purify_none
    USE input_section_types,             ONLY: section_vals_get_subs_vals,&
                                               section_vals_type,&
@@ -380,7 +381,12 @@ CONTAINS
          CALL calc_mixed_overlap_force(qs_env)
       END IF
 
-      !  *** replicate forces ***
+      ! Energy_correction
+      CALL energy_correction(qs_env, ec_init=.FALSE., calculate_forces=.TRUE.)
+
+      ! replicate forces (get current pointer)
+      NULLIFY (force)
+      CALL get_qs_env(qs_env=qs_env, force=force)
       CALL replicate_qs_force(force, para_env)
 
       DO iatom = 1, natom
@@ -408,7 +414,7 @@ CONTAINS
                      dft_control%qs_control%semi_empirical))) THEN
             DO dir = 1, 3
                virial%pv_virial(dir, dir) = virial%pv_virial(dir, dir) - energy%exc &
-                                            - 2.0_dp*energy%hartree
+                                            - 2.0_dp*(energy%hartree + energy%sccs_pol)
                IF (dft_control%do_admm) THEN
                   virial%pv_virial(dir, dir) = virial%pv_virial(dir, dir) - energy%exc_aux_fit
                END IF

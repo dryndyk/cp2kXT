@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 MODULE optbas_fenv_manipulation
    USE admm_types,                      ONLY: admm_env_create,&
@@ -418,7 +418,7 @@ CONTAINS
          END DO
       END DO
 
-      CALL init_interaction_radii(dft_control%qs_control, atomic_kind_set, qs_kind_set)
+      CALL init_interaction_radii(dft_control%qs_control, qs_kind_set)
 
    END SUBROUTINE update_basis_set
 

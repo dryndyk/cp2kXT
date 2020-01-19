@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -1412,6 +1412,7 @@ CONTAINS
 !> \par History
 !>      IAB (15-Feb-2010): Added OpenMP parallelisation to task loop
 !>                         (c) The Numerical Algorithms Group (NAG) Ltd, 2010 on behalf of the HECToR project
+!>      Anything that is not the default ORB basis_type requires an external_task_list 12.2019, (A.Bussy)
 !> \note
 !>      both rho and rho_gspace contain the new rho
 !>      (in real and g-space respectively)
@@ -1529,16 +1530,13 @@ CONTAINS
                       particle_set=particle_set, &
                       pw_env=pw_env)
 
-      SELECT CASE (my_basis_type)
-      CASE ("ORB")
-         CALL get_ks_env(ks_env, &
-                         task_list=task_list, &
-                         task_list_soft=task_list_soft)
-      CASE ("AUX_FIT")
-         CALL get_ks_env(ks_env, &
-                         task_list_aux_fit=task_list, &
-                         task_list_soft=task_list_soft)
-      END SELECT
+      !take the default ORB basis task lists
+      CALL get_ks_env(ks_env, task_list=task_list, task_list_soft=task_list_soft)
+
+      !if any other basis_type is used, need to provide an external task_list => for generality
+      IF (.NOT. my_basis_type == "ORB") THEN
+         CPASSERT(PRESENT(task_list_external))
+      END IF
 
       nimages = dft_control%nimages
       CPASSERT(nimages == 1 .OR. do_kp)
@@ -1784,23 +1782,15 @@ CONTAINS
                sgfb = first_sgfb(1, jset)
 
                IF (iatom <= jatom) THEN
-                  CALL dgemm("N", "N", ncoa, nsgfb(jset), nsgfa(iset), &
-                             1.0_dp, sphi_a(1, sgfa), SIZE(sphi_a, 1), &
-                             p_block(sgfa, sgfb), SIZE(p_block, 1), &
-                             0.0_dp, work(1, 1), maxco)
-                  CALL dgemm("N", "T", ncoa, ncob, nsgfb(jset), &
-                             1.0_dp, work(1, 1), maxco, &
-                             sphi_b(1, sgfb), SIZE(sphi_b, 1), &
-                             0.0_dp, pab(1, 1), maxco)
+                  work(1:ncoa, 1:nsgfb(jset)) = MATMUL(sphi_a(1:ncoa, sgfa:sgfa + nsgfa(iset) - 1), &
+                                                       p_block(sgfa:sgfa + nsgfa(iset) - 1, sgfb:sgfb + nsgfb(jset) - 1))
+                  pab(1:ncoa, 1:ncob) = MATMUL(work(1:ncoa, 1:nsgfb(jset)), &
+                                               TRANSPOSE(sphi_b(1:ncob, sgfb:sgfb + nsgfb(jset) - 1)))
                ELSE
-                  CALL dgemm("N", "N", ncob, nsgfa(iset), nsgfb(jset), &
-                             1.0_dp, sphi_b(1, sgfb), SIZE(sphi_b, 1), &
-                             p_block(sgfb, sgfa), SIZE(p_block, 1), &
-                             0.0_dp, work(1, 1), maxco)
-                  CALL dgemm("N", "T", ncob, ncoa, nsgfa(iset), &
-                             1.0_dp, work(1, 1), maxco, &
-                             sphi_a(1, sgfa), SIZE(sphi_a, 1), &
-                             0.0_dp, pab(1, 1), maxco)
+                  work(1:ncob, 1:nsgfa(iset)) = MATMUL(sphi_b(1:ncob, sgfb:sgfb + nsgfb(jset) - 1), &
+                                                       p_block(sgfb:sgfb + nsgfb(jset) - 1, sgfa:sgfa + nsgfa(iset) - 1))
+                  pab(1:ncob, 1:ncoa) = MATMUL(work(1:ncob, 1:nsgfa(iset)), &
+                                               TRANSPOSE(sphi_a(1:ncoa, sgfa:sgfa + nsgfa(iset) - 1)))
                END IF
 
                iset_old = iset

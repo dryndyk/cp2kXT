@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -351,7 +351,7 @@ CONTAINS
 
       CALL timestop(handle)
 
-   END SUBROUTINE
+   END SUBROUTINE write_mos_molden
 
 ! **************************************************************************************************
 !> \brief Output MO coefficients formatted correctly for MOLDEN, omitting those <= 1E(-digits)
@@ -379,7 +379,7 @@ CONTAINS
          END IF
       END DO
 
-   END SUBROUTINE
+   END SUBROUTINE print_coeffs
 
 ! **************************************************************************************************
 !> \brief writes the output for vibrational analysis in MOLDEN format

@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -132,6 +132,8 @@ MODULE qs_scf_post_gpw
    USE qs_collocate_density,            ONLY: calculate_wavefunction
    USE qs_commutators,                  ONLY: build_com_hr_matrix
    USE qs_core_energies,                ONLY: calculate_ptrace
+   USE qs_dos,                          ONLY: calculate_dos,&
+                                              calculate_dos_kp
    USE qs_electric_field_gradient,      ONLY: qs_efg_calc
    USE qs_elf_methods,                  ONLY: qs_elf_calc
    USE qs_energy_types,                 ONLY: qs_energy_type
@@ -208,7 +210,7 @@ MODULE qs_scf_post_gpw
              qs_scf_post_moments, &
              write_available_results, &
              write_mo_free_results
-   PUBLIC :: make_lumo
+   PUBLIC :: make_lumo_gpw
 
 ! **************************************************************************************************
 
@@ -583,7 +585,7 @@ CONTAINS
 
             ALLOCATE (unoccupied_orbs(dft_control%nspins))
             ALLOCATE (unoccupied_evals(dft_control%nspins))
-            CALL make_lumo(qs_env, scf_env, unoccupied_orbs, unoccupied_evals, min_lumos, nlumos)
+            CALL make_lumo_gpw(qs_env, scf_env, unoccupied_orbs, unoccupied_evals, min_lumos, nlumos)
             lumo_ptr => unoccupied_orbs
             DO ispin = 1, dft_control%nspins
                has_lumo = .TRUE.
@@ -686,8 +688,8 @@ CONTAINS
             IF (nlumo_stm > 0) THEN
                ALLOCATE (unoccupied_orbs_stm(dft_control%nspins))
                ALLOCATE (unoccupied_evals_stm(dft_control%nspins))
-               CALL make_lumo(qs_env, scf_env, unoccupied_orbs_stm, unoccupied_evals_stm, &
-                              nlumo_stm, nlumos)
+               CALL make_lumo_gpw(qs_env, scf_env, unoccupied_orbs_stm, unoccupied_evals_stm, &
+                                  nlumo_stm, nlumos)
             END IF
 
             CALL th_stm_image(qs_env, stm_section, particles, unoccupied_orbs_stm, &
@@ -741,7 +743,7 @@ CONTAINS
 !> \param nlumo ...
 !> \param nlumos ...
 ! **************************************************************************************************
-   SUBROUTINE make_lumo(qs_env, scf_env, unoccupied_orbs, unoccupied_evals, nlumo, nlumos)
+   SUBROUTINE make_lumo_gpw(qs_env, scf_env, unoccupied_orbs, unoccupied_evals, nlumo, nlumos)
 
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(qs_scf_env_type), POINTER                     :: scf_env
@@ -750,7 +752,7 @@ CONTAINS
       INTEGER, INTENT(IN)                                :: nlumo
       INTEGER, INTENT(OUT)                               :: nlumos
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'make_lumo', routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER :: routineN = 'make_lumo_gpw', routineP = moduleN//':'//routineN
 
       INTEGER                                            :: handle, homo, ispin, n, nao, nmo, &
                                                             output_unit
@@ -836,7 +838,7 @@ CONTAINS
 
       CALL timestop(handle)
 
-   END SUBROUTINE make_lumo
+   END SUBROUTINE make_lumo_gpw
 ! **************************************************************************************************
 !> \brief Computes and Prints Atomic Charges with several methods
 !> \param input ...
@@ -1646,6 +1648,18 @@ CONTAINS
                END DO
             END IF
          END IF
+
+         ! *** at the end of scf print out dos
+         IF (BTEST(cp_print_key_should_output(logger%iter_info, dft_section, "PRINT%DOS") &
+                   , cp_p_file)) THEN
+            IF (do_kpoints) THEN
+               CALL get_qs_env(qs_env=qs_env, kpoints=kpoints)
+               CALL calculate_dos_kp(kpoints, qs_env, dft_section)
+            ELSE
+               CALL get_qs_env(qs_env, mos=mos)
+               CALL calculate_dos(mos, qs_env, dft_section)
+            ENDIF
+         ENDIF
 
          ! *** at the end of scf print out the projected dos per kind
          IF (BTEST(cp_print_key_should_output(logger%iter_info, dft_section, "PRINT%PDOS") &

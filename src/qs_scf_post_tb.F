@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -102,6 +102,8 @@ MODULE qs_scf_post_tb
                                               calculate_wavefunction
    USE qs_dftb_types,                   ONLY: qs_dftb_atom_type
    USE qs_dftb_utils,                   ONLY: get_dftb_atom_param
+   USE qs_dos,                          ONLY: calculate_dos,&
+                                              calculate_dos_kp
    USE qs_elf_methods,                  ONLY: qs_elf_calc
    USE qs_energy_window,                ONLY: energy_windows
    USE qs_environment_types,            ONLY: get_qs_env,&
@@ -142,7 +144,9 @@ MODULE qs_scf_post_tb
 
    ! Global parameters
    CHARACTER(len=*), PARAMETER, PRIVATE :: moduleN = 'qs_scf_post_tb'
-   PUBLIC :: scf_post_calculation_tb
+   PUBLIC :: scf_post_calculation_tb, make_lumo_tb
+
+! **************************************************************************************************
 
 CONTAINS
 
@@ -187,6 +191,7 @@ CONTAINS
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: matrix_p, matrix_s
       TYPE(dbcsr_type), POINTER                          :: mo_coeff_deriv
       TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(kpoint_type), POINTER                         :: kpoints
       TYPE(mo_set_p_type), DIMENSION(:), POINTER         :: mos
       TYPE(particle_list_type), POINTER                  :: particles
       TYPE(particle_type), DIMENSION(:), POINTER         :: particle_set
@@ -376,6 +381,19 @@ CONTAINS
          IF (explicit .AND. .NOT. qs_env%run_rtp) CALL wfn_mix_tb(qs_env, dft_section, scf_env)
       END IF
 
+      IF (.NOT. no_mos) THEN
+         print_key => section_vals_get_subs_vals(print_section, "DOS")
+         IF (BTEST(cp_print_key_should_output(logger%iter_info, print_key), cp_p_file)) THEN
+            IF (do_kpoints) THEN
+               CALL get_qs_env(qs_env=qs_env, kpoints=kpoints)
+               CALL calculate_dos_kp(kpoints, qs_env, dft_section)
+            ELSE
+               CALL get_qs_env(qs_env, mos=mos)
+               CALL calculate_dos(mos, qs_env, dft_section)
+            ENDIF
+         ENDIF
+      ENDIF
+
       ! PDOS
       IF (.NOT. no_mos) THEN
          print_key => section_vals_get_subs_vals(print_section, "PDOS")
@@ -551,8 +569,8 @@ CONTAINS
                   IF (nlumo_stm > 0) THEN
                      ALLOCATE (unoccupied_orbs_stm(dft_control%nspins))
                      ALLOCATE (unoccupied_evals_stm(dft_control%nspins))
-                     CALL make_lumo(qs_env, scf_env, unoccupied_orbs_stm, unoccupied_evals_stm, &
-                                    nlumo_stm, nlumos)
+                     CALL make_lumo_tb(qs_env, scf_env, unoccupied_orbs_stm, unoccupied_evals_stm, &
+                                       nlumo_stm, nlumos)
                   END IF
 
                   CALL get_qs_env(qs_env, subsys=subsys)
@@ -917,7 +935,7 @@ CONTAINS
 !> \param nlumo ...
 !> \param nlumos ...
 ! **************************************************************************************************
-   SUBROUTINE make_lumo(qs_env, scf_env, unoccupied_orbs, unoccupied_evals, nlumo, nlumos)
+   SUBROUTINE make_lumo_tb(qs_env, scf_env, unoccupied_orbs, unoccupied_evals, nlumo, nlumos)
 
       TYPE(qs_environment_type), POINTER                 :: qs_env
       TYPE(qs_scf_env_type), POINTER                     :: scf_env
@@ -926,7 +944,7 @@ CONTAINS
       INTEGER                                            :: nlumo
       INTEGER, INTENT(OUT)                               :: nlumos
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'make_lumo', routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER :: routineN = 'make_lumo_tb', routineP = moduleN//':'//routineN
 
       INTEGER                                            :: homo, iounit, ispin, n, nao, nmo
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env
@@ -995,7 +1013,7 @@ CONTAINS
 
       END DO
 
-   END SUBROUTINE make_lumo
+   END SUBROUTINE make_lumo_tb
 
 ! **************************************************************************************************
 !> \brief ...

@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -63,6 +63,8 @@ MODULE qs_environment
                                               distribution_1d_type
    USE distribution_methods,            ONLY: distribute_molecules_1d
    USE dm_ls_scf_create,                ONLY: ls_scf_create
+   USE ec_env_types,                    ONLY: energy_correction_type
+   USE ec_environment,                  ONLY: ec_env_create
    USE et_coupling_types,               ONLY: et_coupling_create
    USE ewald_environment_types,         ONLY: ewald_env_create,&
                                               ewald_env_get,&
@@ -165,6 +167,7 @@ MODULE qs_environment
    USE qs_rho0_methods,                 ONLY: init_rho0
    USE qs_rho0_types,                   ONLY: rho0_mpole_type
    USE qs_rho_atom_methods,             ONLY: init_rho_atom
+   USE qs_rho_atom_types,               ONLY: rho_atom_type
    USE qs_subsys_methods,               ONLY: qs_subsys_create
    USE qs_subsys_types,                 ONLY: qs_subsys_get,&
                                               qs_subsys_release,&
@@ -257,6 +260,7 @@ CONTAINS
       TYPE(cell_type), POINTER                           :: my_cell, my_cell_ref
       TYPE(cp_blacs_env_type), POINTER                   :: blacs_env
       TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(energy_correction_type), POINTER              :: ec_env
       TYPE(kpoint_type), POINTER                         :: kpoints
       TYPE(lri_environment_type), POINTER                :: lri_env
       TYPE(particle_type), DIMENSION(:), POINTER         :: particle_set
@@ -424,6 +428,13 @@ CONTAINS
          CALL kg_env_create(qs_env, qs_env%kg_env, qs_kind_set, qs_env%input)
       END IF
 
+      dft_section => section_vals_get_subs_vals(qs_env%input, "DFT")
+      CALL section_vals_val_get(dft_section, "ENERGY_CORRECTION%_SECTION_PARAMETERS_", &
+                                l_val=qs_env%energy_correction)
+      NULLIFY (ec_env)
+      CALL ec_env_create(qs_env, ec_env, dft_section)
+      CALL set_qs_env(qs_env, ec_env=ec_env)
+
       et_coupling_section => section_vals_get_subs_vals(qs_env%input, &
                                                         "PROPERTIES%ET_COUPLING")
       CALL section_vals_get(et_coupling_section, explicit=do_et)
@@ -527,6 +538,7 @@ CONTAINS
       TYPE(qs_wf_history_type), POINTER                  :: wf_history
       TYPE(rel_control_type), POINTER                    :: rel_control
       TYPE(rho0_mpole_type), POINTER                     :: rho0_mpole
+      TYPE(rho_atom_type), DIMENSION(:), POINTER         :: rho_atom_set
       TYPE(scf_control_type), POINTER                    :: scf_control
       TYPE(se_taper_type), POINTER                       :: se_taper
       TYPE(section_vals_type), POINTER :: dft_section, et_coupling_section, et_ddapc_section, &
@@ -717,11 +729,11 @@ CONTAINS
 
       !   *** Check that no all-electron potential is present if GPW or GAPW_XC
       CALL get_qs_kind_set(qs_kind_set, all_potential_present=all_potential_present)
-      IF ((dft_control%qs_control%method == "GPW") .OR. &
-          (dft_control%qs_control%method == "GAPW_XC") .OR. &
-          (dft_control%qs_control%method == "OFGPW")) THEN
+      IF ((dft_control%qs_control%method_id == do_method_gpw) .OR. &
+          (dft_control%qs_control%method_id == do_method_gapw_xc) .OR. &
+          (dft_control%qs_control%method_id == do_method_ofgpw)) THEN
          IF (all_potential_present) THEN
-            CPABORT("All-el calculations with GPW, GAPW_XC, and OFGPW are not implemented ")
+            CPABORT("All-electron calculations with GPW, GAPW_XC, and OFGPW are not implemented")
          END IF
       END IF
 
@@ -819,11 +831,11 @@ CONTAINS
          lmax_sphere = 2*maxlgto
          dft_control%qs_control%gapw_control%lmax_sphere = lmax_sphere
       END IF
-      IF (dft_control%qs_control%method == "LRIGPW" .OR. dft_control%qs_control%lri_optbas) THEN
+      IF (dft_control%qs_control%method_id == do_method_lrigpw .OR. dft_control%qs_control%lri_optbas) THEN
          CALL get_qs_kind_set(qs_kind_set, maxlgto=maxlgto_lri, basis_type="LRI_AUX")
          !take maxlgto from lri basis if larger (usually)
          maxlgto = MAX(maxlgto, maxlgto_lri)
-      ELSE IF (dft_control%qs_control%method == "RIGPW") THEN
+      ELSE IF (dft_control%qs_control%method_id == do_method_rigpw) THEN
          CALL get_qs_kind_set(qs_kind_set, maxlgto=maxlgto_lri, basis_type="RI_HXC")
          maxlgto = MAX(maxlgto, maxlgto_lri)
       END IF
@@ -842,8 +854,8 @@ CONTAINS
       CALL init_qs_kind_set(qs_kind_set)
 
       !   *** Initialise GAPW soft basis and projectors
-      IF (dft_control%qs_control%method == "GAPW" .OR. &
-          dft_control%qs_control%method == "GAPW_XC") THEN
+      IF (dft_control%qs_control%method_id == do_method_gapw .OR. &
+          dft_control%qs_control%method_id == do_method_gapw_xc) THEN
          qs_control => dft_control%qs_control
          CALL init_gapw_basis_set(qs_kind_set, qs_control, qs_env%input)
       ENDIF
@@ -855,7 +867,7 @@ CONTAINS
       CALL init_md_ftable(maxl)
 
       !   *** Initialize the atomic interaction radii ***
-      CALL init_interaction_radii(dft_control%qs_control, atomic_kind_set, qs_kind_set)
+      CALL init_interaction_radii(dft_control%qs_control, qs_kind_set)
       !
       IF (dft_control%qs_control%method_id == do_method_xtb) THEN
          ! cutoff radius
@@ -972,8 +984,10 @@ CONTAINS
       IF (dft_control%qs_control%method_id == do_method_gapw .OR. &
           dft_control%qs_control%method_id == do_method_gapw_xc) THEN
          !     *** Allocate and initialize the set of atomic densities ***
+         NULLIFY (rho_atom_set)
          gapw_control => dft_control%qs_control%gapw_control
-         CALL init_rho_atom(qs_env, gapw_control)
+         CALL init_rho_atom(rho_atom_set, qs_kind_set, qs_env, gapw_control)
+         CALL set_qs_env(qs_env=qs_env, rho_atom_set=rho_atom_set)
          IF (dft_control%qs_control%method_id /= do_method_gapw_xc) THEN
             CALL get_qs_env(qs_env=qs_env, natom=natom)
             !       *** Allocate and initialize the compensation density rho0 ***
@@ -1478,7 +1492,7 @@ CONTAINS
       CALL qs_env_setup(qs_env)
 
       ! Allocate and Initialie rho0 soft on the global grid
-      IF (dft_control%qs_control%method == "GAPW") THEN
+      IF (dft_control%qs_control%method_id == do_method_gapw) THEN
          CALL get_qs_env(qs_env=qs_env, rho0_mpole=rho0_mpole)
          CALL rho0_s_grid_create(qs_env, rho0_mpole)
       END IF

@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -83,9 +83,10 @@ MODULE bibliography
                             Becke1988b, Migliore2009, Mavros2015, Holmberg2017, Marek2014, &
                             Stoychev2016, Futera2017, Bailey2006, Papior2017, Lehtola2018, &
                             Brieuc2016, Barca2018, Scheiber2018, Huang2011, Heaton_Burgess2007, &
-                            Schuett2018, Holmberg2018, Togo2018, Staub2019, Grimme2017, Kondov2007, &
+                            Schuett2018, Holmberg2018, Togo2018, Staub2019, Grimme2013, Grimme2016, &
+                            Grimme2017, Kondov2007, &
                             Ren2011, Ren2013, Cohen2000, Rogers2002, Filippetti2000, Paziani2006, &
-                            Toulouse2004, Limpanuparb2011
+                            Toulouse2004, Limpanuparb2011, Martin2003, Yin2017
 
 CONTAINS
 
@@ -1807,6 +1808,36 @@ CONTAINS
                          "DI 10.1002/jcc.21759", &
                          "ER"), &
                          DOI="10.1002/jcc.21759")
+
+      CALL add_reference(key=Grimme2013, ISI_record=s2a( &
+                         "PT J", &
+                         "AU Grimme, S", &
+                         "AF Grimme, Stefan", &
+                         "TI A simplified Tamm-Dancoff density functional approach for", &
+                         "   the electronic excitation spectra of very large molecules", &
+                         "SO The Journal of Chemical Physics", &
+                         "PY 2013", &
+                         "VL 138", &
+                         "AR 244104", &
+                         "DI 10.1063/1.4811331", &
+                         "ER"), &
+                         DOI="10.1063/1.4811331")
+
+      CALL add_reference(key=Grimme2016, ISI_record=s2a( &
+                         "PT J", &
+                         "AU Grimme, S", &
+                         "   Bannwarth, C", &
+                         "AF Grimme, Stefan", &
+                         "   Bannwarth, Christoph", &
+                         "TI Ultra-fast computation of electronic spectra for large systems", &
+                         "   by tight-binding based simplified Tamm-Dancoff approximation (sTDA-xTB)", &
+                         "SO The Journal of Chemical Physics", &
+                         "PY 2016", &
+                         "VL 145", &
+                         "AR 054103", &
+                         "DI 10.1063/1.4959605", &
+                         "ER"), &
+                         DOI="10.1063/1.4959605")
 
       CALL add_reference(key=Grimme2017, ISI_record=s2a( &
                          "PT J", &
@@ -4064,6 +4095,20 @@ CONTAINS
                          "ER"), &
                          DOI="10.1103/PhysRevB.88.035120")
 
+      CALL add_reference(key=Martin2003, ISI_record=s2a( &
+                         "AU Martin,Richard L.", &
+                         "AF Martin,Richard L.Holger", &
+                         "TI Natural transition orbitals", &
+                         "SO The Journal of Chemical Physics", &
+                         "PY 2003", &
+                         "VL 118", &
+                         "IS 11", &
+                         "BP 4775", &
+                         "EP 4777", &
+                         "DI 10.1063/1.1558471", &
+                         "ER"), &
+                         DOI="10.1063/1.1558471")
+
       CALL add_reference(key=Cohen2000, ISI_record=s2a( &
                          "AU Cohen, Morrel H.", &
                          "   Frydel, Derek", &
@@ -4257,6 +4302,23 @@ CONTAINS
                          "SN 1549-9618", &
                          "ER"), &
                          DOI="10.1021/ct200305n")
+
+      CALL add_reference(key=Yin2017, ISI_record=s2a( &
+                         "AU Yin, Wen-Jin", &
+                         "   Krack, Matthias", &
+                         "   Li, Xibo", &
+                         "   Chen, Li-Zhen", &
+                         "   Liu, Li-Min", &
+                         "TI Periodic continuum solvation model integrated with first-principles", &
+                         "   calculations for solid surfaces", &
+                         "SO Prog. Nat. Sci.", &
+                         "PY 2017", &
+                         "VL 27", &
+                         "IS 2", &
+                         "BP 283", &
+                         "EP 288", &
+                         "ER"), &
+                         DOI="10.1016/j.pnsc.2017.03.003")
 
    END SUBROUTINE add_all_references
 

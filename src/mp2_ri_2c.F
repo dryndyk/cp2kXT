@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -89,10 +89,10 @@ MODULE mp2_ri_2c
    USE qs_kind_types,                   ONLY: get_qs_kind,&
                                               qs_kind_type
    USE qs_ks_types,                     ONLY: set_ks_env
-   USE qs_neighbor_list_types,          ONLY: neighbor_list_set_p_type
+   USE qs_neighbor_list_types,          ONLY: neighbor_list_set_p_type,&
+                                              release_neighbor_list_sets
    USE qs_tensors,                      ONLY: build_2c_integrals,&
-                                              build_2c_neighbor_lists,&
-                                              neighbor_list_2c_destroy
+                                              build_2c_neighbor_lists
    USE rpa_communication,               ONLY: communicate_buffer
 
 !$ USE OMP_LIB, ONLY: omp_get_max_threads, omp_get_thread_num
@@ -139,7 +139,6 @@ CONTAINS
 !> \param do_im_time ...
 !> \param do_kpoints ...
 !> \param mp2_eps_pgf_orb_S ...
-!> \param atomic_kind_set ...
 !> \param qs_kind_set ...
 !> \param sab_orb_sub ...
 ! **************************************************************************************************
@@ -149,7 +148,7 @@ CONTAINS
                                gd_array, calc_PQ_cond_num, cond_num, do_svd, eps_svd, &
                                num_small_eigen, potential, ri_metric, &
                                fm_matrix_L_RI_metric, &
-                               do_im_time, do_kpoints, mp2_eps_pgf_orb_S, atomic_kind_set, qs_kind_set, sab_orb_sub)
+                               do_im_time, do_kpoints, mp2_eps_pgf_orb_S, qs_kind_set, sab_orb_sub)
 
       TYPE(qs_environment_type), POINTER                 :: qs_env
       INTEGER, INTENT(IN)                                :: eri_method
@@ -173,7 +172,6 @@ CONTAINS
       TYPE(cp_fm_p_type), DIMENSION(:, :), POINTER       :: fm_matrix_L_RI_metric
       LOGICAL, INTENT(IN)                                :: do_im_time, do_kpoints
       REAL(KIND=dp), INTENT(IN)                          :: mp2_eps_pgf_orb_S
-      TYPE(atomic_kind_type), DIMENSION(:), POINTER      :: atomic_kind_set
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
       TYPE(neighbor_list_set_p_type), DIMENSION(:), &
          POINTER                                         :: sab_orb_sub
@@ -210,14 +208,14 @@ CONTAINS
             ! re-init the radii to be able to generate pair lists with appropriate screening for overlap matrix
             eps_pgf_orb_old = dft_control%qs_control%eps_pgf_orb
             dft_control%qs_control%eps_pgf_orb = mp2_eps_pgf_orb_S
-            CALL init_interaction_radii(dft_control%qs_control, atomic_kind_set, qs_kind_set)
+            CALL init_interaction_radii(dft_control%qs_control, qs_kind_set)
 
             CALL RI_2c_integral_mat(qs_env, fm_matrix_L_RI_metric, fm_matrix_L, dimen_RI, ri_metric, &
                                     do_kpoints, kpoints)
 
             ! re-init the radii to previous values
             dft_control%qs_control%eps_pgf_orb = eps_pgf_orb_old
-            CALL init_interaction_radii(dft_control%qs_control, atomic_kind_set, qs_kind_set)
+            CALL init_interaction_radii(dft_control%qs_control, qs_kind_set)
 
             ! GPW overlap matrix
          ELSE
@@ -654,7 +652,7 @@ CONTAINS
 
       END IF
 
-      CALL neighbor_list_2c_destroy(sab_RI)
+      CALL release_neighbor_list_sets(sab_RI)
 
       CALL cp_fm_struct_release(fm_struct)
 

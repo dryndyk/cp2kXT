@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 ! **************************************************************************************************
 !> \brief Routines useful for iterative matrix calculations
@@ -1281,7 +1281,7 @@ CONTAINS
       ! symmetrize the matrices as this is not guaranteed by the algorithm
       IF (tsym) THEN
          IF (unit_nr > 0) THEN
-            WRITE (unit_nr, '(A20)') "SYMMETRIZING RESULTS"
+            WRITE (unit_nr, '(T6,A20)') "Symmetrizing Results"
          ENDIF
          CALL dbcsr_transposed(tmp1, matrix_sqrt_inv)
          CALL dbcsr_add(matrix_sqrt_inv, tmp1, 0.5_dp, 0.5_dp)

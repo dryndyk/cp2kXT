@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -60,6 +60,8 @@ MODULE qs_kpp1_env_types
       TYPE(pw_p_type), DIMENSION(:, :), POINTER :: drho_r
       TYPE(xc_derivative_set_type), POINTER :: deriv_set
       TYPE(xc_rho_set_type), POINTER        :: rho_set
+      TYPE(xc_derivative_set_type), POINTER :: deriv_set_admm
+      TYPE(xc_rho_set_type), POINTER        :: rho_set_admm
       INTEGER, DIMENSION(:, :), POINTER :: spin_pot
       LOGICAL, DIMENSION(:, :), POINTER :: grad_pot
       LOGICAL, DIMENSION(:), POINTER :: ndiag_term
@@ -120,6 +122,14 @@ CONTAINS
             IF (ASSOCIATED(kpp1_env%rho_set)) THEN
                CALL xc_rho_set_release(kpp1_env%rho_set)
                NULLIFY (kpp1_env%rho_set)
+            END IF
+            IF (ASSOCIATED(kpp1_env%deriv_set_admm)) THEN
+               CALL xc_dset_release(kpp1_env%deriv_set_admm)
+               NULLIFY (kpp1_env%deriv_set_admm)
+            END IF
+            IF (ASSOCIATED(kpp1_env%rho_set_admm)) THEN
+               CALL xc_rho_set_release(kpp1_env%rho_set_admm)
+               NULLIFY (kpp1_env%rho_set_admm)
             END IF
             IF (ASSOCIATED(kpp1_env%spin_pot)) THEN
                DEALLOCATE (kpp1_env%spin_pot)

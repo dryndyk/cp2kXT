@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -9,6 +9,7 @@
 !>
 !> \par History
 !>     refactoring 03-2011 [MI]
+!>     Made GAPW compatible 12.2019 (A. Bussy)
 !> \author MI
 ! **************************************************************************************************
 MODULE hfx_admm_utils
@@ -16,14 +17,19 @@ MODULE hfx_admm_utils
                                               admm_dm_type
    USE admm_methods,                    ONLY: scale_dm
    USE admm_types,                      ONLY: admm_env_create,&
+                                              admm_gapw_type,&
                                               admm_type
    USE atomic_kind_types,               ONLY: atomic_kind_type
+   USE basis_set_container_types,       ONLY: add_basis_set_to_container
+   USE basis_set_types,                 ONLY: copy_gto_basis_set,&
+                                              gto_basis_set_type
    USE cell_types,                      ONLY: cell_type
    USE cp_control_types,                ONLY: dft_control_type
    USE cp_dbcsr_operations,             ONLY: copy_dbcsr_to_fm
    USE cp_fm_types,                     ONLY: cp_fm_get_info,&
                                               cp_fm_type
    USE cp_log_handling,                 ONLY: cp_get_default_logger,&
+                                              cp_logger_get_default_io_unit,&
                                               cp_logger_type
    USE cp_output_handling,              ONLY: cp_print_key_finished_output,&
                                               cp_print_key_unit_nr
@@ -32,6 +38,7 @@ MODULE hfx_admm_utils
                                               dbcsr_p_type,&
                                               dbcsr_set,&
                                               dbcsr_type
+   USE external_potential_types,        ONLY: copy_potential
    USE hfx_derivatives,                 ONLY: derivatives_four_center
    USE hfx_energy_potential,            ONLY: integrate_four_center
    USE hfx_types,                       ONLY: hfx_type
@@ -70,11 +77,17 @@ MODULE hfx_admm_utils
                                               qs_environment_type,&
                                               set_qs_env
    USE qs_force_types,                  ONLY: qs_force_type
-   USE qs_kind_types,                   ONLY: qs_kind_type
+   USE qs_interactions,                 ONLY: init_interaction_radii
+   USE qs_kind_types,                   ONLY: get_qs_kind,&
+                                              init_gapw_basis_set,&
+                                              init_gapw_nlcc,&
+                                              qs_kind_type
    USE qs_ks_types,                     ONLY: qs_ks_env_type,&
                                               set_ks_env
+   USE qs_local_rho_types,              ONLY: local_rho_set_create
    USE qs_mo_types,                     ONLY: get_mo_set,&
                                               mo_set_p_type
+   USE qs_rho_atom_methods,             ONLY: init_rho_atom
    USE qs_rho_types,                    ONLY: qs_rho_get,&
                                               qs_rho_type
    USE rt_propagation_types,            ONLY: rt_prop_type
@@ -156,12 +169,6 @@ CONTAINS
       IF (.NOT. do_hfx) &
          CPABORT("Wavefunction fitting requested without Hartree-Fock.")
 
-      ! ** Method runs with GAPW only if no DFT exchange correction
-      IF (dft_control%qs_control%gapw .AND. &
-          dft_control%admm_control%aux_exch_func .NE. do_admm_aux_exch_func_none) THEN
-         CPABORT("ADMM only works with GAPW without DFT exchange correction")
-      END IF
-
       CALL section_vals_get(hfx_sections, n_repetition=n_rep_hf)
       IF (n_rep_hf > 1) &
          CPABORT("ADMM can handle only one HF section.")
@@ -176,7 +183,20 @@ CONTAINS
          xc_section => section_vals_get_subs_vals(input, "DFT%XC")
          CALL create_admm_xc_section(qs_env=qs_env, xc_section=xc_section, &
                                      admm_env=admm_env)
+
+         ! Initialize the GAPW data types
+         IF (dft_control%qs_control%gapw .OR. dft_control%qs_control%gapw_xc) &
+            CALL init_admm_gapw(qs_env)
+
       ENDIF
+
+      IF (admm_env%do_gapw .AND. dft_control%do_admm_dm) THEN
+         CPABORT("GAPW ADMM not implemented for MCWEENY or NONE_DM purification.")
+      END IF
+
+      IF (admm_env%do_gapw .AND. qs_env%run_rtp) THEN
+         CPABORT("GAPW ADMM not implemented for real-time propagation.")
+      END IF
 
       IF (dft_control%do_admm_dm .AND. .NOT. ASSOCIATED(admm_dm)) THEN
          CALL admm_dm_create(admm_dm, dft_control%admm_control, nspins=nspins, natoms=natoms)
@@ -186,6 +206,95 @@ CONTAINS
       CALL timestop(handle)
 
    END SUBROUTINE hfx_admm_init
+
+! **************************************************************************************************
+!> \brief Sets up the admm_gapw env
+!> \param qs_env ...
+! **************************************************************************************************
+   SUBROUTINE init_admm_gapw(qs_env)
+
+      TYPE(qs_environment_type), POINTER                 :: qs_env
+
+      CHARACTER(LEN=*), PARAMETER :: routineN = 'init_admm_gapw', routineP = moduleN//':'//routineN
+
+      INTEGER                                            :: ikind, nkind
+      TYPE(admm_gapw_type), POINTER                      :: admm_gapw_env
+      TYPE(admm_type), POINTER                           :: admm_env
+      TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(gto_basis_set_type), POINTER                  :: aux_fit_basis, aux_fit_soft_basis, &
+                                                            orb_basis, soft_basis
+      TYPE(qs_kind_type), DIMENSION(:), POINTER          :: admm_kind_set, qs_kind_set
+
+      NULLIFY (qs_kind_set, admm_kind_set, aux_fit_basis, orb_basis, dft_control, soft_basis, &
+               aux_fit_soft_basis)
+
+      CALL get_qs_env(qs_env, admm_env=admm_env, qs_kind_set=qs_kind_set, dft_control=dft_control)
+
+      admm_env%do_gapw = .TRUE.
+      ALLOCATE (admm_env%admm_gapw_env)
+      admm_gapw_env => admm_env%admm_gapw_env
+      NULLIFY (admm_gapw_env%local_rho_set)
+      NULLIFY (admm_gapw_env%admm_kind_set)
+      NULLIFY (admm_gapw_env%task_list)
+
+      !Create a new kind set for the ADMM stuff (paw_proj soft AUX_FIT basis, etc)
+      nkind = SIZE(qs_kind_set)
+      ALLOCATE (admm_gapw_env%admm_kind_set(nkind))
+      admm_kind_set => admm_gapw_env%admm_kind_set
+
+      !In this new kind set, we want the AUX_FIT basis to be known as ORB, such that GAPW routines work
+      DO ikind = 1, nkind
+         !copying over simple data  of interest from qs_kind_set
+         admm_kind_set(ikind)%name = qs_kind_set(ikind)%name
+         admm_kind_set(ikind)%element_symbol = qs_kind_set(ikind)%element_symbol
+         admm_kind_set(ikind)%natom = qs_kind_set(ikind)%natom
+         admm_kind_set(ikind)%hard_radius = qs_kind_set(ikind)%hard_radius
+         admm_kind_set(ikind)%max_rad_local = qs_kind_set(ikind)%max_rad_local
+         admm_kind_set(ikind)%gpw_type_forced = qs_kind_set(ikind)%gpw_type_forced
+         admm_kind_set(ikind)%ngrid_rad = qs_kind_set(ikind)%ngrid_rad
+         admm_kind_set(ikind)%ngrid_ang = qs_kind_set(ikind)%ngrid_ang
+
+         !copying potentials of interest from qs_kind_set
+         IF (ASSOCIATED(qs_kind_set(ikind)%all_potential)) THEN
+            CALL copy_potential(qs_kind_set(ikind)%all_potential, admm_kind_set(ikind)%all_potential)
+         END IF
+         IF (ASSOCIATED(qs_kind_set(ikind)%gth_potential)) THEN
+            CALL copy_potential(qs_kind_set(ikind)%gth_potential, admm_kind_set(ikind)%gth_potential)
+         END IF
+         IF (ASSOCIATED(qs_kind_set(ikind)%sgp_potential)) THEN
+            CALL copy_potential(qs_kind_set(ikind)%sgp_potential, admm_kind_set(ikind)%sgp_potential)
+         END IF
+
+         NULLIFY (orb_basis)
+         CALL get_qs_kind(qs_kind_set(ikind), basis_set=aux_fit_basis, basis_type="AUX_FIT")
+         CALL copy_gto_basis_set(aux_fit_basis, orb_basis)
+         CALL add_basis_set_to_container(admm_kind_set(ikind)%basis_sets, orb_basis, "ORB")
+      END DO
+
+      !Create the corresponding soft basis set (and projectors)
+      CALL init_gapw_basis_set(admm_kind_set, dft_control%qs_control, qs_env%input, &
+                               modify_qs_control=.FALSE.)
+
+      !Make sure the basis and the projectors are well initialized
+      CALL init_interaction_radii(dft_control%qs_control, admm_kind_set)
+
+      !We also init the atomic grids and harmonics
+      CALL local_rho_set_create(admm_gapw_env%local_rho_set)
+      CALL init_rho_atom(admm_gapw_env%local_rho_set%rho_atom_set, admm_kind_set, qs_env, &
+                         dft_control%qs_control%gapw_control)
+
+      !Make sure that any NLCC potential is well initialized
+      CALL init_gapw_nlcc(admm_kind_set)
+
+      !Need to have access to the soft AUX_FIT basis from the qs_env => add it to the qs_kinds
+      DO ikind = 1, nkind
+         NULLIFY (aux_fit_soft_basis)
+         CALL get_qs_kind(admm_kind_set(ikind), soft_basis_set=soft_basis)
+         CALL copy_gto_basis_set(soft_basis, aux_fit_soft_basis)
+         CALL add_basis_set_to_container(qs_kind_set(ikind)%basis_sets, aux_fit_soft_basis, "AUX_FIT_SOFT")
+      END DO
+
+   END SUBROUTINE init_admm_gapw
 
 ! **************************************************************************************************
 !> \brief Add the hfx contributions to the Hamiltonian
@@ -223,10 +332,8 @@ CONTAINS
       REAL(dp)                                           :: eh1, ehfx, ehfxrt
       REAL(dp), ALLOCATABLE, DIMENSION(:)                :: hf_energy
       TYPE(cp_para_env_type), POINTER                    :: para_env
-      TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: matrix_ks_1d, matrix_ks_aux_fit, &
-                                                            matrix_ks_aux_fit_hfx, &
-                                                            matrix_ks_aux_fit_im, matrix_ks_im, &
-                                                            rho_ao_1d
+      TYPE(dbcsr_p_type), DIMENSION(:), POINTER :: matrix_ks_1d, matrix_ks_aux_fit, &
+         matrix_ks_aux_fit_hfx, matrix_ks_aux_fit_im, matrix_ks_im, rho_ao_1d, rho_ao_resp
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: matrix_h, matrix_ks_orb, rho_ao_orb
       TYPE(dft_control_type), POINTER                    :: dft_control
       TYPE(hfx_type), DIMENSION(:, :), POINTER           :: x_data
@@ -277,7 +384,6 @@ CONTAINS
       IF (dft_control%do_admm) THEN
          DO ispin = 1, nspins
             CALL dbcsr_set(matrix_ks_aux_fit(ispin)%matrix, 0.0_dp)
-            CALL dbcsr_set(matrix_ks_aux_fit_hfx(ispin)%matrix, 0.0_dp)
          END DO
       END IF
       DO ispin = 1, nspins
@@ -331,7 +437,12 @@ CONTAINS
             IF (dft_control%do_admm) THEN
                CALL scale_dm(qs_env, rho_ao_orb, scale_back=.FALSE.)
             END IF
-            CALL derivatives_four_center(qs_env, rho_ao_orb, hfx_sections, &
+            IF (ASSOCIATED(qs_env%mp2_env)) THEN
+               CALL get_qs_env(qs_env, matrix_p_mp2=rho_ao_resp)
+            ELSE
+               NULLIFY (rho_ao_resp)
+            END IF
+            CALL derivatives_four_center(qs_env, rho_ao_orb, rho_ao_resp, hfx_sections, &
                                          para_env, irep, use_virial)
             !Scale auxiliary density matrix for ADMMP back with 1/gsi(ispin)
             IF (dft_control%do_admm) THEN
@@ -376,7 +487,8 @@ CONTAINS
             END DO
 
             IF (calculate_forces .AND. .NOT. do_adiabatic_rescaling) THEN
-               CALL derivatives_four_center(qs_env, rho_ao_orb, hfx_sections, &
+               NULLIFY (rho_ao_resp)
+               CALL derivatives_four_center(qs_env, rho_ao_orb, rho_ao_resp, hfx_sections, &
                                             para_env, irep, use_virial)
             END IF
 
@@ -410,6 +522,14 @@ CONTAINS
          CALL rescale_xc_potential(qs_env, matrix_ks, rho, energy, v_rspace_new, v_tau_rspace, &
                                    hf_energy, just_energy, calculate_forces, use_virial)
       END IF ! do_adiabatic_rescaling
+
+      !update the hfx aux_fit matrixIF (dft_control%do_admm) THEN
+      IF (dft_control%do_admm) THEN
+         DO ispin = 1, nspins
+            CALL dbcsr_add(matrix_ks_aux_fit_hfx(ispin)%matrix, matrix_ks_aux_fit(ispin)%matrix, &
+                           0.0_dp, 1.0_dp)
+         END DO
+      END IF
 
       CALL timestop(handle)
 
@@ -618,14 +738,17 @@ CONTAINS
 
       CHARACTER(LEN=*), PARAMETER :: routineN = 'create_admm_xc_section', &
          routineP = moduleN//':'//routineN
+      LOGICAL, PARAMETER                                 :: debug_functional = .FALSE.
 
       CHARACTER(LEN=20)                                  :: name_x_func
-      INTEGER                                            :: hfx_potential_type, ifun, nfun
+      INTEGER                                            :: hfx_potential_type, ifun, iounit, nfun
       LOGICAL                                            :: funct_found
       REAL(dp)                                           :: cutoff_radius, hfx_fraction, omega, &
                                                             scale_x
+      TYPE(cp_logger_type), POINTER                      :: logger
       TYPE(section_vals_type), POINTER                   :: xc_fun, xc_fun_section
 
+      logger => cp_get_default_logger()
       NULLIFY (admm_env%xc_section_aux, admm_env%xc_section_primary)
 
       CALL get_qs_env(qs_env)
@@ -905,8 +1028,11 @@ CONTAINS
 
       END IF
 
-      IF (1 == 0) THEN
-         WRITE (*, *) "primary"
+      IF (debug_functional) THEN
+         iounit = cp_logger_get_default_io_unit(logger)
+         IF (iounit > 0) THEN
+            WRITE (iounit, "(A)") " ADMM Primary Basis Set Functional"
+         END IF
          xc_fun_section => section_vals_get_subs_vals(admm_env%xc_section_primary, "XC_FUNCTIONAL")
          ifun = 0
          funct_found = .FALSE.
@@ -917,20 +1043,23 @@ CONTAINS
 
             scale_x = -1000.0_dp
             IF (xc_fun%section%name /= "LYP" .AND. xc_fun%section%name /= "VWN") THEN
-               CALL section_vals_val_get(xc_fun, "SCALE_X", &
-                                         r_val=scale_x)
+               CALL section_vals_val_get(xc_fun, "SCALE_X", r_val=scale_x)
             END IF
             IF (xc_fun%section%name == "XWPBE") THEN
-               CALL section_vals_val_get(xc_fun, "SCALE_X0", &
-                                         r_val=hfx_fraction)
-
-               WRITE (*, *) xc_fun%section%name, scale_x, hfx_fraction
+               CALL section_vals_val_get(xc_fun, "SCALE_X0", r_val=hfx_fraction)
+               IF (iounit > 0) THEN
+                  WRITE (iounit, "(T5,A,T25,2F10.3)") TRIM(xc_fun%section%name), scale_x, hfx_fraction
+               END IF
             ELSE
-               WRITE (*, *) xc_fun%section%name, scale_x
+               IF (iounit > 0) THEN
+                  WRITE (iounit, "(T5,A,T25,F10.3)") TRIM(xc_fun%section%name), scale_x
+               END IF
             END IF
          END DO
 
-         WRITE (*, *) "auxiliary"
+         IF (iounit > 0) THEN
+            WRITE (iounit, "(A)") " Auxiliary Basis Set Functional"
+         END IF
          xc_fun_section => section_vals_get_subs_vals(admm_env%xc_section_aux, "XC_FUNCTIONAL")
          ifun = 0
          funct_found = .FALSE.
@@ -940,16 +1069,17 @@ CONTAINS
             IF (.NOT. ASSOCIATED(xc_fun)) EXIT
             scale_x = -1000.0_dp
             IF (xc_fun%section%name /= "LYP" .AND. xc_fun%section%name /= "VWN") THEN
-               CALL section_vals_val_get(xc_fun, "SCALE_X", &
-                                         r_val=scale_x)
+               CALL section_vals_val_get(xc_fun, "SCALE_X", r_val=scale_x)
             END IF
             IF (xc_fun%section%name == "XWPBE") THEN
-               CALL section_vals_val_get(xc_fun, "SCALE_X0", &
-                                         r_val=hfx_fraction)
-
-               WRITE (*, *) xc_fun%section%name, scale_x, hfx_fraction
+               CALL section_vals_val_get(xc_fun, "SCALE_X0", r_val=hfx_fraction)
+               IF (iounit > 0) THEN
+                  WRITE (iounit, "(T5,A,T25,2F10.3)") TRIM(xc_fun%section%name), scale_x, hfx_fraction
+               END IF
             ELSE
-               WRITE (*, *) xc_fun%section%name, scale_x
+               IF (iounit > 0) THEN
+                  WRITE (iounit, "(T5,A,T25,F10.3)") TRIM(xc_fun%section%name), scale_x
+               END IF
             END IF
          END DO
       END IF

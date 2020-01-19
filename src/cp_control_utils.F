@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -11,7 +11,7 @@ MODULE cp_control_utils
         Andreussi2012, Dewar1977, Dewar1985, Elstner1998, Fattebert2002, Grimme2017, Hu2007, &
         Krack2000, Lippert1997, Lippert1999, Porezag1995, Repasky2002, Rocha2006, Schenter2008, &
         Seifert1996, Souza2002, Stengel2009, Stewart1989, Stewart2007, Thiel1992, Umari2002, &
-        VanVoorhis2015, VandeVondele2005a, VandeVondele2005b, Zhechkov2005, cite_reference
+        VanVoorhis2015, VandeVondele2005a, VandeVondele2005b, Yin2017, Zhechkov2005, cite_reference
    USE cp_control_types,                ONLY: &
         admm_control_create, admm_control_type, ddapc_control_create, ddapc_restraint_type, &
         dft_control_create, dft_control_type, efield_type, qs_control_type, sccs_control_create, &
@@ -41,8 +41,7 @@ MODULE cp_control_utils
         sic_list_all, sic_list_unpaired, sic_mauri_spz, sic_mauri_us, sic_none, slater, &
         tddfpt_excitations, use_mom_ref_user, xas_dip_len
    USE input_cp2k_check,                ONLY: xc_functionals_expand
-   USE input_cp2k_dft,                  ONLY: create_dft_section,&
-                                              create_qs_section
+   USE input_cp2k_dft,                  ONLY: create_dft_section
    USE input_enumeration_types,         ONLY: enum_i2c,&
                                               enumeration_type
    USE input_keyword_types,             ONLY: keyword_get,&
@@ -416,7 +415,7 @@ CONTAINS
       tmp_section => section_vals_get_subs_vals(dft_section, "EXTERNAL_POTENTIAL")
       CALL section_vals_get(tmp_section, explicit=dft_control%apply_external_potential)
 
-      !MK Read the SCCS input section if present
+      ! Read the SCCS input section if present
       sccs_section => section_vals_get_subs_vals(dft_section, "SCCS")
       CALL section_vals_get(sccs_section, explicit=is_present)
       IF (is_present) THEN
@@ -459,6 +458,7 @@ CONTAINS
                                 "The SCCS parameter RHO_MAX is smaller than RHO_MIN. "// &
                                 "Please, check your input!")
                END IF
+               CALL cite_reference(Andreussi2012)
             CASE (sccs_fattebert_gygi)
                tmp_section => section_vals_get_subs_vals(sccs_section, "FATTEBERT-GYGI")
                CALL section_vals_val_get(tmp_section, "BETA", &
@@ -470,11 +470,11 @@ CONTAINS
                END IF
                CALL section_vals_val_get(tmp_section, "RHO_ZERO", &
                                          r_val=dft_control%sccs_control%rho_zero)
+               CALL cite_reference(Fattebert2002)
             CASE DEFAULT
                CPABORT("Invalid SCCS model specified. Please, check your input!")
             END SELECT
-            CALL cite_reference(Fattebert2002)
-            CALL cite_reference(Andreussi2012)
+            CALL cite_reference(Yin2017)
          END IF
       END IF
 
@@ -601,9 +601,6 @@ CONTAINS
       LOGICAL                                            :: explicit, was_present
       REAL(dp)                                           :: tmp, tmpsqrt, value
       REAL(dp), POINTER                                  :: scal(:)
-      TYPE(enumeration_type), POINTER                    :: enum
-      TYPE(keyword_type), POINTER                        :: keyword
-      TYPE(section_type), POINTER                        :: section
       TYPE(section_vals_type), POINTER :: cdft_control_section, ddapc_restraint_section, &
          dftb_parameter, dftb_section, lri_optbas_section, mull_section, s2_restraint_section, &
          se_section, xtb_parameter, xtb_section
@@ -753,12 +750,6 @@ CONTAINS
 
       !Method
       CALL section_vals_val_get(qs_section, "METHOD", i_val=qs_control%method_id)
-      NULLIFY (section, keyword, enum)
-      CALL create_qs_section(section)
-      keyword => section_get_keyword(section, "METHOD")
-      CALL keyword_get(keyword, enum=enum)
-      qs_control%method = enum_i2c(enum, qs_control%method_id)
-      CALL section_release(section)
       qs_control%gapw = .FALSE.
       qs_control%gapw_xc = .FALSE.
       qs_control%gpw = .FALSE.
@@ -1186,8 +1177,8 @@ CONTAINS
       INTEGER                                            :: handle
       INTEGER, ALLOCATABLE, DIMENSION(:)                 :: inds
       LOGICAL                                            :: explicit, multigrid_set
-      TYPE(section_vals_type), POINTER                   :: dipole_section, mgrid_section, xc_func, &
-                                                            xc_section
+      TYPE(section_vals_type), POINTER                   :: dipole_section, mgrid_section, &
+                                                            stda_section, xc_func, xc_section
 
       CALL timeset(routineN, handle)
 
@@ -1198,6 +1189,10 @@ CONTAINS
       CALL section_vals_val_get(t_section, "MAX_KV", i_val=t_control%nkvs)
       CALL section_vals_val_get(t_section, "NLUMO", i_val=t_control%nlumo)
       CALL section_vals_val_get(t_section, "NPROC_STATE", i_val=t_control%nprocs)
+      CALL section_vals_val_get(t_section, "KERNEL", i_val=t_control%kernel)
+      CALL section_vals_val_get(t_section, "OE_CORR", i_val=t_control%oe_corr)
+      CALL section_vals_val_get(t_section, "EV_SHIFT", r_val=t_control%ev_shift)
+      CALL section_vals_val_get(t_section, "EOS_SHIFT", r_val=t_control%eos_shift)
 
       CALL section_vals_val_get(t_section, "CONVERGENCE", r_val=t_control%conv)
       CALL section_vals_val_get(t_section, "MIN_AMPLITUDE", r_val=t_control%min_excitation_amplitude)
@@ -1291,6 +1286,19 @@ CONTAINS
       CALL section_vals_get(xc_func, explicit=explicit)
       IF (explicit) &
          CALL xc_functionals_expand(xc_func, xc_section)
+
+      ! sTDA subsection
+      stda_section => section_vals_get_subs_vals(t_section, "STDA")
+      CALL section_vals_get(stda_section, explicit=explicit)
+      IF (explicit) THEN
+         CALL section_vals_val_get(stda_section, "HFX_FRACTION", r_val=t_control%stda_control%hfx_fraction)
+         CALL section_vals_val_get(stda_section, "EPS_TD_FILTER", r_val=t_control%stda_control%eps_td_filter)
+         CALL section_vals_val_get(stda_section, "DO_EWALD", l_val=t_control%stda_control%do_ewald)
+      ELSE
+         t_control%stda_control%hfx_fraction = 0.0_dp
+         t_control%stda_control%eps_td_filter = 1.e-10_dp
+         t_control%stda_control%do_ewald = .FALSE.
+      END IF
 
       CALL timestop(handle)
    END SUBROUTINE read_tddfpt2_control
@@ -1570,31 +1578,42 @@ CONTAINS
       CHARACTER(len=*), PARAMETER :: routineN = 'write_qs_control', &
          routineP = moduleN//':'//routineN
 
+      CHARACTER(len=20)                                  :: method, quadrature
       INTEGER                                            :: handle, i, igrid_level, ngrid_level, &
                                                             output_unit
       TYPE(cp_logger_type), POINTER                      :: logger
       TYPE(ddapc_restraint_type), POINTER                :: ddapc_restraint_control
       TYPE(enumeration_type), POINTER                    :: enum
       TYPE(keyword_type), POINTER                        :: keyword
-      TYPE(section_type), POINTER                        :: section
+      TYPE(section_type), POINTER                        :: qs_section
+      TYPE(section_vals_type), POINTER                   :: print_section_vals, qs_section_vals
 
       IF (qs_control%semi_empirical) RETURN
       IF (qs_control%dftb) RETURN
       IF (qs_control%xtb) RETURN
       CALL timeset(routineN, handle)
-      NULLIFY (logger, enum, keyword, section)
+      NULLIFY (logger, print_section_vals, qs_section, qs_section_vals)
       logger => cp_get_default_logger()
+      print_section_vals => section_vals_get_subs_vals(dft_section, "PRINT")
+      qs_section_vals => section_vals_get_subs_vals(dft_section, "QS")
+      CALL section_vals_get(qs_section_vals, section=qs_section)
 
-      CALL create_qs_section(section)
-      keyword => section_get_keyword(section, "QUADRATURE")
+      NULLIFY (enum, keyword)
+      keyword => section_get_keyword(qs_section, "METHOD")
       CALL keyword_get(keyword, enum=enum)
+      method = enum_i2c(enum, qs_control%method_id)
 
-      output_unit = cp_print_key_unit_nr(logger, dft_section, &
-                                         "PRINT%DFT_CONTROL_PARAMETERS", extension=".Log")
+      NULLIFY (enum, keyword)
+      keyword => section_get_keyword(qs_section, "QUADRATURE")
+      CALL keyword_get(keyword, enum=enum)
+      quadrature = enum_i2c(enum, qs_control%gapw_control%quadrature)
+
+      output_unit = cp_print_key_unit_nr(logger, print_section_vals, &
+                                         "DFT_CONTROL_PARAMETERS", extension=".Log")
       IF (output_unit > 0) THEN
          ngrid_level = SIZE(qs_control%e_cutoff)
-         WRITE (UNIT=output_unit, FMT="(/,T2,A,T71,A)") &
-            "QS| Method:", ADJUSTR(qs_control%method)
+         WRITE (UNIT=output_unit, FMT="(/,T2,A,T61,A20)") &
+            "QS| Method:", ADJUSTR(method)
          IF (qs_control%pw_grid_opt%spherical) THEN
             WRITE (UNIT=output_unit, FMT="(T2,A,T61,A)") &
                "QS| Density plane wave grid type", " SPHERICAL HALFSPACE"
@@ -1660,9 +1679,9 @@ CONTAINS
                qs_control%gapw_control%eps_svd, &
                "QS| GAPW|                   eps_cpc:", &
                qs_control%gapw_control%eps_cpc
-            WRITE (UNIT=output_unit, FMT="(T2,A,T55,A30)") &
+            WRITE (UNIT=output_unit, FMT="(T2,A,T61,A20)") &
                "QS| GAPW|   atom-r-grid: quadrature:", &
-               enum_i2c(enum, qs_control%gapw_control%quadrature)
+               ADJUSTR(quadrature)
             WRITE (UNIT=output_unit, FMT="(T2,A,T71,I10)") &
                "QS| GAPW|      atom-s-grid:  max l :", &
                qs_control%gapw_control%lmax_sphere, &
@@ -1746,9 +1765,8 @@ CONTAINS
             END SELECT
          END IF
       END IF
-      CALL cp_print_key_finished_output(output_unit, logger, dft_section, &
-                                        "PRINT%DFT_CONTROL_PARAMETERS")
-      CALL section_release(section)
+      CALL cp_print_key_finished_output(output_unit, logger, print_section_vals, &
+                                        "DFT_CONTROL_PARAMETERS")
 
       CALL timestop(handle)
 

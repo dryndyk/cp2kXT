@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -31,11 +31,6 @@ MODULE cp_fm_types
         cp2k_is_parallel, mp_allgather, mp_any_source, mp_bcast, mp_irecv, mp_isend, mp_max, &
         mp_proc_null, mp_recv, mp_request_null, mp_send, mp_sum, mp_waitall
    USE parallel_rng_types,              ONLY: UNIFORM,&
-                                              create_rng_stream,&
-                                              delete_rng_stream,&
-                                              get_rng_stream,&
-                                              random_numbers,&
-                                              reset_to_next_rng_substream,&
                                               rng_stream_type
 #include "../base/base_uses.f90"
 
@@ -299,7 +294,7 @@ CONTAINS
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: buff
       REAL(KIND=dp), DIMENSION(3, 2), SAVE               :: seed
       REAL(KIND=dp), DIMENSION(:, :), POINTER            :: local_data
-      TYPE(rng_stream_type), POINTER                     :: rng
+      TYPE(rng_stream_type)                              :: rng
 
       CALL timeset(routineN, handle)
 
@@ -311,9 +306,8 @@ CONTAINS
       ! guarantee same seed over all tasks
       CALL mp_bcast(seed, 0, matrix%matrix_struct%para_env%group)
 
-      NULLIFY (rng)
-      CALL create_rng_stream(rng, "cp_fm_init_random_stream", distribution_type=UNIFORM, &
-                             extended_precision=.TRUE., seed=seed)
+      rng = rng_stream_type("cp_fm_init_random_stream", distribution_type=UNIFORM, &
+                            extended_precision=.TRUE., seed=seed)
 
       CPASSERT(.NOT. matrix%use_sp)
 
@@ -339,11 +333,11 @@ CONTAINS
       DO icol_local = 1, ncol_local
          CPASSERT(col_indices(icol_local) > icol_global)
          DO
-            CALL reset_to_next_rng_substream(rng)
+            CALL rng%reset_to_next_substream()
             icol_global = icol_global + 1
             IF (icol_global == col_indices(icol_local)) EXIT
          ENDDO
-         CALL random_numbers(buff, rng)
+         CALL rng%fill(buff)
          DO irow_local = 1, nrow_local
             local_data(irow_local, icol_local) = buff(row_indices(irow_local))
          ENDDO
@@ -352,8 +346,7 @@ CONTAINS
       DEALLOCATE (buff)
 
       ! store seed before deletion (unclear if this is the proper seed)
-      CALL get_rng_stream(rng, ig=seed)
-      CALL delete_rng_stream(rng)
+      CALL rng%get(ig=seed)
 
       CALL timestop(handle)
 
@@ -1116,39 +1109,64 @@ CONTAINS
 ! **************************************************************************************************
 !> \brief summing up all the elements along the matrix's i-th index
 !>        \f$ \mathrm{sum}_{j} = \sum_{i} A_{ij} \f$
+!>        or
+!>        \f$ \mathrm{sum}_{i} = \sum_{j} A_{ij} \f$
 !> \param matrix     an input matrix A
-!> \param sum_array  sums of elements in each column
+!> \param sum_array  sums of elements in each column/row
+!> \param dir ...
 !> \note  forked from cp_fm_vectorsnorm() to be used with
 !>        the maximum overlap method
+!>        added row variation
 ! **************************************************************************************************
-   SUBROUTINE cp_fm_vectorssum(matrix, sum_array)
+   SUBROUTINE cp_fm_vectorssum(matrix, sum_array, dir)
       TYPE(cp_fm_type), POINTER                          :: matrix
       REAL(KIND=dp), DIMENSION(:), INTENT(OUT)           :: sum_array
+      CHARACTER(LEN=1), INTENT(IN), OPTIONAL             :: dir
 
       CHARACTER(len=*), PARAMETER :: routineN = 'cp_fm_vectorssum', &
          routineP = moduleN//':'//routineN
 
-      INTEGER                                            :: handle, i, j, ncol_global, ncol_local, &
-                                                            nrow_local
-      INTEGER, DIMENSION(:), POINTER                     :: col_indices
+      INTEGER                                            :: handle, i, j, ncol_local, nrow_local
+      INTEGER, DIMENSION(:), POINTER                     :: col_indices, row_indices
+      LOGICAL                                            :: docol
       REAL(KIND=dp), DIMENSION(:, :), POINTER            :: my_block
 
       CALL timeset(routineN, handle)
+
+      IF (PRESENT(dir)) THEN
+         IF (dir == 'c' .OR. dir == 'C') THEN
+            docol = .TRUE.
+         ELSEIF (dir == 'r' .OR. dir == 'R') THEN
+            docol = .FALSE.
+         ELSE
+            CPABORT('Wrong argument DIR')
+         END IF
+      ELSE
+         docol = .TRUE.
+      END IF
 
       my_block => matrix%local_data
 
       CPASSERT(.NOT. matrix%use_sp)
 
-      CALL cp_fm_get_info(matrix, col_indices=col_indices, ncol_global=ncol_global, &
+      CALL cp_fm_get_info(matrix, col_indices=col_indices, row_indices=row_indices, &
                           nrow_local=nrow_local, ncol_local=ncol_local)
 
       ! the efficiency could be improved by making use of the row-col distribution of scalapack
       sum_array(:) = 0.0_dp
+      IF (docol) THEN
       DO j = 1, ncol_local
          DO i = 1, nrow_local
             sum_array(col_indices(j)) = sum_array(col_indices(j)) + my_block(i, j)
          ENDDO
       ENDDO
+      ELSE
+      DO j = 1, ncol_local
+         DO i = 1, nrow_local
+            sum_array(row_indices(i)) = sum_array(row_indices(i)) + my_block(i, j)
+         ENDDO
+      ENDDO
+      END IF
       CALL mp_sum(sum_array, matrix%matrix_struct%para_env%group)
 
       CALL timestop(handle)

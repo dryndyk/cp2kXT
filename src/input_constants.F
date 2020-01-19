@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2019  CP2K developers group                                               !
+!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -547,11 +547,14 @@ MODULE input_constants
                                                tddfpt_spin_flip = 3
    INTEGER, PARAMETER, PUBLIC               :: tddfpt_lanczos = 0, &
                                                tddfpt_davidson = 1
+   INTEGER, PARAMETER, PUBLIC               :: tddfpt_kernel_full = 1, &
+                                               tddfpt_kernel_stda = 0
    INTEGER, PARAMETER, PUBLIC               :: oe_none = 0, &
                                                oe_lb = 1, &
                                                oe_gllb = 2, &
                                                oe_saop = 3, &
-                                               oe_sic = 4
+                                               oe_sic = 44, &
+                                               oe_shift = 4
    INTEGER, PARAMETER, PUBLIC               :: no_excitations = 0, &
                                                tddfpt_excitations = 1
    INTEGER, PARAMETER, PUBLIC               :: xc_vdw_fun_none = 100, &
@@ -1020,12 +1023,15 @@ MODULE input_constants
                                                kg_tnadd_atomic = 200, &
                                                kg_tnadd_none = 300
 
-   ! kg energy corrections
-   INTEGER, PARAMETER, PUBLIC               :: kg_ec_diagonalization = 1001
-
-   INTEGER, PARAMETER, PUBLIC               :: kg_ec_functional_harris = 2001
-
    INTEGER, PARAMETER, PUBLIC               :: kg_cholesky = 3001
+
+   ! non-scf energy corrections
+   INTEGER, PARAMETER, PUBLIC               :: ec_diagonalization = 1001, &
+                                               ec_curvy_steps = 1002, &
+                                               ec_matrix_sign = 1003, &
+                                               ec_matrix_trs4 = 1004, &
+                                               ec_matrix_tc2 = 1005
+   INTEGER, PARAMETER, PUBLIC               :: ec_functional_harris = 2001
 
    ! swarm parameters
    INTEGER, PARAMETER, PUBLIC               :: swarm_do_glbopt = 1
