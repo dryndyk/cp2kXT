@@ -59,7 +59,7 @@ MODULE qs_linres_methods
    USE hfx_types,                       ONLY: hfx_type
    USE input_constants,                 ONLY: &
         do_admm_aux_exch_func_none, do_admm_basis_projection, do_admm_exch_scaling_none, &
-        do_admm_purify_none, do_loc_none, op_loc_berry, ot_precond_none, &
+        do_admm_purify_none, do_loc_none, kg_tnadd_embed, op_loc_berry, ot_precond_none, &
         ot_precond_solver_default, state_loc_all
    USE input_section_types,             ONLY: section_get_ival,&
                                               section_get_lval,&
@@ -68,6 +68,8 @@ MODULE qs_linres_methods
                                               section_vals_get_subs_vals,&
                                               section_vals_type,&
                                               section_vals_val_get
+   USE kg_correction,                   ONLY: kg_ekin_subset
+   USE kg_environment_types,            ONLY: kg_environment_type
    USE kinds,                           ONLY: default_path_length,&
                                               default_string_length,&
                                               dp
@@ -862,8 +864,8 @@ CONTAINS
       INTEGER, DIMENSION(2, 3)                           :: bo
       LOGICAL                                            :: deriv2_analytic, gapw, gapw_xc, &
                                                             lr_triplet, lrigpw, lsd
-      REAL(KIND=dp)                                      :: energy_hartree, energy_hartree_1c, exc, &
-                                                            fac
+      REAL(KIND=dp)                                      :: alpha, ekin_mol, energy_hartree, &
+                                                            energy_hartree_1c, exc, fac
       REAL(KIND=dp), DIMENSION(3, 3)                     :: virial_xc
       REAL(kind=dp), DIMENSION(:, :, :), POINTER         :: rho3, rhoa, rhob
       TYPE(admm_type), POINTER                           :: admm_env
@@ -873,6 +875,7 @@ CONTAINS
       TYPE(dbcsr_p_type), DIMENSION(:), POINTER          :: k1mat, rho1_ao, rho_ao
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: ksmat, psmat
       TYPE(dft_control_type), POINTER                    :: dft_control
+      TYPE(kg_environment_type), POINTER                 :: kg_env
       TYPE(linres_control_type), POINTER                 :: linres_control
       TYPE(lri_density_type), POINTER                    :: lri_density
       TYPE(lri_environment_type), POINTER                :: lri_env
@@ -891,7 +894,7 @@ CONTAINS
 
       CALL timeset(routineN, handle)
 
-      NULLIFY (auxbas_pw_pool, pw_env, v_rspace_new, &
+      NULLIFY (auxbas_pw_pool, pw_env, v_rspace_new, para_env, &
                rho1_r, rho1_g_pw, tau_pw, v_xc, rho1_set, rho1_ao, rho_ao, &
                poisson_env, input, rho, dft_control, logger, rho1_g)
       logger => cp_get_default_logger()
@@ -914,6 +917,7 @@ CONTAINS
       CALL get_qs_env(qs_env=qs_env, &
                       pw_env=pw_env, &
                       input=input, &
+                      para_env=para_env, &
                       rho=rho, &
                       linres_control=linres_control, &
                       dft_control=dft_control)
@@ -1060,8 +1064,8 @@ CONTAINS
          END DO
          DEALLOCATE (v_xc)
 
-         IF (gapw) CALL calculate_xc_2nd_deriv_atom(p_env, qs_env, xc_section, do_tddft=.FALSE., &
-                                                    do_triplet=lr_triplet)
+         IF (gapw) CALL calculate_xc_2nd_deriv_atom(p_env%local_rho_set, qs_env, xc_section, para_env, &
+                                                    do_tddft=.FALSE., do_triplet=lr_triplet)
 
          CALL xc_rho_set_release(rho1_set)
 
@@ -1268,7 +1272,7 @@ CONTAINS
 
             IF (lrigpw) THEN
                lri_v_int => lri_density%lri_coefs(ispin)%lri_kinds
-               CALL get_qs_env(qs_env, para_env=para_env, nkind=nkind)
+               CALL get_qs_env(qs_env, nkind=nkind)
                DO ikind = 1, nkind
                   lri_v_int(ikind)%v_int = 0.0_dp
                END DO
@@ -1301,12 +1305,14 @@ CONTAINS
       IF (gapw) THEN
 
          IF (.NOT. ((nspins == 1 .AND. lr_triplet))) THEN
-            CALL Vh_1c_gg_integrals(qs_env, energy_hartree_1c, tddft=.TRUE., do_triplet=lr_triplet, &
-                                    p_env=p_env)
+            CALL Vh_1c_gg_integrals(qs_env, energy_hartree_1c, &
+                                    p_env%hartree_local%ecoul_1c, &
+                                    p_env%local_rho_set, &
+                                    para_env, tddft=.TRUE.)
 
-            CALL integrate_vhg0_rspace(qs_env, v_hartree_rspace, &
-                                       .FALSE., tddft=.TRUE., do_triplet=lr_triplet, &
-                                       p_env=p_env)
+            CALL integrate_vhg0_rspace(qs_env, v_hartree_rspace, para_env, &
+                                       calculate_forces=.FALSE., &
+                                       local_rho_set=p_env%local_rho_set)
          END IF
 
          ! ***  Add single atom contributions to the KS matrix ***
@@ -1319,6 +1325,29 @@ CONTAINS
          CALL update_ks_atom(qs_env, ksmat, psmat, forces=.FALSE., tddft=.TRUE., &
                              rho_atom_external=p_env%local_rho_set%rho_atom_set)
 
+      END IF
+
+      ! KG embedding, contribution of kinetic energy functional to kernel
+      IF (dft_control%qs_control%do_kg .AND. .NOT. (lr_triplet .OR. gapw .OR. gapw_xc)) THEN
+         IF (qs_env%kg_env%tnadd_method == kg_tnadd_embed) THEN
+
+            CALL qs_rho_get(rho1, rho_ao=rho1_ao)
+            IF (nspins == 2) THEN
+               alpha = 1.0_dp
+            ELSE
+               alpha = 2.0_dp
+            END IF
+
+            ekin_mol = 0.0_dp
+            CALL get_qs_env(qs_env, kg_env=kg_env)
+            CALL kg_ekin_subset(qs_env=qs_env, &
+                                ks_matrix=p_env%kpp1, &
+                                ekin_mol=ekin_mol, &
+                                calc_force=.FALSE., &
+                                do_kernel=.TRUE., &
+                                pmat_ext=rho1_ao, &
+                                alpha=alpha)
+         END IF
       END IF
 
       CALL pw_pool_give_back_pw(auxbas_pw_pool, v_hartree_gspace%pw)
