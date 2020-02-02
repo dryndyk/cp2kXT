@@ -57,6 +57,11 @@ case "$with_spfft" in
         SPFFT_CFLAGS="-I'${pkg_install_dir}/include'"
         SPFFT_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
         SPFFT_CUDA_LDFLAGS="-L'${pkg_install_dir}/lib/cuda' -Wl,-rpath='${pkg_install_dir}/lib/cuda'"
+        if [ -d "${SPFFT_ROOT}/lib64" ]; then
+           cd ${SPFFT_ROOT}
+           ln -sf lib64 lib
+           cd ${BUILDDIR}
+        fi
         ;;
     __SYSTEM__)
         echo "==================== Finding psfft from system paths ===================="
@@ -106,14 +111,6 @@ export CP_LIBS="IF_MPI(IF_OMP(${SPFFT_LIBS}|)|) \${CP_LIBS}"
 EOF
     cat "${BUILDDIR}/setup_spfft" >> $SETUPFILE
 fi
-
-# ----------------------------------------------------------------------
-# Suppress reporting of known leaks
-# ----------------------------------------------------------------------
-cat <<EOF >> ${INSTALLDIR}/lsan.supp
-# Leaks in SpFFT
-leak:spfft::MPICommunicatorHandle::MPICommunicatorHandle
-EOF
 
 # update toolchain environment
 load "${BUILDDIR}/setup_spfft"
