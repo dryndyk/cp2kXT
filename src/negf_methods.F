@@ -127,7 +127,7 @@ MODULE negf_methods
    use dftbp_globalenv   
    use dftbp_environment   
    use dftbp_main, only : runDftbPlus
-   use dftbp_inputdata, only : inputData
+   use dftbp_inputdata, only : TInputData
    use dftbp_formatout, only : printDftbHeader
    use dftbp_hsdhelpers, only : parseHsdInput
    use dftbp_initprogram, only : initProgramVariables, negf_init_nogeom, negf_init_str, tranasNoGeom 
@@ -148,7 +148,7 @@ MODULE negf_methods
    LOGICAL, PARAMETER, PRIVATE          :: debug_this_module = .TRUE.
    LOGICAL, PARAMETER, PRIVATE          :: disable_cache = .TRUE.
    
-   type(inputData), allocatable :: input !!DAR
+   type(TInputData), allocatable :: input !!DAR
 
    PUBLIC :: do_negf
 
@@ -201,7 +201,7 @@ CONTAINS
       integer :: i,j, I0,J0, Num
 
       type(TEnvironment) :: env
-      type(inputData), allocatable :: input
+      type(TInputData), allocatable :: input
       integer :: iAtom, nAtom
       logical :: tInitNEGF   
       type(TDenseDescr) :: denseDescr
