@@ -58,7 +58,8 @@ MODULE mp2_gpw
                                               release_group_dist
    USE input_constants,                 ONLY: &
         do_eri_gpw, do_eri_mme, do_eri_os, do_potential_coulomb, do_potential_id, &
-        do_potential_long, eri_default, mp2_method_gpw, ri_default, ri_mp2_method_gpw
+        do_potential_long, do_potential_truncated, eri_default, mp2_method_gpw, ri_default, &
+        ri_mp2_method_gpw
    USE input_section_types,             ONLY: section_vals_val_get
    USE kinds,                           ONLY: dp
    USE kpoint_types,                    ONLY: kpoint_type
@@ -292,7 +293,7 @@ CONTAINS
             END ASSOCIATE
          ENDIF
 
-         IF (mp2_env%ri_metric%potential_type == ri_default) mp2_env%ri_metric%potential_type = do_potential_id
+         IF (mp2_env%ri_metric%potential_type == ri_default) mp2_env%ri_metric%potential_type = do_potential_truncated
 
          ! statically initialize libint
          CALL cp_libint_static_init()
@@ -552,7 +553,7 @@ CONTAINS
                                    t_3c_M, t_3c_O, &
                                    starts_array_mc, ends_array_mc, &
                                    starts_array_mc_block, ends_array_mc_block, &
-                                   mp2_env%mp2_gpw%eps_filter, BIb_C_beta, homo_beta, Eigenval_beta, &
+                                   BIb_C_beta, homo_beta, Eigenval_beta, &
                                    gd_B_virtual_beta, &
                                    mo_coeff_beta, BIb_C_gw_beta, gw_corr_lev_occ_beta, gw_corr_lev_virt_beta)
 
@@ -571,8 +572,7 @@ CONTAINS
                                    mat_P_global, &
                                    t_3c_M, t_3c_O, &
                                    starts_array_mc, ends_array_mc, &
-                                   starts_array_mc_block, ends_array_mc_block, &
-                                   mp2_env%mp2_gpw%eps_filter)
+                                   starts_array_mc_block, ends_array_mc_block)
 
             IF (mp2_env%ri_rpa%do_rse) &
                CALL rse_energy(qs_env, mp2_env, para_env, dft_control, &

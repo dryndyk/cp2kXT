@@ -265,12 +265,13 @@ CONTAINS
          !   *** init the bibliography ***
          CALL add_all_references()
 
-         CALL pw_cuda_init()
-
          ! Initialize the DBCSR configuration
          ! Attach the time handler hooks to DBCSR
+         ! DBCSR sets the device for multi-gpu, make sure it is the first GPU call
          CALL dbcsr_init_lib(default_para_env%group, timeset_hook, timestop_hook, &
                              cp_abort_hook, cp_warn_hook, io_unit=unit_nr)
+
+         CALL pw_cuda_init()
       ELSE
          ierr = cp_failure_level
       END IF
@@ -1078,7 +1079,7 @@ CONTAINS
       ELSE
          exist_res = .TRUE.
       END IF
-      ! if existing (or assuming the existance) read the results
+      ! if existing (or assuming the existence) read the results
       IF (exist_res) THEN
          CALL get_results(results, description=description, n_rep=nres)
          CALL get_results(results, description=description, values=RESULT, nval=nres)
