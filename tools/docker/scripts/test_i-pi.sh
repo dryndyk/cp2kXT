@@ -27,12 +27,15 @@ echo -e "\n========== Running i-Pi Tests =========="
 cd  /opt/i-pi/examples/cp2k/nvt-cl
 set +e # disable error trapping for remainder of script
 
+TIMEOUT_SEC="300"
+ulimit -t ${TIMEOUT_SEC}  # Limit cpu time.
+
 # launch cp2k
 (
   mkdir -p run_1
   cd run_1
   echo 42 > cp2k_exit_code
-  sleep 2 # give i-pi some time to startup
+  sleep 10 # give i-pi some time to startup
   export OMP_NUM_THREADS=2
   mpiexec -np 2 /workspace/cp2k/exe/local/cp2k.pdbg ../in.cp2k
   echo $? > cp2k_exit_code
@@ -40,7 +43,8 @@ set +e # disable error trapping for remainder of script
 
 # launch i-pi
 sed -i "s/total_steps>1000/total_steps>10/" input.xml
-/usr/local/bin/i-pi input.xml
+# Limit walltime too, because waiting for a connection consumes no cpu time.
+timeout ${TIMEOUT_SEC} /usr/local/bin/i-pi input.xml
 IPI_EXIT_CODE=$?
 
 wait # for cp2k to shutdown

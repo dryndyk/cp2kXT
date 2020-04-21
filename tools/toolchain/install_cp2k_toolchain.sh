@@ -74,14 +74,14 @@ OPTIONS:
                           --with-PKG option placed AFTER this option on the
                           command line.
 --mpi-mode                Selects which MPI flavour to use. Available options
-                          are: mpich, openmpi and no. By selecting no, you will
-                          be disabling MPI support. By default the script
+                          are: mpich, openmpi, intelmpi, and no. By selecting no,
+                          you will be disabling MPI support. By default the script
                           will try to determine the flavour based on the MPI library
                           currently available in your system path. For CRAY (CLE)
                           systems, the default flavour is mpich. Note that explicitly
-                          setting --with-mpich or --with-openmpi options to values
-                          other than no will also switch --mpi-mode to the respective
-                          mode.
+                          setting --with-mpich, --with-openmpi or --with-intelmpi
+                          options to values other than no will also switch --mpi-mode
+                          to the respective mode.
 --math-mode               Selects which core math library to use. Available options
                           are: acml, cray, mkl, openblas and reflapack. cray
                           corresponds to cray libsci, and is the default for CRAY
@@ -144,7 +144,7 @@ The --with-PKG options follow the rules:
 
   --with-gcc              The GCC compiler to use to compile CP2K
                           Default = system
-  --with-cmake            Cmake utilities, required for building ParMETIS
+  --with-cmake            Cmake utilities
                           Default = no
   --with-valgrind         Valgrind memory debugging tool, only used for
                           debugging purposes.
@@ -153,7 +153,10 @@ The --with-PKG options follow the rules:
                           of CP2K.
                           Default = system
   --with-mpich            MPICH, MPI library like OpenMPI. one should
-                          only use EITHER OpenMPI or MPICH and not both.
+                          use only one of OpenMPI, MPICH or Intel MPI.
+                          Default = system
+  --with-intelmpi         Intel MPI, MPI library like OpenMPI. one should
+                          use only one of OpenMPI, MPICH or Intel MPI.
                           Default = system
   --with-libxc            libxc, exchange-correlation library. Needed for
                           QuickStep DFT and hybrid calculations.
@@ -196,14 +199,6 @@ The --with-PKG options follow the rules:
                           Fast library for large parallel jobs.
                           Default = install
   --with-ptscotch         PT-SCOTCH, only used if PEXSI is used
-                          Default = no
-  --with-parmetis         ParMETIS, and if --with-parmetis=install will also install
-                          METIS, only used if PEXSI is used
-                          Default = no
-  --with-metis            METIS, --with-metis=install actually does nothing, because
-                          METIS is installed together with ParMETIS.  This option
-                          is used to specify the METIS library if it is pre-installed
-                          else-where. Only used if PEXSI is used
                           Default = no
   --with-superlu          SuperLU DIST, used only if PEXSI is used
                           Default = no
@@ -262,10 +257,10 @@ EOF
 # is important, the first in the list gets installed first
 # ------------------------------------------------------------------------
 tool_list="gcc cmake valgrind"
-mpi_list="mpich openmpi"
+mpi_list="mpich openmpi intelmpi"
 math_list="mkl acml openblas reflapack"
 lib_list="fftw libint libxc libsmm libxsmm cosma scalapack elpa plumed \
-          spfft ptscotch parmetis metis superlu pexsi quip gsl spglib hdf5 libvdwxc sirius"
+          spfft ptscotch superlu pexsi quip gsl spglib hdf5 libvdwxc sirius"
 package_list="$tool_list $mpi_list $math_list $lib_list"
 # ------------------------------------------------------------------------
 
@@ -313,14 +308,19 @@ with_cosma=__INSTALL__
 # for MPI, we try to detect system MPI variant
 with_openmpi=__SYSTEM__
 with_mpich=__SYSTEM__
+with_intelmpi=__SYSTEM__
 if (command -v mpirun >&- 2>&-) ; then
-    # check if we are dealing with openmpi or mpich
+    # check if we are dealing with openmpi, mpich or intelmpi
     if (mpirun --version 2>&1 | grep -s -q "HYDRA") ; then
         echo "MPI is detected and it appears to be MPICH"
         export MPI_MODE=mpich
     elif (mpirun --version 2>&1 | grep -s -q "Open MPI") ; then
         echo "MPI is detected and it appears to be OpenMPI"
         export MPI_MODE=openmpi
+    elif (mpirun --version 2>&1 | grep -s -q "Intel") ; then
+        echo "MPI is detected and it appears to be Intel MPI"
+        with_gcc=__DONTUSE__
+        export MPI_MODE=intelmpi
     else
         # default to mpich
         export MPI_MODE=mpich
@@ -360,6 +360,7 @@ if [ "$CRAY_LD_LIBRARY_PATH" ] ; then
     # don't use the installers for the MPI libraries
     with_mpich="__DONTUSE__"
     with_openmpi="__DONTUSE__"
+    with_intelmpi="__DONTUSE__"
     export MPI_MODE=mpich
     # set default value for some installers appropriate for CLE
     with_gcc="__DONTUSE__"
@@ -399,12 +400,15 @@ while [ $# -ge 1 ] ; do
                 openmpi)
                     export MPI_MODE=openmpi
                     ;;
+                intelmpi)
+                    export MPI_MODE=intelmpi
+                    ;;
                 no)
                     export MPI_MODE=no
                     ;;
                 *)
                     report_error ${LINENO} \
-                                 "--mpi-mode currently only supports openmpi, mpich and no as options"
+                                 "--mpi-mode currently only supports openmpi, mpich, intelmpi and no as options"
                     exit 1
                     ;;
             esac
@@ -530,6 +534,12 @@ while [ $# -ge 1 ] ; do
                 export MPI_MODE=openmpi
             fi
             ;;
+        --with-intelmpi*)
+            with_intelmpi=$(read_with $1)
+            if [ $with_intelmpi != __DONTUSE__ ] ; then
+                export MPI_MODE=intelmpi
+            fi
+            ;;
         --with-libint*)
             with_libint=$(read_with $1)
             ;;
@@ -574,12 +584,6 @@ while [ $# -ge 1 ] ; do
             ;;
         --with-ptscotch*)
             with_ptscotch=$(read_with $1)
-            ;;
-        --with-parmetis*)
-            with_parmetis=$(read_with $1)
-            ;;
-        --with-metis*)
-            with_metis=$(read_with $1)
             ;;
         --with-superlu*)
             with_superlu=$(read_with $1)
@@ -694,6 +698,7 @@ else
         echo "You have chosen to install GCC, therefore MPI libraries will have to be installed too"
         with_openmpi="__INSTALL__"
         with_mpich="__INSTALL__"
+        with_intelmpi="__DONTUSE__"
     fi
 fi
 
@@ -711,45 +716,22 @@ if [ "$with_pexsi" = "__DONTUSE__" ] ; then
         echo "Not using PEXSI, so PT-Scotch is disabled."
         with_ptscotch="__DONTUSE__"
     fi
-    if [ "$with_parmetis" != "__DONTUSE__" ] ; then
-        echo "Not using PEXSI, so ParMETIS is disabled."
-        with_parmetis="__DONTUSE__"
-    fi
-    if [ "$with_metis" != "__DONTUSE__" ] ; then
-        echo "Not using PEXSI, so METIS is disabled."
-        with_metis="__DONTUSE__"
-    fi
     if [ "$with_superlu" != "__DONTUSE__" ] ; then
         echo "Not using PEXSI, so SuperLU-DIST is disabled."
         with_superlu="__DONTUSE__"
     fi
 elif [ "$with_pexsi" = "__INSTALL__" ] ; then
     [ "$with_ptscotch" = "__DONTUSE__" ] && with_ptscotch="__INSTALL__"
-    [ "$with_parmetis" = "__DONTUSE__" ] && with_parmetis="__INSTALL__"
     [ "$with_superlu" = "__DONTUSE__" ] && with_superlu="__INSTALL__"
 else
     if [ "$with_ptscotch" = "__DONTUSE__" ] ; then
         report_error "For PEXSI to work you need a working PT-Scotch library use --with-ptscotch option to specify if you wish to install the library or specify its location."
         exit 1
     fi
-    if [ "$with_parmetis" = "__DONTUSE__" ] ; then
-        report_error "For PEXSI to work you need a working PARMETIS library use --with-parmetis option to specify if you wish to install the library or specify its location."
-        exit 1
-    fi
-    if [ "$with_metis" = "__DONTUSE__" ] ; then
-        report_error "For PEXSI to work you need a working METIS library use --with-metis option to specify if you wish to install the library or specify its location."
-        exit 1
-    fi
     if [ "$with_superlu" = "__DONTUSE__" ] ; then
         report_error "For PEXSI to work you need a working SuperLU-DIST library use --with-superlu option to specify if you wish to install the library or specify its location."
         exit 1
     fi
-fi
-
-# ParMETIS requires cmake, it also installs METIS if it is chosen
-if [ "$with_parmetis" = "__INSTALL__" ] ; then
-    [ "$with_cmake" = "__DONTUSE__" ] && with_cmake="__INSTALL__"
-    with_metis="__INSTALL__"
 fi
 
 # spg library requires cmake.
@@ -863,6 +845,17 @@ if [ "$ENABLE_CRAY" = "__TRUE__" ] ; then
                 export CP_DFLAGS="${CP_DFLAGS} IF_MPI(-D__parallel -D__MPI_VERSION=3|)"
             fi
             ;;
+        intelmpi)
+            if [ "$with_intelmpi" = "__DONTUSE__" ] ; then
+                with_gcc=__DONTUSE__
+                add_include_from_paths MPI_CFLAGS "mpi.h" $INCLUDE_PATHS
+                add_include_from_paths MPI_LDFLAGS "libmpi.*" $LIB_PATHS
+                export MPI_CFLAGS
+                export MPI_LDFLAGS
+                export MPI_LIBS="-lmpi -lmpi_cxx"
+                export CP_DFLAGS="${CP_DFLAGS} IF_MPI(-D__parallel -D__MPI_VERSION=3|)"
+            fi
+            ;;
     esac
     check_lib -lz
     check_lib -ldl
@@ -936,6 +929,7 @@ else
     ./scripts/install_valgrind.sh
     ./scripts/install_mpich.sh
     ./scripts/install_openmpi.sh
+    ./scripts/install_intelmpi.sh
     ./scripts/install_mathlibs.sh
     ./scripts/install_fftw.sh
     ./scripts/install_spfft.sh
@@ -947,8 +941,6 @@ else
     ./scripts/install_scalapack.sh
     ./scripts/install_elpa.sh
     ./scripts/install_ptscotch.sh
-    ./scripts/install_parmetis.sh
-    ./scripts/install_metis.sh
     ./scripts/install_superlu.sh
     ./scripts/install_pexsi.sh
     ./scripts/install_quip.sh

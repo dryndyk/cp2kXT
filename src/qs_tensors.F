@@ -29,7 +29,7 @@ MODULE qs_tensors
                                               dbcsr_type,&
                                               dbcsr_type_real_8
    USE dbcsr_tensor_api,                ONLY: &
-        dbcsr_t_blk_sizes, dbcsr_t_copy, dbcsr_t_create, dbcsr_t_destroy, &
+        dbcsr_t_blk_sizes, dbcsr_t_copy, dbcsr_t_create, dbcsr_t_default_distvec, dbcsr_t_destroy, &
         dbcsr_t_distribution_destroy, dbcsr_t_distribution_new, dbcsr_t_distribution_type, &
         dbcsr_t_filter, dbcsr_t_get_block, dbcsr_t_get_info, dbcsr_t_get_mapping_info, &
         dbcsr_t_get_nze_total, dbcsr_t_get_stored_coordinates, dbcsr_t_mp_environ_pgrid, &
@@ -76,9 +76,9 @@ MODULE qs_tensors
                                               local_atoms_type,&
                                               pair_radius_setup
    USE qs_tensors_types,                ONLY: &
-        cyclic_tensor_dist, distribution_3d_destroy, distribution_3d_type, &
-        neighbor_list_3c_iterator_type, neighbor_list_3c_type, symmetric_ij, symmetric_ijk, &
-        symmetric_jk, symmetric_none, symmetrik_ik
+        distribution_3d_destroy, distribution_3d_type, neighbor_list_3c_iterator_type, &
+        neighbor_list_3c_type, symmetric_ij, symmetric_ijk, symmetric_jk, symmetric_none, &
+        symmetrik_ik
    USE t_c_g0,                          ONLY: get_lmax_init,&
                                               init
 #include "./base/base_uses.f90"
@@ -873,8 +873,7 @@ CONTAINS
                                                             do_kpoints_prv, found
       REAL(KIND=dp)                                      :: dij, dik, djk, dr_ij, dr_ik, dr_jk, &
                                                             kind_radius_i, kind_radius_j, &
-                                                            kind_radius_k, max_contraction_val, &
-                                                            prefac
+                                                            kind_radius_k, prefac, sijk_ext
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:)           :: max_contraction_i, max_contraction_j, &
                                                             max_contraction_k
       REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :, :)     :: block_t, dummy_block_t, sijk, sijk_contr
@@ -1122,7 +1121,7 @@ CONTAINS
                                       lmin_i(iset), &
                                       lmax_j(jset), npgfj(jset), zetj(:, jset), rpgf_j(:, jset), lmin_j(jset), &
                                       lmax_k(kset), npgfk(kset), zetk(:, kset), rpgf_k(:, kset), lmin_k(kset), &
-                                      rij, dij, rik, dik, rjk, djk, sijk)
+                                      rij, dij, rik, dik, rjk, djk, sijk, int_abc_ext=sijk_ext)
                      ELSEIF (op_jk /= do_potential_id) THEN ! for everything else use libint
                         ALLOCATE (sijk(ncoi, ncoj, ncok))
                         sijk(:, :, :) = 0.0_dp
@@ -1134,7 +1133,7 @@ CONTAINS
                                          lmin_i(iset), lmax_i(iset), npgfi(iset), zeti(:, iset), rpgf_i(:, iset), ri, &
                                          lmin_j(jset), lmax_j(jset), npgfj(jset), zetj(:, jset), rpgf_j(:, jset), rj, &
                                          lmin_k(kset), lmax_k(kset), npgfk(kset), zetk(:, kset), rpgf_k(:, kset), rk, &
-                                         dij, dik, djk, lib, potential_parameter)
+                                         dij, dik, djk, lib, potential_parameter, int_abc_ext=sijk_ext)
                      ELSEIF (op_ij /= do_potential_id) THEN
                         ALLOCATE (sijk(ncoj, ncok, ncoi))
                         sijk(:, :, :) = 0.0_dp
@@ -1145,16 +1144,17 @@ CONTAINS
                                          lmin_j(jset), lmax_j(jset), npgfj(jset), zetj(:, jset), rpgf_j(:, jset), rj, &
                                          lmin_k(kset), lmax_k(kset), npgfk(kset), zetk(:, kset), rpgf_k(:, kset), rk, &
                                          lmin_i(iset), lmax_i(iset), npgfi(iset), zeti(:, iset), rpgf_i(:, iset), ri, &
-                                         djk, dij, dik, lib, potential_parameter)
+                                         djk, dij, dik, lib, potential_parameter, int_abc_ext=sijk_ext)
 
                      ENDIF
-                     max_contraction_val = max_contraction_i(iset)*max_contraction_j(jset)*max_contraction_k(kset)
 
                      IF (PRESENT(int_eps)) THEN
-                        IF (MAXVAL(ABS(sijk))*max_contraction_val < int_eps) THEN
+                        IF (int_eps > sijk_ext*(max_contraction_i(iset)* &
+                                                max_contraction_j(jset)* &
+                                                max_contraction_k(kset))) THEN
                            DEALLOCATE (sijk)
                            CYCLE
-                        ENDIF
+                        END IF
                      ENDIF
 
                      block_not_zero = .TRUE.
@@ -1610,42 +1610,42 @@ CONTAINS
       ALLOCATE (dist2(tdims(2)))
       ALLOCATE (dist3(tdims(3)))
 
-      CALL cyclic_tensor_dist(tdims(1), pdims(1), bs1, dist1)
+      CALL dbcsr_t_default_distvec(tdims(1), pdims(1), bs1, dist1)
 
       IF (mem_aware_1) THEN
          DO imem = 1, memcut_1
             size_cut = ends_array_mc_block_1(imem) - starts_array_mc_block_1(imem) + 1
-            CALL cyclic_tensor_dist( &
+            CALL dbcsr_t_default_distvec( &
                size_cut, pdims(1), &
                bs1(starts_array_mc_block_1(imem):ends_array_mc_block_1(imem)), &
                dist1(starts_array_mc_block_1(imem):ends_array_mc_block_1(imem)))
          ENDDO
       ELSE
-         CALL cyclic_tensor_dist(tdims(1), pdims(1), bs1, dist1)
+         CALL dbcsr_t_default_distvec(tdims(1), pdims(1), bs1, dist1)
       ENDIF
 
       IF (mem_aware_2) THEN
          DO imem = 1, memcut_2
             size_cut = ends_array_mc_block_2(imem) - starts_array_mc_block_2(imem) + 1
-            CALL cyclic_tensor_dist( &
+            CALL dbcsr_t_default_distvec( &
                size_cut, pdims(2), &
                bs2(starts_array_mc_block_2(imem):ends_array_mc_block_2(imem)), &
                dist2(starts_array_mc_block_2(imem):ends_array_mc_block_2(imem)))
          ENDDO
       ELSE
-         CALL cyclic_tensor_dist(tdims(2), pdims(2), bs2, dist2)
+         CALL dbcsr_t_default_distvec(tdims(2), pdims(2), bs2, dist2)
       ENDIF
 
       IF (mem_aware_3) THEN
          DO imem = 1, memcut_3
             size_cut = ends_array_mc_block_3(imem) - starts_array_mc_block_3(imem) + 1
-            CALL cyclic_tensor_dist( &
+            CALL dbcsr_t_default_distvec( &
                size_cut, pdims(3), &
                bs3(starts_array_mc_block_3(imem):ends_array_mc_block_3(imem)), &
                dist3(starts_array_mc_block_3(imem):ends_array_mc_block_3(imem)))
          ENDDO
       ELSE
-         CALL cyclic_tensor_dist(tdims(3), pdims(3), bs3, dist3)
+         CALL dbcsr_t_default_distvec(tdims(3), pdims(3), bs3, dist3)
       ENDIF
 
       CALL dbcsr_t_get_mapping_info(t_3c%nd_index_blk, map1_2d=map1, map2_2d=map2)

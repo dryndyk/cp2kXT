@@ -396,7 +396,6 @@ CONTAINS
       CALL pw_fpga_finalize()
 
       CALL dbcsr_print_statistics()
-      CALL dbcsr_finalize_lib()
 
       m_memory_max_mpi = m_memory_max
       CALL mp_max(m_memory_max_mpi, mpi_comm)
@@ -424,6 +423,8 @@ CONTAINS
          CALL section_vals_release(root_section)
          CALL globenv_release(globenv)
       END IF
+
+      CALL dbcsr_finalize_lib()
 
       CALL cp_para_env_release(para_env)
 
@@ -983,7 +984,7 @@ CONTAINS
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
-        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03 (17.03.2020)                   ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03 (21.04.2020)                   ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(5A)') hbar,hbar,' CP2K eXTended version for quantum nanoscale modeling                       ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar,' Uses the libraries of the DFTB+XT package                                  ',hbar,hbar
