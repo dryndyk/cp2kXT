@@ -984,7 +984,7 @@ CONTAINS
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
-        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03 (21.04.2020)                   ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03 (26.04.2020)                   ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(5A)') hbar,hbar,' CP2K eXTended version for quantum nanoscale modeling                       ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar,' Uses the libraries of the DFTB+XT package                                  ',hbar,hbar
@@ -995,14 +995,13 @@ CONTAINS
         write(unit_nr, '(A)') repeat(hbar, headerWidth)  
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,' Please cite as:                                                            ',hBar,hBar
-        write(unit_nr, '(5A)') hBar,hBar,' TraNaS OpenSuite [1], partially based on the DFTB+ [2,3] source code       ',hBar,hBar
-        write(unit_nr, '(5A)') hBar,hBar,' and the CP2K software package [4] with a Quickstep module [5].             ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' CP2K+XT code as a part of TraNaS OpenSuite [1], partially based on         ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' the DFTB+ software package [2,3] and the CP2K software package [4]         ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' with a Quickstep module [5].                                               ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,' [1] TraNaS OpenSuite, tranas.org/opensuite                                 ',hBar,hBar 
-        write(unit_nr, '(5A)') hBar,hBar,' [2] B. Aradi, B. Hourahine and T. Frauenheim,                              ',hBar,hBar
-        write(unit_nr, '(5A)') hBar,hBar,'     J. Phys. Chem. A 111, 5678 (2007); dftbplus.org                        ',hBar,hBar
-        write(unit_nr, '(5A)') hBar,hBar,' [3] A. Pecchia, G. Penazzi, L. Salvucci and A. Di Carlo,                   ',hBar,hBar
-        write(unit_nr, '(5A)') hBar,hBar,'     New Journal of Physics 10, 065022 (2008)                               ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' [2] B. Hourahine et al., J. Chem. Phys. 152, 124101 (2020)                 ',hBar,hBar
+        write(unit_nr, '(5A)') hBar,hBar,' [3] A. Pecchia et al., New Journal of Physics 10, 065022 (2008)            ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,' [4] CP2K (Development Version), cp2k.org                                   ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,' [5] J. VandeVondele, M. Krack, F. Mohamed, M. Parrinello, T. Chassaing     ',hBar,hBar
         write(unit_nr, '(5A)') hBar,hBar,'     and J. Hutter, Comput. Phys. Commun. 167, 103 (2005)                   ',hBar,hBar
