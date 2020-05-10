@@ -984,7 +984,7 @@ CONTAINS
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(A)') repeat(hbar, headerWidth)
         write(unit_nr, '(5A)') hBar,hBar, repeat(' ', headerWidth - 4),hBar,hBar
-        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03 (03.05.2020)                   ',hbar,hbar 
+        write(unit_nr, '(5A)') hbar,hbar,'                                CP2K+XT 1.03 (10.05.2020)                   ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar, repeat(' ', headerWidth - 4),hbar,hbar
         write(unit_nr, '(5A)') hbar,hbar,' CP2K eXTended version for quantum nanoscale modeling                       ',hbar,hbar 
         write(unit_nr, '(5A)') hbar,hbar,' Uses the libraries of the DFTB+XT package                                  ',hbar,hbar
