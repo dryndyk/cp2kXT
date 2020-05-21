@@ -81,6 +81,11 @@ CONTAINS
                           description="Do not keep contact self-energy matrices for future reuse", &
                           default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)
       CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)                    
+      CALL keyword_create(keyword, __LOCATION__, name="USE_DFTBXT", &
+                          description="Switch on DFTB+XT calculation", &
+                          default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)                    
+      CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
       ! convergence thresholds

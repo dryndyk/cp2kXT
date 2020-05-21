@@ -78,6 +78,8 @@ MODULE negf_control_types
       INTEGER, ALLOCATABLE, DIMENSION(:)                 :: atomlist_S_screening
       !> do not keep contact self-energy matrices
       LOGICAL                                            :: disable_cache
+      !> switch on dftb+xt calculations
+      LOGICAL                                            :: use_dftbxt
       !> convergence criteria for adaptive integration methods
       REAL(kind=dp)                                      :: conv_density
       !> convergence criteria for iterative Lopez-Sancho algorithm
@@ -321,6 +323,7 @@ CONTAINS
       END IF
 
       CALL section_vals_val_get(negf_section, "DISABLE_CACHE", l_val=negf_control%disable_cache)
+      CALL section_vals_val_get(negf_section, "USE_DFTBXT", l_val=negf_control%use_dftbxt)
 
       CALL section_vals_val_get(negf_section, "EPS_DENSITY", r_val=negf_control%conv_density)
       CALL section_vals_val_get(negf_section, "EPS_GREEN", r_val=negf_control%conv_green)
