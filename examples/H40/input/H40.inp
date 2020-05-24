@@ -1,5 +1,5 @@
 @SET project      H40
-@SET fermi_level  -0.01756396865017 #-0.01126
+@SET fermi_level  -0.08987575
 @SET v_bias_volt  0.0
 @SET temperature  293.0
 
@@ -7,6 +7,8 @@
 @SET potential_path GTH_POTENTIALS
 @SET basis_set_h    SZV-MOLOPT-GTH
 @SET potential_h    GTH-PBE-q1
+#@SET basis_set_h    SZV-MOLOPT-SR-GTH
+#@SET potential_h    GTH-PADE-q1
 
 @SET xc_functional  pbe
 
@@ -15,8 +17,8 @@
 @SET max_scf        100
 @SET eps_scf        1e-6
 
-@SET lx             3.0
-@SET ly             3.0
+@SET lx             5.0
+@SET ly             5.0
 
 &GLOBAL
   PROJECT              ${project}
@@ -58,14 +60,14 @@
          #
          # Atomic indices (and/or names of molecular fragments) are relative
          # to the primary force environment.
-         MOLNAME L1 L2 L3
+         MOLNAME L1 L2
       &END
       &SCREENING_REGION
          MOLNAME L0
       &END
 
-      FERMI_LEVEL  ${fermi_level}
-      REFINE_FERMI_LEVEL
+      #FERMI_LEVEL  ${fermi_level}
+      #REFINE_FERMI_LEVEL
       ELECTRIC_POTENTIAL [eV] ${v_bias_volt}/2
 
       # each contact has its own temperature
@@ -77,14 +79,14 @@
       FORCE_EVAL_SECTION 2
 
       &BULK_REGION
-         MOLNAME R1 R2 R3
+         MOLNAME R1 R2
       &END
       &SCREENING_REGION
          MOLNAME R0
       &END
 
-      FERMI_LEVEL  ${fermi_level}
-      REFINE_FERMI_LEVEL
+      #FERMI_LEVEL  ${fermi_level}
+      #REFINE_FERMI_LEVEL
       ELECTRIC_POTENTIAL [eV] -${v_bias_volt}/2
 
       TEMPERATURE [K] ${temperature}
@@ -100,33 +102,29 @@
     # is applied, a density mixing scheme in inverse space is typically
     # much stable then the default direct mixing of new and old density matrices.
     &MIXING
-       ALPHA   0.2
+       ALPHA   0.05
        METHOD  broyden_mixing
        NBUFFER 8
     &END MIXING
 
     # Integration lower bound (in Hartree)
-    ENERGY_LBOUND -2.0
+    ENERGY_LBOUND -3.0
+    
+    # slower, but works without FFTW3 library
+    INTEGRATION_METHOD simpson
 
     # Maximum error in each matrix element of the density matrix
     EPS_DENSITY    1e-5
 
     MAX_SCF        100
 
-    # The boundary conditions define solution of the Poisson equation up to
+    # Boundary conditions define solution of the Poisson equation up to
     # an additive constant, which affects Hamiltonian matrix elements within
-    # the NEGF procedure. A straighforward way to determine a correct shift
-    # for matrix elements -- which converges zero-bias NEGF procedure in
-    # one iteration -- is to do it iteratively.
-    # V_SHIFT_ALPHA -- mixing factor (lower number means slower convergence
-    #          but better numerical stability). The optimal value changes
-    #          at every iteration, so an algorithm that automatically picks
-    #          the correct number needs to be implemented, instead of asking
-    #          users to guess it
-    # V_SHIFT_MAX_ITERS -- maximum number of iterations
-    #
-    V_SHIFT_ALPHA     0.03
-    V_SHIFT_OFFSET     0.03
+    # the NEGF procedure. The following parameters control evaluation of
+    # the correct shift in Hartree potential:
+    #   * V_SHIFT           -- initial guess for the shift
+    #   * V_SHIFT_MAX_ITERS -- maximal number of iterations
+    #V_SHIFT             0.03
     V_SHIFT_MAX_ITERS   70
 
     &PRINT
@@ -153,6 +151,7 @@
     # (up to 16 x 16 elements)
     # 
     NPROC_POINT 1
+    USE_DFTBXT
 &END NEGF
 
 # *** Primary force environment ***
@@ -179,7 +178,7 @@
       &END SMEAR
 
       &MIXING
-         ALPHA   0.3
+         ALPHA   0.03
          METHOD  broyden_mixing
          NBUFFER 8
       &END MIXING
@@ -208,10 +207,6 @@
     &END CELL
 
     &COORD
-H            0.00000000           0.00000000           0.00000000 L3
-H            0.00000000           0.00000000           1.67200000 L3
-H            0.00000000           0.00000000           3.34400000 L3
-H            0.00000000           0.00000000           5.01600000 L3
 H            0.00000000           0.00000000           6.68800000 L2
 H            0.00000000           0.00000000           8.36000000 L2
 H            0.00000000           0.00000000          10.03200000 L2
@@ -244,10 +239,6 @@ H            0.00000000           0.00000000          53.50400000 R2
 H            0.00000000           0.00000000          55.17600000 R2
 H            0.00000000           0.00000000          56.84800000 R2
 H            0.00000000           0.00000000          58.52000000 R2
-H            0.00000000           0.00000000          60.19200000 R3
-H            0.00000000           0.00000000          61.86400000 R3
-H            0.00000000           0.00000000          63.53600000 R3
-H            0.00000000           0.00000000          65.20800000 R3
     &END COORD
 
     &KIND H
@@ -281,7 +272,7 @@ H            0.00000000           0.00000000          65.20800000 R3
       &END SMEAR
 
       &MIXING
-         ALPHA   0.3
+         ALPHA   0.03
          METHOD  broyden_mixing
          NBUFFER 8
       &END MIXING
@@ -303,7 +294,7 @@ H            0.00000000           0.00000000          65.20800000 R3
     &END XC
 
     &KPOINTS
-       SCHEME  MONKHORST-PACK  1 1 8
+       SCHEME  MONKHORST-PACK  4 4 8
     &END KPOINTS
   &END DFT
 
@@ -374,7 +365,7 @@ H            0.00000000           0.00000000          18.39200000 L1
     &END XC
 
     &KPOINTS
-       SCHEME  MONKHORST-PACK 1 1 8
+       SCHEME  MONKHORST-PACK 4 4 8
     &END KPOINTS
   &END DFT
 
