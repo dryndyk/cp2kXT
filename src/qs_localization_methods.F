@@ -1,6 +1,8 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
+!   Copyright 2000-2020 CP2K developers group <https://cp2k.org>                                   !
+!                                                                                                  !
+!   SPDX-License-Identifier: GPL-2.0-or-later                                                      !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -97,8 +99,7 @@ CONTAINS
       LOGICAL, INTENT(INOUT)                             :: converged
       INTEGER, INTENT(INOUT)                             :: sweeps
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'approx_l1_norm_sd', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'approx_l1_norm_sd'
       INTEGER, PARAMETER                                 :: taylor_order = 100
       REAL(KIND=dp), PARAMETER                           :: alpha = 0.1_dp, f2_eps = 0.01_dp
 
@@ -333,8 +334,7 @@ CONTAINS
       INTEGER                                            :: sweeps
       INTEGER, INTENT(IN)                                :: out_each
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'jacobi_rotations_serial', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER :: routineN = 'jacobi_rotations_serial'
 
       COMPLEX(KIND=dp), POINTER                          :: mii(:), mij(:), mjj(:)
       INTEGER                                            :: dim2, handle, idim, istate, jstate, &
@@ -542,8 +542,7 @@ CONTAINS
       REAL(KIND=dp), INTENT(IN)                          :: weights(:)
       REAL(KIND=dp), INTENT(OUT)                         :: tolerance
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'check_tolerance', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'check_tolerance'
 
       INTEGER                                            :: handle
       TYPE(cp_fm_type), POINTER                          :: force
@@ -748,8 +747,7 @@ CONTAINS
       INTEGER                                            :: iterations
       LOGICAL, INTENT(out), OPTIONAL                     :: converged
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'crazy_rotations', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'crazy_rotations'
       COMPLEX(KIND=dp), PARAMETER                        :: cone = (1.0_dp, 0.0_dp), &
                                                             czero = (0.0_dp, 0.0_dp)
 
@@ -947,7 +945,7 @@ CONTAINS
       REAL(KIND=dp), INTENT(IN)                          :: eps_localization
       INTEGER                                            :: iterations
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'direct_mini', routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'direct_mini'
       COMPLEX(KIND=dp), PARAMETER                        :: cone = (1.0_dp, 0.0_dp), &
                                                             czero = (0.0_dp, 0.0_dp)
       REAL(KIND=dp), PARAMETER                           :: gold_sec = 0.3819_dp
@@ -1361,8 +1359,7 @@ CONTAINS
       INTEGER, INTENT(IN)                                :: out_each
       REAL(dp)                                           :: target_time, start_time
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'jacobi_rot_para', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'jacobi_rot_para'
 
       COMPLEX(KIND=dp)                                   :: zi, zj
       COMPLEX(KIND=dp), ALLOCATABLE, DIMENSION(:, :, :)  :: c_array_me, c_array_partner
@@ -1939,8 +1936,6 @@ CONTAINS
       TYPE(cp_para_env_type), POINTER                    :: para_env
       INTEGER, DIMENSION(:, :)                           :: list_pair
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'eberlein', routineP = moduleN//':'//routineN
-
       INTEGER                                            :: i, ii, jj, npair
 
       npair = (para_env%num_pe + 1)/2
@@ -1983,7 +1978,7 @@ CONTAINS
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: op_sm_set
       TYPE(cp_fm_p_type), DIMENSION(:, :), POINTER       :: zij_fm_set
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'zij_matrix', routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'zij_matrix'
 
       INTEGER                                            :: handle, i, j, nao, nmoloc
       TYPE(cp_fm_type), POINTER                          :: opvec
@@ -2019,7 +2014,7 @@ CONTAINS
 
       TYPE(cp_fm_type), POINTER                          :: vectors
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'scdm_qrfact', routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER                        :: routineN = 'scdm_qrfact'
 
       INTEGER                                            :: handle, ncolT, nrowT
       REAL(KIND=dp), DIMENSION(:), POINTER               :: tau

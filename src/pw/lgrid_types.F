@@ -1,6 +1,8 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
+!   Copyright 2000-2020 CP2K developers group <https://cp2k.org>                                   !
+!                                                                                                  !
+!   SPDX-License-Identifier: GPL-2.0-or-later                                                      !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -52,8 +54,6 @@ CONTAINS
       TYPE(realspace_grid_desc_p_type), DIMENSION(:), &
          POINTER                                         :: rs_descs
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'lgrid_create', routineP = moduleN//':'//routineN
-
       INTEGER                                            :: i, ngpts
 
       CPASSERT(.NOT. ASSOCIATED(lgrid))
@@ -77,8 +77,6 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE lgrid_release(lgrid)
       TYPE(lgrid_type), POINTER                          :: lgrid
-
-      CHARACTER(len=*), PARAMETER :: routineN = 'lgrid_release', routineP = moduleN//':'//routineN
 
       IF (ASSOCIATED(lgrid)) THEN
          CPASSERT(lgrid%ref_count > 0)
@@ -104,8 +102,7 @@ CONTAINS
       TYPE(lgrid_type), POINTER                          :: lgrid
       INTEGER, INTENT(in)                                :: nthreads
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'lgrid_allocate_grid', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER :: routineN = 'lgrid_allocate_grid'
 
       INTEGER                                            :: handle
 

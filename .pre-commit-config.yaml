@@ -8,15 +8,26 @@ repos:
     -   id: check-added-large-files
     -   id: check-ast
 -   repo: https://github.com/ambv/black
-    rev: stable
+    rev: "19.10b0"
     hooks:
     -   id: black
+        name: Reformat Python files with the black code formatter
+        files: '^.*(/PACKAGE)|(\.py)$'
         exclude: >-
           (?x)^(
             exts/.*|
             tools/prettify/fprettify/.|
             tools/build_utils/fypp|
           )$
+-   repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: master
+    hooks:
+    -   id: markdownlint
+-   repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.7.1.1
+    hooks:
+    -   id: shellcheck
+        files: '^tools/pre-commit-install.sh$'
 -   repo: local
     hooks:
     -   id: doxify
@@ -45,3 +56,16 @@ repos:
         language: system
         files: 'data/*'
         pass_filenames: false
+    -   id: clang-format
+        name: clang-format
+        description: Format files with ClangFormat.
+        entry: clang-format
+        language: python
+        files: \.(c|cc|cxx|cpp|frag|glsl|h|hpp|hxx|ih|ispc|ipp|java|js|m|mm|proto|textproto|vert)$
+        args: ['-i', '-fallback-style=none', '--style=llvm']
+        additional_dependencies: ['clang-format']
+        exclude: >-
+          (?x)^(
+            tools/manual/collapsibleList.js|
+            tools/manual/toggle_folding.js|
+          )$

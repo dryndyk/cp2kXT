@@ -1,6 +1,8 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
+!   Copyright 2000-2020 CP2K developers group <https://cp2k.org>                                   !
+!                                                                                                  !
+!   SPDX-License-Identifier: GPL-2.0-or-later                                                      !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -134,8 +136,6 @@ CONTAINS
       TYPE(pw_poisson_type), OPTIONAL, POINTER           :: poisson_env
       TYPE(section_vals_type), OPTIONAL, POINTER         :: interp_section
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'pw_env_get', routineP = moduleN//':'//routineN
-
       CPASSERT(ASSOCIATED(pw_env))
       CPASSERT(pw_env%ref_count > 0)
       IF (PRESENT(pw_pools)) pw_pools => pw_env%pw_pools
@@ -170,8 +170,6 @@ CONTAINS
    SUBROUTINE pw_env_retain(pw_env)
       TYPE(pw_env_type), POINTER                         :: pw_env
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'pw_env_retain', routineP = moduleN//':'//routineN
-
       CPASSERT(ASSOCIATED(pw_env))
       CPASSERT(pw_env%ref_count > 0)
       pw_env%ref_count = pw_env%ref_count + 1
@@ -188,8 +186,6 @@ CONTAINS
    SUBROUTINE pw_env_release(pw_env, kg)
       TYPE(pw_env_type), POINTER                         :: pw_env
       LOGICAL, OPTIONAL                                  :: kg
-
-      CHARACTER(len=*), PARAMETER :: routineN = 'pw_env_release', routineP = moduleN//':'//routineN
 
       INTEGER                                            :: i, igrid_level
       LOGICAL                                            :: my_kg

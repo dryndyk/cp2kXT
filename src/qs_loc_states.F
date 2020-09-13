@@ -1,6 +1,8 @@
 !--------------------------------------------------------------------------------------------------!
 !   CP2K: A general program to perform molecular dynamics simulations                              !
-!   Copyright (C) 2000 - 2020  CP2K developers group                                               !
+!   Copyright 2000-2020 CP2K developers group <https://cp2k.org>                                   !
+!                                                                                                  !
+!   SPDX-License-Identifier: GPL-2.0-or-later                                                      !
 !--------------------------------------------------------------------------------------------------!
 
 ! **************************************************************************************************
@@ -73,8 +75,7 @@ CONTAINS
       TYPE(cp_1d_r_p_type), DIMENSION(:), POINTER        :: evals
       INTEGER, DIMENSION(:, :, :), POINTER               :: marked_states
 
-      CHARACTER(len=*), PARAMETER :: routineN = 'get_localization_info', &
-         routineP = moduleN//':'//routineN
+      CHARACTER(len=*), PARAMETER :: routineN = 'get_localization_info'
 
       INTEGER                                            :: handle, ispin, mystate, ns, output_unit
       INTEGER, DIMENSION(:), POINTER                     :: lstates, marked_states_spin
