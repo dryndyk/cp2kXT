@@ -59,12 +59,14 @@ The basic steps are:
 ```shell
 cd tools/toolchain/
 ./install_cp2k_toolchain.sh --help
+```
 
 - Launch toolchain script (example option choice)
 
 ```shell
 ./install_cp2k_toolchain.sh --with-libxsmm=install --with-openblas=system \
      --with-fftw=system --with-reflapack=no  --enable-cuda --enable-omp
+``` 
 
 - Once the script has completed successfully, follow the instructions given at
   the end of its output. Note that the pre-built arch files provided by the

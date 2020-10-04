@@ -27,8 +27,8 @@ a combination of multi-threading, MPI, and CUDA.
 
 To clone the current master (development version):
 
-$ git clone --recursive https://github.com/tranas-open/cp2kXT.git
-git clone --recursive https://github.com/cp2k/cp2k.git cp2k
+```shell
+git clone --recursive https://github.com/tranas-open/cp2kXT.git
 ```
 
 Note the ``--recursive`` flag that is needed because CP2K uses git submodules.
