@@ -30,7 +30,6 @@
 ! **************************************************************************************************
 MODULE qs_integrate_potential_product
    USE admm_types,                      ONLY: admm_type
-   USE ao_util,                         ONLY: exp_radius_very_extended
    USE atomic_kind_types,               ONLY: atomic_kind_type,&
                                               get_atomic_kind_set
    USE basis_set_types,                 ONLY: get_gto_basis_set,&
@@ -211,17 +210,17 @@ CONTAINS
       LOGICAL :: atom_pair_changed, atom_pair_done, distributed_grids, do_kp, found, h_duplicated, &
          has_threads, my_compute_tau, my_force_adm, my_gapw, new_set_pair_coming, p_duplicated, &
          pab_required, use_subpatch, use_virial
-      REAL(KIND=dp)                                      :: admm_scal_fac, eps_rho_rspace, f, &
-                                                            prefactor, radius, scalef, zetp
-      REAL(KIND=dp), ALLOCATABLE, DIMENSION(:, :)        :: h_block_set, p_block_set
+      REAL(KIND=dp)                                      :: admm_scal_fac, scalef
       REAL(KIND=dp), DIMENSION(3)                        :: force_a, force_b, ra, rab, rab_inv, rb, &
                                                             rp
       REAL(KIND=dp), DIMENSION(3, 3)                     :: my_virial_a, my_virial_b, pv_thread
       REAL(KIND=dp), DIMENSION(3, natom)                 :: force_thread
       REAL(KIND=dp), DIMENSION(:), POINTER               :: set_radius_a, set_radius_b
-      REAL(KIND=dp), DIMENSION(:, :), POINTER            :: h_block, hab, p_block, pab, rpgfa, &
-                                                            rpgfb, sphi_a, sphi_b, work, zeta, zetb
-      REAL(KIND=dp), DIMENSION(:, :, :), POINTER         :: habt, hadb, hdab, pabt, workt
+      REAL(KIND=dp), DIMENSION(:, :), POINTER            :: h_block, h_block_set, hab, p_block, &
+                                                            p_block_set, pab, rpgfa, rpgfb, &
+                                                            sphi_a, sphi_b, work, zeta, zetb
+      REAL(KIND=dp), DIMENSION(:, :, :), POINTER         :: h_block_sett, habt, hadb, hdab, &
+                                                            p_block_sett, pabt, workt
       REAL(kind=dp), DIMENSION(:, :, :, :), POINTER      :: hadbt, hdabt
       TYPE(admm_type), POINTER                           :: admm_env
       TYPE(atom_pair_type), DIMENSION(:), POINTER        :: atom_pair_recv, atom_pair_send
@@ -352,9 +351,6 @@ CONTAINS
       pv_thread = 0.0_dp
       force_thread = 0.0_dp
 
-      ! needs to be consistent with rho_rspace
-      eps_rho_rspace = dft_control%qs_control%eps_rho_rspace
-
       pab_required = (PRESENT(pmat) .OR. PRESENT(pmat_kp)) .AND. calculate_forces
 
       CALL get_qs_kind_set(qs_kind_set=qs_kind_set, &
@@ -420,11 +416,13 @@ CONTAINS
 !$    nthread = omp_get_max_threads()
 
       !   *** Allocate work storage ***
-      NULLIFY (pabt, habt, workt)
+      NULLIFY (habt, workt, h_block_sett, pabt, p_block_sett)
       CALL reallocate(habt, 1, maxco, 1, maxco, 0, nthread)
       CALL reallocate(workt, 1, maxco, 1, maxsgf_set, 0, nthread)
+      CALL reallocate(h_block_sett, 1, maxsgf_set, 1, maxsgf_set, 0, nthread)
       IF (pab_required) THEN
          CALL reallocate(pabt, 1, maxco, 1, maxco, 0, nthread)
+         CALL reallocate(p_block_sett, 1, maxsgf_set, 1, maxsgf_set, 0, nthread)
       ELSE
          CPASSERT(.NOT. calculate_forces)
       END IF
@@ -459,10 +457,11 @@ CONTAINS
       END IF
 
 !$OMP PARALLEL DEFAULT(NONE), &
-!$OMP SHARED(workt,habt,hdabt,hadbt,pabt,tasks,particle_set,natom,maxset), &
+!$OMP SHARED(workt,habt,hdabt,hadbt,pabt,h_block_sett, p_block_sett), &
+!$OMP SHARED(tasks,particle_set,natom,maxset), &
 !$OMP SHARED(maxpgf,my_basis_type,my_gapw,dhmat,deltap,use_virial,admm_scal_fac), &
 !$OMP SHARED(pab_required,calculate_forces,ncoset,rs_v,cube_info,my_compute_tau), &
-!$OMP SHARED(eps_rho_rspace,force,virial,cell), &
+!$OMP SHARED(force,virial,cell), &
 !$OMP SHARED(gridlevel_info,task_list,block_touched,nthread,qs_kind_set), &
 !$OMP SHARED(nimages,do_kp), &
 !$OMP PRIVATE(ithread,work,hab,hdab,hadb,pab,iset_old,jset_old), &
@@ -471,7 +470,7 @@ CONTAINS
 !$OMP PRIVATE(rpgfa,set_radius_a,sphi_a,zeta,first_sgfb,lb_max,lb_min,npgfb), &
 !$OMP PRIVATE(nsetb,nsgfb,rpgfb,set_radius_b,sphi_b,zetb,found), &
 !$OMP PRIVATE(force_a,force_b,my_virial_a,my_virial_b,atom_pair_changed,h_block,h_block_set), &
-!$OMP PRIVATE(p_block,p_block_set,ncoa,sgfa,ncob,sgfb,rab,ra,rb,rp,zetp,f,prefactor,radius,igrid_level), &
+!$OMP PRIVATE(p_block,p_block_set,ncoa,sgfa,ncob,sgfb,rab,ra,rb,rp,igrid_level), &
 !$OMP PRIVATE(na1,na2,nb1,nb2,use_subpatch,rab_inv,new_set_pair_coming,atom_pair_done), &
 !$OMP PRIVATE(iset_new,jset_new,ipgf_new,jpgf_new,scalef), &
 !$OMP PRIVATE(itask,dist,has_threads) &
@@ -481,8 +480,10 @@ CONTAINS
 !$    ithread = omp_get_thread_num()
       work => workt(:, :, ithread)
       hab => habt(:, :, ithread)
+      h_block_set => h_block_sett(:, :, ithread)
       IF (pab_required) THEN
          pab => pabt(:, :, ithread)
+         p_block_set => p_block_sett(:, :, ithread)
       END IF
 
       iset_old = -1; jset_old = -1
@@ -623,15 +624,16 @@ CONTAINS
                ncob = npgfb(jset)*ncoset(lb_max(jset))
                sgfb = first_sgfb(1, jset)
 
-               IF (ALLOCATED(p_block_set)) DEALLOCATE (p_block_set)
-               ALLOCATE (p_block_set(nsgfa(iset), nsgfb(jset)))
                IF (pab_required) THEN
                   IF (iatom <= jatom) THEN
-                     p_block_set(:, :) = p_block(sgfa:sgfa + nsgfa(iset) - 1, sgfb:sgfb + nsgfb(jset) - 1)
+                     p_block_set(1:nsgfa(iset), 1:nsgfb(jset)) = &
+                        p_block(sgfa:sgfa + nsgfa(iset) - 1, sgfb:sgfb + nsgfb(jset) - 1)
                   ELSE
-                     p_block_set(:, :) = TRANSPOSE(p_block(sgfb:sgfb + nsgfb(jset) - 1, sgfa:sgfa + nsgfa(iset) - 1))
+                     p_block_set(1:nsgfa(iset), 1:nsgfb(jset)) = &
+                        TRANSPOSE(p_block(sgfb:sgfb + nsgfb(jset) - 1, sgfa:sgfa + nsgfa(iset) - 1))
                   ENDIF
-                  work(1:ncoa, 1:nsgfb(jset)) = MATMUL(sphi_a(1:ncoa, sgfa:sgfa + nsgfa(iset) - 1), p_block_set)
+                  work(1:ncoa, 1:nsgfb(jset)) = MATMUL(sphi_a(1:ncoa, sgfa:sgfa + nsgfa(iset) - 1), &
+                                                       p_block_set(1:nsgfa(iset), 1:nsgfb(jset)))
                   pab(1:ncoa, 1:ncob) = MATMUL(work(1:ncoa, 1:nsgfb(jset)), &
                                                TRANSPOSE(sphi_b(1:ncob, sgfb:sgfb + nsgfb(jset) - 1)))
                END IF
@@ -644,16 +646,6 @@ CONTAINS
 
             rab = tasks(itask)%rab
             rb(:) = ra(:) + rab(:)
-            zetp = zeta(ipgf, iset) + zetb(jpgf, jset)
-
-            f = zetb(jpgf, jset)/zetp
-            rp(:) = ra(:) + f*rab(:)
-            prefactor = EXP(-zeta(ipgf, iset)*f*DOT_PRODUCT(rab, rab))
-            radius = exp_radius_very_extended(la_min=la_min(iset), la_max=la_max(iset), &
-                                              lb_min=lb_min(jset), lb_max=lb_max(jset), &
-                                              ra=ra, rb=rb, rp=rp, &
-                                              zetp=zetp, eps=eps_rho_rspace, &
-                                              prefactor=prefactor, cutoff=1.0_dp)
 
             na1 = (ipgf - 1)*ncoset(la_max(iset)) + 1
             na2 = ipgf*ncoset(la_max(iset))
@@ -679,7 +671,7 @@ CONTAINS
                   ra, rab, rs_v(igrid_level)%rs_grid, cell, &
                   cube_info(igrid_level), &
                   hab, pab=pab, o1=na1 - 1, o2=nb1 - 1, &
-                  radius=radius, &
+                  radius=tasks(itask)%radius, &
                   calculate_forces=calculate_forces, &
                   force_a=force_a, force_b=force_b, &
                   compute_tau=my_compute_tau, &
@@ -692,7 +684,7 @@ CONTAINS
                   ra, rab, rs_v(igrid_level)%rs_grid, cell, &
                   cube_info(igrid_level), &
                   hab, o1=na1 - 1, o2=nb1 - 1, &
-                  radius=radius, &
+                  radius=tasks(itask)%radius, &
                   calculate_forces=calculate_forces, &
                   force_a=force_a, force_b=force_b, &
                   compute_tau=my_compute_tau, &
@@ -721,16 +713,17 @@ CONTAINS
 
             ! contract the block into h if we're done with the current set pair
             IF (new_set_pair_coming) THEN
-               IF (ALLOCATED(h_block_set)) DEALLOCATE (h_block_set)
-               ALLOCATE (h_block_set(nsgfa(iset), nsgfb(jset)))
                work(1:ncoa, 1:nsgfb(jset)) = MATMUL(hab(1:ncoa, 1:ncob), sphi_b(1:ncob, sgfb:sgfb + nsgfb(jset) - 1))
-               h_block_set(:, :) = MATMUL(TRANSPOSE(sphi_a(1:ncoa, sgfa:sgfa + nsgfa(iset) - 1)), work(1:ncoa, 1:nsgfb(jset)))
+               h_block_set(1:nsgfa(iset), 1:nsgfb(jset)) = &
+                  MATMUL(TRANSPOSE(sphi_a(1:ncoa, sgfa:sgfa + nsgfa(iset) - 1)), work(1:ncoa, 1:nsgfb(jset)))
                IF (iatom <= jatom) THEN
                   h_block(sgfa:sgfa + nsgfa(iset) - 1, sgfb:sgfb + nsgfb(jset) - 1) = &
-                     h_block(sgfa:sgfa + nsgfa(iset) - 1, sgfb:sgfb + nsgfb(jset) - 1) + h_block_set
+                     h_block(sgfa:sgfa + nsgfa(iset) - 1, sgfb:sgfb + nsgfb(jset) - 1) + &
+                     h_block_set(1:nsgfa(iset), 1:nsgfb(jset))
                ELSE
                   h_block(sgfb:sgfb + nsgfb(jset) - 1, sgfa:sgfa + nsgfa(iset) - 1) = &
-                     h_block(sgfb:sgfb + nsgfb(jset) - 1, sgfa:sgfa + nsgfa(iset) - 1) + TRANSPOSE(h_block_set)
+                     h_block(sgfb:sgfb + nsgfb(jset) - 1, sgfa:sgfa + nsgfa(iset) - 1) + &
+                     TRANSPOSE(h_block_set(1:nsgfa(iset), 1:nsgfb(jset)))
                END IF
             END IF
 
@@ -823,10 +816,10 @@ CONTAINS
 
       !   *** Release work storage ***
 
-      DEALLOCATE (habt, workt)
+      DEALLOCATE (habt, workt, h_block_sett)
 
       IF (pab_required) THEN
-         DEALLOCATE (pabt)
+         DEALLOCATE (pabt, p_block_sett)
       END IF
 
       IF (ASSOCIATED(rs_v)) THEN
