@@ -2,7 +2,7 @@
 
 ##  0. CP2K+XT| Before compiling
 
-The directories `cp2kXT/` and `dftbXT/` must be in the same (any) directory `<MAIN>/`.
+We assume that the directories `cp2kXT/` and `dftbXT/` are in the same directory `<MAIN>/`.
 Possible name for this directory is OpenSuite or TraNaS, or what you want.
 DFTB+XT must be installed before CP2K+XT (note however, that if you want to use the versions of
 MPI, OpenBLAS or ScaLAPACK from CP2K suite, see: `cp2kXT/tools/toolchain`, you can install it first.
@@ -17,10 +17,10 @@ The object, mod and lib files must be copied from `<MAIN>/dftbXT` to `<MAIN>/dft
 ``$cp  dftbXT/_build/prog/dftb+/include/*.mod                         dftbXT_libs/``  
 ``$cp  dftbXT/_build/prog/dftb+/libdftbplus.a                         dftbXT_libs/``  
 ``$cp  dftbXT/_build/external/xmlf90/include/*.mod                    dftbXT_libs/``  
-``$cp  dftbXT/_build/external/mpifx/origin/lib/include/*.mod          dftbXT_libs/``  
-``$cp  dftbXT/_build/external/mpifx/origin/lib/libmpifx.a             dftbXT_libs/``  
-``$cp  dftbXT/_build/external/scalapackfx/origin/lib/include/*.mod    dftbXT_libs/``  
-``$cp  dftbXT/_build/external/scalapackfx/origin/lib/libscalapackfx.a dftbXT_libs/``  
+``$cp  dftbXT/_build/MpiFx_SUBMODULE/origin/lib/include/*.mod          dftbXT_libs/``  
+``$cp  dftbXT/_build/MpiFx_SUBMODULE/origin/lib/libmpifx.a             dftbXT_libs/``  
+``$cp  dftbXT/_build/ScalapackFx_SUBMODULE/origin/lib/include/*.mod    dftbXT_libs/``  
+``$cp  dftbXT/_build/ScalapackFx_SUBMODULE/origin/lib/libscalapackfx.a dftbXT_libs/``  
 ``$cp  dftbXT/_build/external/mudpack/libmudpack.a                    dftbXT_libs/``  
 ``$cp  dftbXT/_build/external/sparskit/libsparskit.a                  dftbXT_libs/``  
 
@@ -493,14 +493,10 @@ be found in the subdirectory of `./obj/` that corresponds to your build, e.g.,
 1. Include the path to mod files for compilation
 
    ``FCFLAGS => FCFLAGS -I'<MAIN>/dftbXT_libs'``
- 
-2. Add "-fopenmp" to LDFLAGS
 
-   ``LDFLAGS => -fopenmp LDFLAGS``
+2. Add object files and libraries
 
-3. Add object files and libraries
-
-   ``LIBS => -L<MAIN>/dftbXT_libs -ldftbplus -lmudpack -lsparskit LIB_[SCA]LAPACK/BLAS``
+   ``LIBS => -L<MAIN>/dftbXT_libs -ldftbplus -lmpifx -lscalapackfx -lmudpack -lsparskit LIB_[SCA]LAPACK/BLAS``
  
    `LIB_[SCA]LAPACK/BLAS` should be taken from the DFTB+XT arch file, something like  
    ``'-L/usr/lib -lscalapack -lopenblas'``
