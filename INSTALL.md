@@ -519,7 +519,7 @@ should work if you can locally execute CP2K without the need for e.g. batch subm
 In the other case, you might need to configure the underlying testing script as
 described more systematically at <https://www.cp2k.org/dev:regtesting>
 
-CP2K+XT| We recommend to go to `<MAIN>/cp2kXT/regtesting` directory and run something like
+CP2K+XT| Alternatively, go to `<MAIN>/cp2kXT/regtesting` directory and run something like
     
 ``$ ../tools/regtesting/do_regtest -maxtasks 4 -quick -arch local -version popt -cp2kdir ../``
 
